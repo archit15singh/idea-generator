@@ -91,14 +91,14 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `analysed` (cohort) | 107 | full cohort analysed + scored + primary selected |
 | `wedges` | 2140 | **107 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 514 | per-startup platform needs |
-| `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
+| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈40 after cluster |
-| `personal_fit` | 107 | Supermemory/Mem0 tops (69); Knock/Magic lower |
-| `pattern_library` | 13 | **clusterer ready** (20 new) — next_action=cluster |
+| `candidate_startups` | 266 | pending_ingest≈40; next Poolside/Stainless/Cognee/… |
+| `personal_fit` | 107 | all scored |
+| `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `cluster`**. Primaries 111–115: Magic Better evaluation, Tempo Better memory, Knock Better evaluation, Syntropy AI-native, Supermemory Better memory. Mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
+**`plan_recursive_fanout` next_action = `ingest`**. Cluster complete; new_since=0. Primary mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,18 +119,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; **107 startups e2e**; 2140 wedges; 514 infra_ops; **107 primary**. Latest: **score_a+select** Magic/Tempo/Knock/Syntropy/Supermemory. Clusterer **ready**. **88 tests green.**
-- **Next fire:** **`cluster`** (20 new since last) → ingest/expand CANONICAL.
+- **Done (pushed):** CANONICAL 24/24; 107 startups e2e; 2140 wedges; 514 infra_ops; **107 primary**; **patterns 15**. Latest: **cluster** — infra graph refresh (4 convergent); promote Long-horizon autonomous coding agents + Multi-channel product notification infrastructure. **88 tests green.**
+- **Next fire:** `ingest` (Poolside, Stainless, Cognee, …) or further CANONICAL expand; optional score_b.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Clusterer** wave (Pattern Library + Problem/Infra graphs).
-2. Ingest next batch (≤5) or further CANONICAL expand.
-3. Optional score_b / infra fit refresh after cluster.
-4. Keep expanding founder-relevant parents past 24.
+1. **Ingest** ≤5; keep analyse backlog clear.
+2. Further **CANONICAL expand** (founder gaps past 24).
+3. Optional **score_b** / infra fit refresh on convergent layers.
+4. Next cluster after +20 startups.
 
 ## Subagent dispatch contract
 
