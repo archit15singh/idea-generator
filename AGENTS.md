@@ -36,6 +36,22 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 ```
 `top_infra_node` is the single layer to bet on (fit × conviction × cross-cluster). Live state (Aug 2026): **Memory layer wins** (7/8 sightings, 3 clusters, fit 72/80, rank 0.9125).
 
+One-shot resume digest (counts + deterministic blockers for a fresh session):
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
+```
+
+## Recursive fan-out (dispatch in parallel; re-plan each fire)
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import plan_recursive_fanout; import json; print(json.dumps(plan_recursive_fanout(DB('sid.db')), indent=2, default=str))"
+```
+- `next_action` ∈ `scout | ingest | analyse | score_a | score_b | idle`
+- Scout: parallel agents via `scout_fanout_inputs` (uncovered markets, chunked)
+- Ingest: `ingest_fanout_batches` diversifies across parent markets (round-robin)
+- Analyst / Mode A / Mode B: parallel id waves with hard caps (5/5/5)
+- `CANONICAL_MARKETS` is the 20-market pool; `market_coverage(db)` tracks progress
+- Board status embeds `market_coverage` + `fanout` so loops do not invent SQL
+
 ## Subagent dispatch contract
 Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds the typed `Input` from `idea_factory.pm` (`default_scout_input`, `build_scorer_input`, `build_infra_node_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`). After dispatch, parse the returned JSON with `receipts.parse`; if `ReceiptError`, re-dispatch naming the gap. Run gates in code between dispatches — never trust prose for routing. The scorer has two modes: Mode A (per-startup → `personal_fit`) and Mode B (infra node → `infra_personal_fit`); stage-04 receipts disambiguate on `infra_nodes_scored`.
 

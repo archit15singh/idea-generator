@@ -138,16 +138,23 @@ class DB:
             ).fetchone()[0])
 
     def candidates_for_ingest(self, segment_id: Optional[int] = None) -> list[CandidateStartupRow]:
-        """The ingestor fans out on these. If segment_id is None, returns all."""
-        if segment_id is None:
-            r = self._conn.execute(
-                "SELECT * FROM candidate_startups ORDER BY id"
-            ).fetchall()
-        else:
-            r = self._conn.execute(
-                "SELECT * FROM candidate_startups WHERE market_segment_id = ? ORDER BY id",
-                (segment_id,),
-            ).fetchall()
+        """Candidates not yet present as startups (matched on website).
+
+        The PM fans the ingestor out on this list. Already-ingested websites are
+        excluded so re-running a cohort does not re-dispatch the same 8 rows
+        when 114 pending candidates remain.
+        """
+        sql = """
+            SELECT c.* FROM candidate_startups c
+            LEFT JOIN startups s ON s.website = c.website
+            WHERE s.id IS NULL
+        """
+        params: tuple = ()
+        if segment_id is not None:
+            sql += " AND c.market_segment_id = ?"
+            params = (segment_id,)
+        sql += " ORDER BY c.id"
+        r = self._conn.execute(sql, params).fetchall()
         return [
             CandidateStartupRow(
                 name=row["name"], website=row["website"],

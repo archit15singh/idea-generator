@@ -184,6 +184,14 @@ def test_db_candidate_startups_fanout(db):
     # filtered fan-out
     only_seg = db.candidates_for_ingest(segment_id=seg_id)
     assert len(only_seg) == 2
+    # once a candidate is ingested as a startup, it drops out of the fan-out
+    db.upsert_startup(StartupRow(
+        startup="Braintrust", website="https://www.braintrust.dev", yc_batch="W23",
+    ))
+    remaining = db.candidates_for_ingest()
+    assert len(remaining) == 1
+    assert remaining[0].name == "LangSmith"
+    assert len(db.candidates_for_ingest(segment_id=seg_id)) == 1
 
 
 def test_db_idempotent_upsert(db):
@@ -382,6 +390,56 @@ def test_top_wedge_picks_highest_combined_score():
     assert top.wedge_type == "Open source"
 
 
+def test_rank_wedges_prefers_per_wedge_personal_fit_score():
+    """Without per-wedge scores every evidence row collides at the same rank.
+
+    The scorer writes wedges.personal_fit_score (0-100); top_wedge must honour
+    it or validator outreach is an insertion-order lottery.
+    """
+    fit = PersonalFitRow(
+        startup_id=1,
+        technical_advantage=8, interest=8, existing_knowledge=8,
+        sales_ability=8, long_term_moat=8, build_speed=8,
+        market_size=8, distribution_fit=8,  # total=64, startup_fit_norm=0.8
+    )
+    wedges = [
+        WedgeRow(
+            id=1, startup_id=1, wedge_type="Cheaper", description="low align",
+            evidence="c.pricing", personal_fit_score=40,
+        ),
+        WedgeRow(
+            id=2, startup_id=1, wedge_type="Open source", description="home turf",
+            evidence="c.moat=OSS", personal_fit_score=92,
+        ),
+        WedgeRow(
+            id=3, startup_id=1, wedge_type="Self-hosted", description="mid",
+            evidence="c.weaknesses", personal_fit_score=70,
+        ),
+    ]
+    ranked = rank_wedges_by_fit(wedges, fit)
+    assert [w.wedge_type for w, _ in ranked] == ["Open source", "Self-hosted", "Cheaper"]
+    # high wedge score beats startup-level fallback even when startup fit is high
+    assert ranked[0][1] > ranked[1][1] > ranked[2][1]
+    assert top_wedge(wedges, fit).wedge_type == "Open source"
+
+
+def test_rank_wedges_falls_back_to_startup_fit_when_wedge_unscored():
+    fit = PersonalFitRow(
+        startup_id=1,
+        technical_advantage=10, interest=10, existing_knowledge=10,
+        sales_ability=10, long_term_moat=10, build_speed=10,
+        market_size=10, distribution_fit=10,  # total=80
+    )
+    wedges = [
+        WedgeRow(id=1, startup_id=1, wedge_type="Open source", description="d", evidence="c"),
+        WedgeRow(id=2, startup_id=1, wedge_type="Faster", description="d", evidence="c"),
+    ]
+    ranked = rank_wedges_by_fit(wedges, fit)
+    assert len(ranked) == 2
+    # both unscored -> equal primary score (startup fit * 0.6 + 0.4 = 1.0)
+    assert ranked[0][1] == ranked[1][1] == 1.0
+
+
 def test_top_wedge_returns_none_when_all_lack_evidence():
     fit = PersonalFitRow(
         startup_id=1,
@@ -539,6 +597,28 @@ Done."""
     assert isinstance(r, IngestorReceipt)
     assert r.ingested == [1, 2, 3]
     assert r.next_stage == "02"
+
+
+def test_parse_fenced_nested_json_market_scout():
+    """Nested arrays inside a fenced block must not truncate at the first `}`.
+
+    The old non-greedy `\\{.*?\\}` fence regex broke MarketScout receipts
+    (segments/candidates) and any Clusterer receipt with nested summary fields.
+    """
+    raw = (
+        "Scout done.\n```json\n"
+        '{"schema_version":"idea_factory_receipt_v1","result":"done","stage":"00",'
+        '"changed_rows":2,"summary":"ok","markets_processed":1,"segments_created":1,'
+        '"candidates_emitted":1,"segments":[{"parent_market":"AI Engineering",'
+        '"segment_name":"IDE agents","icp_cluster":"developer","rationale":"r"}],'
+        '"candidates":[{"name":"Cursor","website":"https://cursor.com",'
+        '"market_segment_id":1,"yc_batch":"W24"}]}\n```\n'
+    )
+    r = parse(raw)
+    assert isinstance(r, MarketScoutReceipt)
+    assert r.candidates_emitted == 1
+    assert r.segments[0].segment_name == "IDE agents"
+    assert r.candidates[0].name == "Cursor"
 
 
 def test_parse_bare_json_block():
@@ -1113,3 +1193,153 @@ def test_run_infra_fit_digest_ranks_and_picks_winner(db):
     assert digest["scored_nodes"] >= 1
     assert digest["top_infra_node"] is not None
     assert digest["top_infra_node"]["canonical_name"] == "Memory layer"
+    # enriched fields: PM needs fit_total + sightings without a second query
+    assert digest["ranked"][0]["fit_total"] is not None
+    assert digest["ranked"][0]["sightings"] >= 1
+    assert digest["top_infra_node"]["fit_total"] is not None
+    assert digest["top_infra_node"]["score"] is not None
+
+
+def test_board_status_empty_db_surfaces_cold_start_blocker(db):
+    from idea_factory.pm import board_status
+    status = board_status(db)
+    assert status["startups"] == 0
+    assert status["analysed"] == 0
+    assert any("empty board" in b for b in status["blockers"])
+
+
+def test_board_status_after_cohort_lists_actionable_blockers(db):
+    from idea_factory.pm import board_status, run_infra_convergence
+    from idea_factory.schema import InfrastructureOpRow
+
+    seg = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="agent memory",
+        icp_cluster="developer", rationale="x",
+    ))
+    for name in ["A", "B", "C"]:
+        website = f"https://{name.lower()}.example"
+        sid = db.upsert_startup(StartupRow(startup=name, website=website))
+        db.insert_candidate_startup(CandidateStartupRow(
+            name=name, website=website, market_segment_id=seg,
+        ))
+        db.replace_wedges(sid, [
+            WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+        ])
+        db.replace_infrastructure_ops(sid, [
+            InfrastructureOpRow(
+                startup_id=sid, internal_platform="Memory",
+                description="rewrites", broader_applicability=1, evidence="e",
+            ),
+        ])
+        db.upsert_personal_fit(PersonalFitRow(
+            startup_id=sid, technical_advantage=8, interest=8, existing_knowledge=8,
+            sales_ability=8, long_term_moat=8, build_speed=8,
+            market_size=8, distribution_fit=8,
+        ))
+        db.set_stage_marker(sid, "scored")
+    run_infra_convergence(db)
+
+    status = board_status(db)
+    assert status["startups"] == 3
+    assert status["analysed"] == 3
+    assert status["wedges"] == 3
+    assert status["wedges_with_evidence"] == 3
+    assert status["convergent_nodes"] >= 1
+    assert status["by_stage"].get("scored") == 3
+    # scored but no outreach; clusterer not ready; no infra fit scored
+    assert any("validator blocked" in b for b in status["blockers"])
+    assert any("clusterer waiting" in b for b in status["blockers"])
+    assert any("Mode B incomplete" in b for b in status["blockers"])
+
+# --- recursive fan-out planning ---
+
+
+def test_canonical_markets_is_twenty():
+    assert len(CANONICAL_MARKETS) == 20
+    assert len(set(CANONICAL_MARKETS)) == 20  # no dupes
+
+
+def test_uncovered_markets_and_scout_fanout(db):
+    from idea_factory.pm import uncovered_markets, scout_fanout_inputs, market_coverage
+
+    assert len(uncovered_markets(db)) == 20
+    inputs = scout_fanout_inputs(db, markets_per_agent=2)
+    assert len(inputs) == 10  # 20 markets / 2
+    assert all(len(i.markets) <= 2 for i in inputs)
+    # seed one market's segment → drops out of uncovered
+    db.upsert_market_segment(MarketSegmentRow(
+        parent_market="AI Engineering", segment_name="IDE agents",
+        icp_cluster="developer", rationale="x",
+    ))
+    left = uncovered_markets(db)
+    assert "AI Engineering" not in left
+    assert len(left) == 19
+    cov = market_coverage(db)
+    assert cov["pool_size"] == 20
+    assert cov["with_segments"] == 1
+
+
+def test_diversify_round_robin_prefers_undercovered():
+    from idea_factory.pm import diversify_candidates_round_robin
+    from idea_factory.schema import CandidateStartupRow
+
+    pending = [
+        (CandidateStartupRow(name="A1", website="https://a1.example", market_segment_id=1), "M1"),
+        (CandidateStartupRow(name="A2", website="https://a2.example", market_segment_id=1), "M1"),
+        (CandidateStartupRow(name="B1", website="https://b1.example", market_segment_id=2), "M2"),
+        (CandidateStartupRow(name="C1", website="https://c1.example", market_segment_id=3), "M3"),
+    ]
+    picked = diversify_candidates_round_robin(
+        pending, limit=3, prefer_markets=["M3", "M2"],
+    )
+    names = [c.name for c in picked]
+    # prefer M3 then M2 then others — first picks should include C1 and B1
+    assert names[0] == "C1"
+    assert names[1] == "B1"
+    assert names[2] == "A1"
+
+
+def test_plan_recursive_fanout_priority_scout_then_ingest(db):
+    from idea_factory.pm import plan_recursive_fanout
+
+    plan = plan_recursive_fanout(db, scout_markets_per_agent=5)
+    assert plan["next_action"] == "scout"
+    assert plan["wave"]["stage"] == "00"
+    assert plan["wave"]["parallel"] == 4  # 20/5
+
+    # cover all markets with empty segments so scout empties; add pending candidates
+    for i, m in enumerate(CANONICAL_MARKETS):
+        seg = db.upsert_market_segment(MarketSegmentRow(
+            parent_market=m, segment_name=f"seg-{i}",
+            icp_cluster="developer", rationale="r",
+        ))
+        db.insert_candidate_startup(CandidateStartupRow(
+            name=f"Co{i}", website=f"https://co{i}.example",
+            market_segment_id=seg,
+        ))
+    plan2 = plan_recursive_fanout(db, ingest_batch_size=5)
+    assert plan2["next_action"] == "ingest"
+    assert plan2["wave"]["stage"] == "01"
+    assert plan2["wave"]["parallel"] == 5
+    assert len(plan2["wave"]["candidates"]) == 5
+
+
+def test_plan_recursive_fanout_analyse_and_score_waves(db):
+    from idea_factory.pm import plan_recursive_fanout
+
+    # no uncovered markets, no pending: seed analysed vs ingested
+    for m in CANONICAL_MARKETS:
+        db.upsert_market_segment(MarketSegmentRow(
+            parent_market=m, segment_name=f"s-{m}",
+            icp_cluster="infra", rationale="r",
+        ))
+    sid_ing = db.upsert_startup(StartupRow(startup="Ing", website="https://ing.example"))
+    db.set_stage_marker(sid_ing, "ingested")
+    plan = plan_recursive_fanout(db)
+    assert plan["next_action"] == "analyse"
+    assert sid_ing in plan["wave"]["startup_ids"]
+
+    db.set_stage_marker(sid_ing, "analysed")
+    plan2 = plan_recursive_fanout(db)
+    assert plan2["next_action"] == "score_a"
+    assert sid_ing in plan2["wave"]["startup_ids"]

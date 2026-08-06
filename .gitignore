@@ -8,3 +8,6 @@ dist/
 .mvp/
 .pytest_cache/_analyst_run_*.py
 .pytest_cache/
+
+# autonomous loop state
+.loop-deadline

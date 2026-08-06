@@ -36,24 +36,54 @@ from idea_factory.schema import (
 
 # The DAG NEVER starts from a flat startup list. It starts from markets.
 # The market scout recursively breaks each into sub-markets and candidates.
+# 20 markets = design target (3 ICP clusters × verticals + orthogonal wedges).
 
 CANONICAL_MARKETS = [
+    # developer / founder ICP
     "AI Engineering",
-    "Cybersecurity",
-    "Enterprise AI",
     "Developer Tools",
+    "Agent Infrastructure",
+    "Technical Founder Tools",
+    "Developer Infrastructure",
+    # platform / infra ICP
     "Knowledge Management",
     "AI Infrastructure",
-    "Agent Infrastructure",
+    "Observability",
+    "Data Infrastructure",
+    "MLOps and Evaluation",
+    "Vector Search and Retrieval",
+    "API and Integration Platforms",
+    "Workflow Orchestration",
+    # enterprise / security ICP
+    "Cybersecurity",
+    "Enterprise AI",
     "Enterprise Automation",
     "B2B Productivity",
-    "Technical Founder Tools",
+    "Email Security",
+    "Identity and Access",
+    "Security Automation",
 ]
+
+# Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.
+DEFAULT_SCOUT_MARKETS_PER_AGENT = 2
+DEFAULT_INGEST_BATCH_SIZE = 5
+DEFAULT_ANALYST_PARALLEL = 5
+DEFAULT_SCORER_PARALLEL = 5
+DEFAULT_VALIDATOR_PARALLEL = 3
+DEFAULT_BUILDER_PARALLEL = 2
+DEFAULT_MAX_FANOUT_WAVES = 8
 
 
 def default_scout_input(depth: int = 2) -> MarketScoutInput:
     """The DAG's entry point. The PM hands this to the market scout."""
-    return MarketScoutInput(markets=CANONICAL_MARKETS, depth=depth)
+    return MarketScoutInput(markets=list(CANONICAL_MARKETS), depth=depth)
+
+
+def _chunk(items: list, size: int) -> list[list]:
+    """Split a list into fixed-size chunks (last chunk may be shorter)."""
+    if size < 1:
+        raise ValueError("chunk size must be >= 1")
+    return [items[i : i + size] for i in range(0, len(items), size)]
 
 
 # --- HTML-to-text helper: shrink webfetch footprint before reasoning ---
@@ -74,6 +104,326 @@ def html_to_summary(html: str, max_chars: int = 1200) -> str:
     if len(collapsed) > max_chars:
         collapsed = collapsed[:max_chars] + " ...[truncated]"
     return collapsed
+
+
+# --- recursive fan-out planning (PM dispatches waves in parallel) ---
+
+
+def parent_markets_in_db(db) -> set[str]:
+    """Distinct parent_market values already present in market_segments."""
+    rows = db._conn.execute(
+        "SELECT DISTINCT parent_market FROM market_segments WHERE parent_market IS NOT NULL"
+    ).fetchall()
+    return {r["parent_market"] for r in rows if r["parent_market"]}
+
+
+def uncovered_markets(db, pool: Optional[list[str]] = None) -> list[str]:
+    """Canonical markets with zero segments yet — scout these first."""
+    pool = pool or list(CANONICAL_MARKETS)
+    have = parent_markets_in_db(db)
+    return [m for m in pool if m not in have]
+
+
+def market_coverage(db, pool: Optional[list[str]] = None) -> dict:
+    """How many of the canonical 20 markets have segments + analysed startups."""
+    pool = pool or list(CANONICAL_MARKETS)
+    have_segments = parent_markets_in_db(db)
+    # parent markets that already produced at least one analysed startup
+    rows = db._conn.execute(
+        """
+        SELECT DISTINCT ms.parent_market AS pm
+        FROM startups s
+        JOIN candidate_startups cs ON cs.website = s.website
+        JOIN market_segments ms ON ms.id = cs.market_segment_id
+        WHERE s.stage_marker IN
+          ('analysed','scored','validated','graduated','built')
+          AND ms.parent_market IS NOT NULL
+        """
+    ).fetchall()
+    have_analysed = {r["pm"] for r in rows if r["pm"]}
+    covered_segments = [m for m in pool if m in have_segments]
+    covered_analysed = [m for m in pool if m in have_analysed]
+    return {
+        "pool_size": len(pool),
+        "with_segments": len(covered_segments),
+        "with_analysed_startups": len(covered_analysed),
+        "uncovered_markets": [m for m in pool if m not in have_segments],
+        "markets_without_analysed": [m for m in pool if m not in have_analysed],
+        "covered_markets": covered_segments,
+    }
+
+
+def scout_fanout_inputs(
+    db,
+    *,
+    markets_per_agent: int = DEFAULT_SCOUT_MARKETS_PER_AGENT,
+    depth: int = 2,
+    only_uncovered: bool = True,
+    pool: Optional[list[str]] = None,
+) -> list[MarketScoutInput]:
+    """Recursive market fan-out: one typed Input per parallel scout agent.
+
+    Prefer uncovered markets. If all 20 already have segments and
+    only_uncovered=True, returns [] (re-scout full pool via default_scout_input
+    when the PM wants a refresh).
+    """
+    pool = pool or list(CANONICAL_MARKETS)
+    markets = uncovered_markets(db, pool) if only_uncovered else list(pool)
+    if not markets:
+        return []
+    return [
+        MarketScoutInput(markets=chunk, depth=depth)
+        for chunk in _chunk(markets, markets_per_agent)
+    ]
+
+
+def _pending_with_parent_market(db) -> list[tuple[CandidateStartupRow, Optional[str]]]:
+    """Pending candidates joined to their parent_market for diversity fan-out."""
+    pending = db.candidates_for_ingest()
+    if not pending:
+        return []
+    # website -> parent_market
+    rows = db._conn.execute(
+        """
+        SELECT cs.website, ms.parent_market
+        FROM candidate_startups cs
+        LEFT JOIN market_segments ms ON ms.id = cs.market_segment_id
+        """
+    ).fetchall()
+    parent_by_site = {r["website"]: r["parent_market"] for r in rows}
+    return [(c, parent_by_site.get(c.website)) for c in pending]
+
+
+def diversify_candidates_round_robin(
+    pending: list[tuple[CandidateStartupRow, Optional[str]]],
+    limit: int,
+    prefer_markets: Optional[list[str]] = None,
+) -> list[CandidateStartupRow]:
+    """Pick up to `limit` candidates, round-robin across parent markets.
+
+    Markets listed in prefer_markets (e.g. those with no analysed startups)
+    are drained first. This is the recursive segment→candidate fan-out that
+    stops the cohort from collapsing into one over-scouted market.
+    """
+    if limit < 1 or not pending:
+        return []
+    # group by parent
+    by_market: dict[str, list[CandidateStartupRow]] = {}
+    for cand, parent in pending:
+        key = parent or "_unknown"
+        by_market.setdefault(key, []).append(cand)
+
+    order: list[str] = []
+    prefer = prefer_markets or []
+    for m in prefer:
+        if m in by_market and m not in order:
+            order.append(m)
+    for m in sorted(by_market.keys()):
+        if m not in order:
+            order.append(m)
+
+    picked: list[CandidateStartupRow] = []
+    # round-robin until limit or all empty
+    while len(picked) < limit:
+        progress = False
+        for m in order:
+            bucket = by_market.get(m) or []
+            if not bucket:
+                continue
+            picked.append(bucket.pop(0))
+            progress = True
+            if len(picked) >= limit:
+                break
+        if not progress:
+            break
+    return picked
+
+
+def ingest_fanout_batches(
+    db,
+    *,
+    batch_size: int = DEFAULT_INGEST_BATCH_SIZE,
+    max_batches: int = DEFAULT_MAX_FANOUT_WAVES,
+    diversify: bool = True,
+) -> list[list[CandidateStartupRow]]:
+    """Recursive candidate fan-out: parallel ingest waves.
+
+    Each inner list is one parallel wave (dispatch one ingestor per candidate
+    inside the wave, or one agent per wave — PM's choice). Waves themselves
+    are sequential across fires if needed.
+    """
+    pending = _pending_with_parent_market(db)
+    if not pending:
+        return []
+    cov = market_coverage(db)
+    prefer = cov["markets_without_analysed"]
+    if diversify:
+        ordered = diversify_candidates_round_robin(
+            pending, limit=len(pending), prefer_markets=prefer,
+        )
+    else:
+        ordered = [c for c, _ in pending]
+    # cap total work this plan emits
+    cap = batch_size * max_batches
+    ordered = ordered[:cap]
+    return _chunk(ordered, batch_size)
+
+
+def startups_at_stage(db, marker: str) -> list[int]:
+    """Startup ids with the given stage_marker, ordered by id."""
+    rows = db._conn.execute(
+        "SELECT id FROM startups WHERE stage_marker = ? ORDER BY id",
+        (marker,),
+    ).fetchall()
+    return [int(r["id"]) for r in rows]
+
+
+def analyst_fanout_ids(
+    db, *, parallel: int = DEFAULT_ANALYST_PARALLEL, max_waves: int = DEFAULT_MAX_FANOUT_WAVES,
+) -> list[list[int]]:
+    """Startups at 'ingested' ready for recursive L1-L10 analyst, in waves."""
+    ids = startups_at_stage(db, "ingested")
+    return _chunk(ids[: parallel * max_waves], parallel)
+
+
+def scorer_mode_a_fanout_ids(
+    db, *, parallel: int = DEFAULT_SCORER_PARALLEL, max_waves: int = DEFAULT_MAX_FANOUT_WAVES,
+) -> list[list[int]]:
+    """Analysed startups lacking a personal_fit row (or needing Mode A)."""
+    rows = db._conn.execute(
+        """
+        SELECT s.id FROM startups s
+        LEFT JOIN personal_fit pf ON pf.startup_id = s.id
+        WHERE s.stage_marker = 'analysed' AND pf.startup_id IS NULL
+        ORDER BY s.id
+        """
+    ).fetchall()
+    ids = [int(r["id"]) for r in rows]
+    return _chunk(ids[: parallel * max_waves], parallel)
+
+
+def scorer_mode_b_fanout_ids(
+    db, *, parallel: int = DEFAULT_SCORER_PARALLEL,
+) -> list[list[int]]:
+    """Convergent infra nodes with no infra_personal_fit yet — parallel Mode B."""
+    rows = db._conn.execute(
+        """
+        SELECT n.id FROM infrastructure_nodes n
+        LEFT JOIN infra_personal_fit f ON f.infra_node_id = n.id
+        WHERE n.convergence = 1 AND n.retired_at IS NULL AND f.infra_node_id IS NULL
+        ORDER BY n.sightings DESC, n.id
+        """
+    ).fetchall()
+    ids = [int(r["id"]) for r in rows]
+    return _chunk(ids, parallel) if ids else []
+
+
+def plan_recursive_fanout(
+    db,
+    *,
+    scout_markets_per_agent: int = DEFAULT_SCOUT_MARKETS_PER_AGENT,
+    ingest_batch_size: int = DEFAULT_INGEST_BATCH_SIZE,
+    analyst_parallel: int = DEFAULT_ANALYST_PARALLEL,
+    scorer_parallel: int = DEFAULT_SCORER_PARALLEL,
+    depth: int = 2,
+) -> dict:
+    """Single source of truth for the PM's parallel dispatch wave.
+
+    Returns a priority-ordered plan. The PM should execute the first non-empty
+    stage's first wave in parallel, then re-plan next fire. Recursive because
+    each stage's output feeds the next stage's fan-out on the subsequent plan.
+
+    Stages (first non-empty wins as `next_action`):
+      1. scout   — uncovered markets, chunked for parallel market-scout agents
+      2. ingest  — diversified pending candidates in parallel batches
+      3. analyse — stage_marker='ingested' startups
+      4. score_a — analysed startups without personal_fit
+      5. score_b — convergent infra nodes without infra_personal_fit
+      6. idle    — board is caught up; run convergence digest / fixes
+    """
+    cov = market_coverage(db)
+    scout_inputs = scout_fanout_inputs(
+        db, markets_per_agent=scout_markets_per_agent, depth=depth, only_uncovered=True,
+    )
+    ingest_batches = ingest_fanout_batches(db, batch_size=ingest_batch_size)
+    analyse_waves = analyst_fanout_ids(db, parallel=analyst_parallel)
+    score_a_waves = scorer_mode_a_fanout_ids(db, parallel=scorer_parallel)
+    score_b_waves = scorer_mode_b_fanout_ids(db, parallel=scorer_parallel)
+
+    if scout_inputs:
+        next_action = "scout"
+        wave = {
+            "stage": "00",
+            "agent": "idea-factory-market-scout",
+            "parallel": len(scout_inputs),
+            "inputs": [
+                {"markets": inp.markets, "depth": inp.depth} for inp in scout_inputs
+            ],
+        }
+    elif ingest_batches:
+        next_action = "ingest"
+        first = ingest_batches[0]
+        wave = {
+            "stage": "01",
+            "agent": "idea-factory-ingestor",
+            "parallel": len(first),
+            "candidates": [
+                {"name": c.name, "website": c.website, "market_segment_id": c.market_segment_id}
+                for c in first
+            ],
+            "remaining_batches": len(ingest_batches) - 1,
+        }
+    elif analyse_waves:
+        next_action = "analyse"
+        wave = {
+            "stage": "02",
+            "agent": "idea-factory-analyst",
+            "parallel": len(analyse_waves[0]),
+            "startup_ids": analyse_waves[0],
+            "remaining_waves": len(analyse_waves) - 1,
+        }
+    elif score_a_waves:
+        next_action = "score_a"
+        wave = {
+            "stage": "04",
+            "agent": "idea-factory-scorer",
+            "mode": "A",
+            "parallel": len(score_a_waves[0]),
+            "startup_ids": score_a_waves[0],
+            "remaining_waves": len(score_a_waves) - 1,
+        }
+    elif score_b_waves:
+        next_action = "score_b"
+        wave = {
+            "stage": "04",
+            "agent": "idea-factory-scorer",
+            "mode": "B",
+            "parallel": len(score_b_waves[0]),
+            "infra_node_ids": score_b_waves[0],
+            "remaining_waves": len(score_b_waves) - 1,
+        }
+    else:
+        next_action = "idle"
+        wave = {
+            "stage": None,
+            "agent": None,
+            "parallel": 0,
+            "hint": "run_infra_convergence + high-ROI code fixes + board_status",
+        }
+
+    return {
+        "next_action": next_action,
+        "wave": wave,
+        "coverage": cov,
+        "queues": {
+            "scout_agents": len(scout_inputs),
+            "ingest_batches": len(ingest_batches),
+            "pending_ingest": sum(len(b) for b in ingest_batches),
+            "analyse_waves": len(analyse_waves),
+            "score_a_waves": len(score_a_waves),
+            "score_b_waves": len(score_b_waves),
+        },
+    }
 
 
 # --- typed Input builders: PM uses these to construct dispatch payloads ---
@@ -142,34 +492,232 @@ def run_infra_fit_digest(db, founder_profile_path: str, fraction: float = 0.5):
     This is the v2 conviction loop: it turns the Infrastructure Graph into a
     ranked, founder-fit-weighted list of the layers to actually build, instead
     of a flat list of per-startup wedges.
+
+    `founder_profile_path` is accepted for API symmetry with the scorer builders
+    (callers already pass it); this digest is read-only over already-scored rows.
     """
     from idea_factory.decisions import rank_infra_nodes_by_fit, top_infra_node
+
+    _ = founder_profile_path  # reserved for future re-score hooks; keep call sites stable
+    _ = fraction
 
     conv = db.convergent_infra_nodes()
     scored: list[tuple[int, str, InfraNodeFitRow]] = []
     sightings: dict[int, int] = {}
     clusters: dict[int, int] = {}
+    fit_by_id: dict[int, InfraNodeFitRow] = {}
+    clusters_list: dict[int, list[str]] = {}
     for node_id, node in conv:
+        sightings[node_id] = node.sightings
+        clusters[node_id] = len(node.clusters_seen)
+        clusters_list[node_id] = list(node.clusters_seen)
+        fit = db.get_infra_personal_fit(node_id)
+        if fit is not None:
+            scored.append((node_id, node.canonical_name, fit))
+            fit_by_id[node_id] = fit
+
+    cohort = db.count_analysed_startups()
+    ranked = rank_infra_nodes_by_fit(scored, sightings, clusters, cohort)
+    winner = top_infra_node(scored, sightings, clusters, cohort)
+    ranked_rows = []
+    for (nid, name), s in ranked:
+        fit = fit_by_id[nid]
+        ranked_rows.append({
+            "infra_node_id": nid,
+            "canonical_name": name,
+            "score": s,
+            "fit_total": fit.total,
+            "sightings": sightings.get(nid, 0),
+            "clusters": clusters_list.get(nid, []),
+            "interest": fit.interest,
+            "technical_advantage": fit.technical_advantage,
+        })
+    return {
+        "cohort": cohort,
+        "convergent_nodes": len(conv),
+        "scored_nodes": len(scored),
+        "ranked": ranked_rows,
+        "top_infra_node": {
+            "infra_node_id": winner[0],
+            "canonical_name": winner[1],
+            "score": ranked_rows[0]["score"] if ranked_rows else None,
+            "fit_total": ranked_rows[0]["fit_total"] if ranked_rows else None,
+            "sightings": ranked_rows[0]["sightings"] if ranked_rows else None,
+        }
+        if winner else None,
+    }
+
+
+def board_status(db) -> dict:
+    """One-shot PM digest over board truth. Pure reads; no agent reasoning.
+
+    Surfaces the counts that matter for routing decisions (cohort size vs
+    clusterer threshold, locked personal_fit rows, infra winner) so a fresh
+    session can resume without inventing SQL.
+    """
+    from idea_factory.decisions import top_infra_node
+
+    def _count(sql: str, params: tuple = ()) -> int:
+        return int(db._conn.execute(sql, params).fetchone()[0])
+
+    startups = _count("SELECT COUNT(*) FROM startups")
+    analysed = db.count_analysed_startups()
+    wedges = _count("SELECT COUNT(*) FROM wedges")
+    wedges_with_evidence = _count(
+        "SELECT COUNT(*) FROM wedges WHERE evidence IS NOT NULL AND TRIM(evidence) != ''"
+    )
+    candidates = _count("SELECT COUNT(*) FROM candidate_startups")
+    pending_ingest = len(db.candidates_for_ingest())
+    segments = _count("SELECT COUNT(*) FROM market_segments")
+    infra_ops = _count("SELECT COUNT(*) FROM infrastructure_ops")
+    infra_nodes = _count("SELECT COUNT(*) FROM infrastructure_nodes")
+    convergent = _count(
+        "SELECT COUNT(*) FROM infrastructure_nodes WHERE convergence = 1 AND retired_at IS NULL"
+    )
+    personal_fit = _count("SELECT COUNT(*) FROM personal_fit")
+    personal_fit_locked = _count(
+        "SELECT COUNT(*) FROM personal_fit WHERE reviewed_at IS NOT NULL"
+    )
+    infra_fit = _count("SELECT COUNT(*) FROM infra_personal_fit")
+    infra_fit_locked = _count(
+        "SELECT COUNT(*) FROM infra_personal_fit WHERE reviewed_at IS NOT NULL"
+    )
+    patterns = _count(
+        "SELECT COUNT(*) FROM pattern_library WHERE retired_at IS NULL"
+    )
+    outreach = _count("SELECT COUNT(*) FROM outreach_log")
+
+    # Stage histogram
+    stage_rows = db._conn.execute(
+        "SELECT COALESCE(stage_marker, 'unset') AS m, COUNT(*) AS n "
+        "FROM startups GROUP BY m ORDER BY n DESC"
+    ).fetchall()
+    by_stage = {r["m"]: r["n"] for r in stage_rows}
+
+    # Infra winner if scored
+    scored: list[tuple[int, str, InfraNodeFitRow]] = []
+    sightings: dict[int, int] = {}
+    clusters: dict[int, int] = {}
+    for node_id, node in db.convergent_infra_nodes():
         sightings[node_id] = node.sightings
         clusters[node_id] = len(node.clusters_seen)
         fit = db.get_infra_personal_fit(node_id)
         if fit is not None:
             scored.append((node_id, node.canonical_name, fit))
+    winner = top_infra_node(scored, sightings, clusters, analysed)
 
-    cohort = db.count_analysed_startups()
-    ranked = rank_infra_nodes_by_fit(scored, sightings, clusters, cohort)
-    winner = top_infra_node(scored, sightings, clusters, cohort)
+    started_at = get_runtime_started_at(db)
+    clusterer_inp = build_clusterer_input(db)
+    new_since = db.count_startups_since(clusterer_inp.last_run_at)
+    coverage = market_coverage(db)
+    fanout = plan_recursive_fanout(db)
+
     return {
-        "cohort": cohort,
-        "convergent_nodes": len(conv),
-        "scored_nodes": len(scored),
-        "ranked": [
-            {"infra_node_id": nid, "canonical_name": name, "score": s}
-            for (nid, name), s in ranked
-        ],
-        "top_infra_node": {"infra_node_id": winner[0], "canonical_name": winner[1]}
-        if winner else None,
+        "startups": startups,
+        "analysed": analysed,
+        "by_stage": by_stage,
+        "wedges": wedges,
+        "wedges_with_evidence": wedges_with_evidence,
+        "candidates": candidates,
+        "pending_ingest": pending_ingest,
+        "market_segments": segments,
+        "infrastructure_ops": infra_ops,
+        "infrastructure_nodes": infra_nodes,
+        "convergent_nodes": convergent,
+        "personal_fit": personal_fit,
+        "personal_fit_locked": personal_fit_locked,
+        "infra_personal_fit": infra_fit,
+        "infra_personal_fit_locked": infra_fit_locked,
+        "pattern_library": patterns,
+        "outreach_sends": outreach,
+        "runtime_started_at": started_at.isoformat() if started_at else None,
+        "market_coverage": coverage,
+        "fanout": {
+            "next_action": fanout["next_action"],
+            "wave": fanout["wave"],
+            "queues": fanout["queues"],
+        },
+        "clusterer": {
+            "last_run_at": (
+                clusterer_inp.last_run_at.isoformat()
+                if clusterer_inp.last_run_at else None
+            ),
+            "new_startups_since_last": new_since,
+            "min_new_required": clusterer_inp.min_new_since_last,
+            "ready": new_since >= clusterer_inp.min_new_since_last,
+        },
+        "top_infra_node": (
+            {"infra_node_id": winner[0], "canonical_name": winner[1]}
+            if winner else None
+        ),
+        "blockers": _board_blockers(
+            analysed=analysed,
+            personal_fit=personal_fit,
+            personal_fit_locked=personal_fit_locked,
+            infra_fit=infra_fit,
+            convergent=convergent,
+            outreach=outreach,
+            patterns=patterns,
+            new_since=new_since,
+            min_clusterer=clusterer_inp.min_new_since_last,
+            pending_ingest=pending_ingest,
+            startups=startups,
+            uncovered_markets=len(coverage["uncovered_markets"]),
+            pool_size=coverage["pool_size"],
+        ),
     }
+
+
+def _board_blockers(
+    *,
+    analysed: int,
+    personal_fit: int,
+    personal_fit_locked: int,
+    infra_fit: int,
+    convergent: int,
+    outreach: int,
+    patterns: int,
+    new_since: int,
+    min_clusterer: int,
+    pending_ingest: int,
+    startups: int,
+    uncovered_markets: int = 0,
+    pool_size: int = 20,
+) -> list[str]:
+    """Deterministic resume hints for a fresh PM session."""
+    blockers: list[str] = []
+    if startups == 0:
+        blockers.append("empty board: run market-scout then ingestor (or git lfs pull sid.db)")
+        return blockers
+    if uncovered_markets > 0:
+        blockers.append(
+            f"scout fan-out: {uncovered_markets}/{pool_size} canonical markets still "
+            "have zero segments — plan_recursive_fanout → scout"
+        )
+    if pending_ingest > 0 and analysed < 20:
+        blockers.append(
+            f"grow cohort: {pending_ingest} candidates not yet ingested "
+            f"({analysed}/20 towards clusterer threshold)"
+        )
+    if personal_fit_locked > 0 and personal_fit == personal_fit_locked:
+        blockers.append(
+            f"scorer Mode A blocked: {personal_fit_locked} personal_fit rows human-locked "
+            "(UPDATE reviewed_at=NULL or force=True to re-score)"
+        )
+    if convergent > 0 and infra_fit < convergent:
+        blockers.append(
+            f"scorer Mode B incomplete: {infra_fit}/{convergent} convergent layers scored"
+        )
+    if personal_fit > 0 and outreach == 0:
+        blockers.append(
+            "validator blocked: no outreach yet (needs user approval + gmail pairing)"
+        )
+    if new_since < min_clusterer and patterns == 0:
+        blockers.append(
+            f"clusterer waiting: {new_since}/{min_clusterer} new startups "
+            "(or run with min_new_since_last=0 for on-demand pass)"
+        )
+    return blockers
 
 
 def build_validator_input(

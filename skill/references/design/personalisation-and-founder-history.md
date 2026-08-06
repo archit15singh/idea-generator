@@ -10,28 +10,17 @@ The original instinct, analyze 100 random YC startups, maximises for breadth. Th
 
 ## The 20 markets
 
-| # | Market | Notes |
-|---|--------|-------|
-| 1  | AI Engineering               | Home turf |
-| 2  | Cybersecurity                | Compliance + adversarial thinking overlap |
-| 3  | Enterprise AI                | Slow buyers, high ACV, durable |
-| 4  | Developer Tools              | PLG-friendly, distribution you know |
-| 5  | Knowledge Management         | Memory/infra plays underneath |
-| 6  | AI Infrastructure            | Cross-cutting platform layer |
-| 7  | Agent Infrastructure         | Emerging, ill-defined, greenfield |
-| 8  | Enterprise Automation        | Boring-but-valuable, clear ROI |
-| 9  | B2B Productivity             | Crowded; wedge hunting matters |
-| 10 | Technical Founder Tools      | Meta, you are the ICP |
+**Source of truth:** `idea_factory.pm.CANONICAL_MARKETS` (20 entries). Scout fan-out and `market_coverage` read that list, not this table.
 
-## These are clusters, not 20 independent dimensions
+| Cluster | Markets |
+|---------|---------|
+| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure |
+| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration |
+| **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation |
 
-- **ICP cluster A (developers/founders):** 1, 4, 7, 10, you are the buyer.
-- **Infra cluster B (platform primitives):** 5, 6, 7, memory, eval, observability repeat across all three.
-- **Buyer cluster C (enterprise IT/ops):** 3, 8, 9, slow buy, high ACV, durable.
+## These are clusters, not 20 fully independent dimensions
 
-The overlap is the point: cross-market pattern transfer is where real signal lives ("agent eval" appears in 1, 6, 7, and 10). \> Treat the list as ~3 clusters × ~4 verticals, not 20 independent axes.
-
-> **Risk:** if a future iteration keeps these 10, it is internally redundant. Either expand to genuinely orthogonal markets (healthcare, legal, climate) or explicitly rename this cluster "developer/enterprise-AI." Do not pretend they are independent.
+Cross-market pattern transfer is the point (e.g. "agent eval" / memory / observability show up across developer + infra). Treat the list as ~3 ICP clusters × verticals. Use `pm.plan_recursive_fanout` + `pm.market_coverage` to track which parents still lack segments or analysed startups.
 
 ## Founder history inputs (drive personalisation)
 

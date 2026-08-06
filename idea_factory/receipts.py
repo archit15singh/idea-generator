@@ -43,9 +43,10 @@ RECEIPT_BY_STAGE = {
 # Disambiguate on a field that only the infra scorer emits.
 _INFRA_SCORER_DISCRIMINATOR = "infra_nodes_scored"
 
-# Accept ```json fenced blocks. Bare JSON (with or without surrounding prose)
-# is handled by a balanced-brace scan with json.JSONDecoder.raw_decode.
-_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
+# Accept ```json fenced blocks. Capture the *fence body* only — nested JSON
+# objects must be parsed with a balanced-brace scan (a non-greedy `\{.*?\}`
+# regex truncates at the first `}` and breaks MarketScout/Clusterer receipts).
+_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
 _RECEIPT_MARKER = "idea_factory_receipt_v1"
 
@@ -57,33 +58,50 @@ class ReceiptError:
     raw: str
 
 
-def _extract_json(raw: str) -> Optional[dict]:
-    # 1. fenced block
-    m = _FENCE_RE.search(raw)
-    if m:
-        try:
-            return json.loads(m.group(1))
-        except json.JSONDecodeError:
-            pass
+def _balanced_receipt_scan(text: str) -> Optional[dict]:
+    """Walk every '{' and keep the LAST full JSON object with the receipt marker.
 
-    # 2. balanced-brace scan: walk every '{' position and try to parse one
-    #    whole JSON object. Keep the LAST object that carries the receipt
-    #    marker (agents commonly emit a trailing receipt after prose, and
-    #    sometimes an unrelated JSON snippet earlier in the message).
+    Agents commonly emit a trailing receipt after prose, and sometimes an
+    unrelated JSON snippet earlier in the message. Nested objects are fine —
+    raw_decode consumes the whole balanced object.
+    """
     decoder = json.JSONDecoder()
     last_payload: Optional[dict] = None
-    for i, ch in enumerate(raw):
+    for i, ch in enumerate(text):
         if ch != "{":
             continue
         try:
-            obj, _end = decoder.raw_decode(raw[i:])
+            obj, _end = decoder.raw_decode(text[i:])
         except json.JSONDecodeError:
             continue
         if isinstance(obj, dict) and obj.get("schema_version") == _RECEIPT_MARKER:
             last_payload = obj
+    return last_payload
 
-    if last_payload is not None:
-        return last_payload
+
+def _extract_json(raw: str) -> Optional[dict]:
+    # 1. fenced block(s): prefer the last fence that yields a valid receipt
+    fence_payload: Optional[dict] = None
+    for m in _FENCE_RE.finditer(raw):
+        body = m.group(1)
+        try:
+            obj = json.loads(body)
+            if isinstance(obj, dict) and obj.get("schema_version") == _RECEIPT_MARKER:
+                fence_payload = obj
+                continue
+        except json.JSONDecodeError:
+            pass
+        # fence body may have prose + JSON; fall back to balanced scan inside it
+        scanned = _balanced_receipt_scan(body)
+        if scanned is not None:
+            fence_payload = scanned
+    if fence_payload is not None:
+        return fence_payload
+
+    # 2. balanced-brace scan over the whole message
+    scanned = _balanced_receipt_scan(raw)
+    if scanned is not None:
+        return scanned
 
     # 3. last-resort: try the whole thing whitespace-stripped
     try:

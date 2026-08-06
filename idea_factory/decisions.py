@@ -63,8 +63,16 @@ def rank_wedges_by_fit(
 ) -> list[tuple[WedgeRow, float]]:
     """Pure function. Returns wedges sorted by fit * evidence-tightness weight.
 
-    weight = (fit.total / 80) * 0.6 + evidence_tightness * 0.4
-    evidence_tightness=1.0 for wedges with a citation, 0.0 otherwise.
+    weight = wedge_fit_norm * 0.6 + evidence_tightness * 0.4
+
+    wedge_fit_norm prefers the scorer's per-wedge `personal_fit_score` (0-100)
+    when present; otherwise falls back to the startup-level fit.total/80.
+    Without the per-wedge signal every evidence-bearing wedge collides at the
+    same score and top_wedge becomes insertion-order lottery — which breaks
+    the factory's "rank wedges by personal_fit_score" contract.
+
+    evidence_tightness=1.0 for wedges with a citation, 0.0 otherwise (rows
+    without evidence are dropped before scoring).
 
     The validator receives the top wedge per startup from this ranking. No prose.
     """
@@ -75,15 +83,27 @@ def rank_wedges_by_fit(
             fit.market_size, fit.distribution_fit,
         ]
     )
-    fit_norm = fit_total / 80.0
+    startup_fit_norm = fit_total / 80.0
     ranked: list[tuple[WedgeRow, float]] = []
     for w in wedges:
         if not (w.evidence and w.description):
             continue
+        if w.personal_fit_score is not None:
+            wedge_fit_norm = max(0.0, min(1.0, w.personal_fit_score / 100.0))
+        else:
+            wedge_fit_norm = startup_fit_norm
         ev_tight = 1.0 if w.evidence else 0.0
-        score = (fit_norm * 0.6) + (ev_tight * 0.4)
+        score = (wedge_fit_norm * 0.6) + (ev_tight * 0.4)
         ranked.append((w, round(score, 4)))
-    ranked.sort(key=lambda t: t[1], reverse=True)
+    # Stable secondary key: higher personal_fit_score, then lower id (if any)
+    ranked.sort(
+        key=lambda t: (
+            t[1],
+            t[0].personal_fit_score if t[0].personal_fit_score is not None else -1,
+            -(t[0].id or 0),
+        ),
+        reverse=True,
+    )
     return ranked
 
 

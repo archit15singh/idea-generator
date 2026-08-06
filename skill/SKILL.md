@@ -127,18 +127,20 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 
 For each cohort (one cohort = one full market-scout pass):
 
-1. **PM** runs `default_scout_input()` to build the typed Input for the market scout.
-2. Dispatch **market-scout** ONCE per cohort. It recursively breaks each market in `pm.CANONICAL_MARKETS` into sub-markets, classifies each to one of the 3 ICP clusters, and writes `market_segments` + `candidate_startups`. Stamp `runtime_meta.started_at` via `pm.mark_runtime_started(db)` on the first successful pass.
-3. Fan out: query `db.candidates_for_ingest()`, dispatch **ingestor** in parallel per candidate.
-4. For each ingested startup, dispatch **analyst** in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
-5. After analyst receipts land, dispatch **scorer** once per cohort (Mode A, per-startup). Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
-6. **Meta-loop scoring (v2, after the digest):** run `run_infra_convergence(db)` (the digest). For each convergent infra node (≥half the cohort), build `pm.build_infra_node_scorer_input(db, infra_node_id, founder_profile_path)` and dispatch **scorer** in Mode B (meta-loop infra-node scoring). The scorer projects the founder profile onto the LAYER and writes `infra_personal_fit`. Then run `decisions.rank_infra_nodes_by_fit` + `top_infra_node` to get the single layer to bet on; surface it to the user alongside the per-startup wedge ranking. This is the v2 conviction-loop winner.
-7. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
+1. **PM** runs `pm.plan_recursive_fanout(db)` — the single source of truth for **what to dispatch in parallel next**. Prefer its `next_action` + `wave` over ad-hoc SQL.
+2. **Recursive market fan-out (00):** if `next_action == "scout"`, dispatch **market-scout** in parallel — one agent per entry in `scout_fanout_inputs` (uncovered markets, chunked). Each agent recursively breaks its markets into sub-markets + candidates. Do **not** send all 20 markets to one agent when many are uncovered. Stamp `runtime_meta.started_at` via `pm.mark_runtime_started(db)` on the first successful pass.
+3. **Candidate fan-out (01):** if `next_action == "ingest"`, take the first wave from `ingest_fanout_batches` (diversity round-robin across parent markets) and dispatch **ingestor** in parallel per candidate (cap ~5).
+4. **Analyst fan-out (02):** if `next_action == "analyse"`, dispatch **analyst** in parallel for each `startup_id` in the wave (recursive L1-L10 + wedges + infra ops).
+5. **Scorer fan-out Mode A (04):** if `next_action == "score_a"`, dispatch **scorer** in parallel per startup in the wave. Pause for human review of locked fits. Never auto-overwrite human-locked rows.
+6. **Meta-loop / Mode B fan-out:** after analyst work, always run `run_infra_convergence(db)`. If `next_action == "score_b"` (or convergent nodes lack fit), dispatch **scorer** Mode B in parallel per `infra_node_id` wave. Then `rank_infra_nodes_by_fit` + `top_infra_node`.
+7. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded, default 3). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
 8. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
 9. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
 10. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
 
-Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-runs the market scout (markets evolve; new YC batches drop; former blanks become populated).
+**Fallback entry:** `default_scout_input()` still builds the full-pool Input when you intentionally re-scout everything; day-to-day use `plan_recursive_fanout` / `scout_fanout_inputs`.
+
+Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-plans via `plan_recursive_fanout` (markets evolve; new YC batches drop; former blanks become populated).
 
 ### Meta-loop digest (after every analyst pass, non-negotiable)
 
