@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 122 | **all 122 scored** E2E complete (primary + shortlist) |
-| `analysed` (cohort) | 122 | full cohort analysed + scored + selected |
+| `startups` | 127 | **122 scored** E2E + **5 ingested** (ids 131–135) awaiting analyse |
+| `analysed` (cohort) | 122 | scored cohort complete; backlog=5 not yet analysed |
 | `wedges` | 2440 | **122 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 593 | +24 from Composio/MC/Fly/Sublime/StackAI |
+| `infrastructure_ops` | 593 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈40 after clearing Composio/MC/Fly/Sublime/StackAI |
+| `candidate_startups` | 266 | pending_ingest≈40 after clearing Steel/Elementary/Statsig/Abnormal/Kindo |
 | `personal_fit` | 122 | Langbase=68; Sublime=65; Composio=60; MC=49; StackAI=40; Fly=38 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Select complete for 122; primary mix Better memory 36, Better evaluation 34, AI-native 19 (cap OK ~29.5%; collapse>40% not hit).
+**`plan_recursive_fanout` next_action = `analyse`**. Ingested ids **131–135** (Steel, Elementary, Statsig, Abnormal, Kindo). Primary mix Better memory 36, Better evaluation 34, AI-native 19. cluster_ready=true (+20 since last) after analyse drain.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,18 +119,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **122/122**; wedges 2440; personal_fit 122; infra_ops 593; **122 primary**; **patterns 15**. Latest: **select-15** — Composio→Better memory; Monte Carlo→Better evaluation; Fly.io→AI-native; Sublime→Better memory; StackAI→Better evaluation. next **ingest**. **88 tests green.**
-- **Next fire:** `ingest` next pending batch (diversified) or CANONICAL expand.
+- **Done (pushed):** CANONICAL 24/24; e2e **122/122** scored; wedges 2440; personal_fit 122; infra_ops 593; **122 primary**; **patterns 15**. Latest: **ingest-16** — Steel (#131), Elementary (#132), Statsig (#133), Abnormal (#134), Kindo (#135) → ingested. next **analyse**. **88 tests green.**
+- **Next fire:** `analyse` ids 131–135 (do not re-ingest; backlog=5). Cluster after drain if still ready.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Ingest** ≤5; keep analyse backlog clear.
-2. Further **CANONICAL expand** (founder gaps past 24).
-3. Optional **score_b** / infra fit refresh on convergent layers.
-4. Next cluster after +20 startups since last cluster (currently +15).
+1. **Analyse** ids 131–135 (Steel, Elementary, Statsig, Abnormal, Kindo).
+2. Then score_a → select for 131–135.
+3. **Cluster** when ready (new_startups_since_last ≥20).
+4. Further **CANONICAL expand** past 24.
 
 ## Subagent dispatch contract
 
