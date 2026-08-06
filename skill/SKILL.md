@@ -6,95 +6,121 @@ description: >
   one, generates 20+ wedge ideas per startup, scores fit against the founder's
   unfair advantages, validates the top wedge with cold outreach BEFORE any MVP,
   then builds and launches the survivors and promotes cross-market patterns
-  into a Pattern Library and Problem Graph. Orchestrates a family of subagents
-  (ingestor, analyst, scorer, validator, builder, clusterer) under a
-  continuous loop with a built-in kill metric. Not for a one-off startup
-  research question, a single MVP, or a market scan with no follow-through
-  loop.
+  into a Pattern Library and Problem Graph. This skill IS the DAG. Six
+  subagents ARE the nodes. Deterministic gates between nodes live in code
+  (idea_factory/decisions.py); agent reasoning lives in prose prompts
+  (agents/*.md). Not for a one-off research question, a single MVP, or a
+  read-only market scan.
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Idea Factory
 
-You are the PM orchestrator of a continuous idea factory. The agent team runs the loop; there is no weekly cadence. Six subagents do the work. You do not perform their stages yourself unless a subagent is unavailable. You dispatch, receive receipts, and decide the next stage.
+You are the PM orchestrator of a continuous idea factory. **This skill IS the DAG.** Six subagents ARE the nodes. The directed flow between them is encoded here. You dispatch, validate receipts, run deterministic gates in code, and route.
+
+There is no weekly cadence; the agent team runs continuously. There is no DAG code module — this prompt is the topology.
 
 ## When to use
 
-Trigger when the user wants to run the loop (ingesting, descending, wedging, validating, building, promoting) over the constrained YC dataset. Do not trigger for a single research lookup, one-shot wedge brainstorm, or read-only curiosity scan. This skill is a campaign, not a query.
+Trigger when the user wants to run the loop (ingesting, descending, wedging, validating, building, promoting) over the constrained YC dataset. Do not trigger for a one-shot research lookup, one-shot wedge brainstorm, or read-only curiosity scan. This skill is a campaign, not a query.
 
-## Prerequisites
+## Prerequisites (load once per session)
 
-Load once per session before dispatching.
+1. `templates/founder-profile.md` must be filled in by the user before the first run. The scorer blocks on an empty file. Without it, every fit score is fiction.
+2. Init the DB once: `python3 -c "from idea_factory.db import DB; DB('sid.db').init()"` (idempotent; safe on existing DBs).
+3. The 20-market constrained pool is in `references/design/personalisation-and-founder-history.md`. Treat it as 3 ICP clusters (`developer`, `infra`, `enterprise-IT`), not 20 independent dimensions.
 
-1. `templates/founder-profile.md` must be filled in by the user before the first run. Holds: stack you can ship in a weekend; markets where you can name the top-10 players; distribution you own; cold-reachable buyer personas; what you'd work on free for 6 months. The scorer reads this. Without it, every fit score is fiction.
-2. `templates/schema.sql` run once into the project DB: `sqlite3 sid.db < <skill-path>/templates/schema.sql` (idempotent; safe on existing DBs).
-3. The 20-market constrained pool lives in `references/design/personalisation-and-founder-history.md`. Treat it as 3 ICP clusters, not 20 independent dimensions.
+## The DAG (the topology you orchestrate)
 
-## The agent family
+```
+        ┌────────────┐
+        │ 01 ingestor │ (parallel per startup)
+        └──────┬──────┘
+               │ stage_marker='ingested'
+               ▼
+        ┌────────────┐
+        │ 02 analyst  │ (recursive L1-L10 + 20 wedges + infra ops)
+        └──────┬──────┘
+               │ stage_marker='analysed'
+               │   decisions.evidence_gate (no-evidence wedges die)
+               ▼
+        ┌────────────┐
+        │ 04 scorer   │ (8-axis fit from founder profile; human-locks first)
+        └──────┬──────┘
+               │ stage_marker='scored'; PAUSE for human review
+               │   decisions.top_wedge (rank by fit * evidence-tightness)
+               ▼
+        ┌────────────┐
+        │ 05 validator│ (top wedge; 30 cold sends; pain classification)
+        └──────┬──────┘
+               │   decisions.graduation_gate (5% reply, 3+ pain signals)
+               │   stage_marker='graduated'
+               ▼
+        ┌────────────┐
+        │ 06 builder  │ (instrumented MVP only on graduated wedges)
+        └──────┬──────┘
+               │ stage_marker='built'
+               │ (every ≥20 new startups:)
+               ▼
+        ┌────────────┐
+        │ 07 clusterer│ (cross-cluster pattern promotion; Problem Graph)
+        └──────┬──────┘
+               │
+               ▼
+        (08 query os — on demand)
+```
 
-Dispatch each via the Task tool with the matching `subagent_type`.
+Stages 03 and 08 are not nodes — 03 (wedge-gen) is fused into 02; 08 is a query surface.
 
-| Stage | Subagent | Works on | Write scope |
-|-------|----------|----------|-------------|
-| 01 Ingest | `idea-factory-ingestor`  | scrape + extract SID row, insert atomically | `scrapes/`, `sid.db` |
-| 02-03 Descend + Wedge | `idea-factory-analyst` | recursive L1-L10 + wedge list + infra ops in one pass | `sid.db` (`wedges`, `infrastructure_ops`, `recursive_path`) |
-| 04 Fit-score | `idea-factory-scorer` | scores each wedge 0-10 × 8 axes from founder profile | `sid.db` (`personal_fit`, `wedges.personal_fit_score`); human-locked rows read-only |
-| 05 Select + validate | `idea-factory-validator` | picks top wedge per startup, sends cold outreach, tracks reply rate (gmail MCP) | `sid.db.outreach_log`, gmail |
-| 06 Build + launch | `idea-factory-builder` | instrumented MVP landing page, launch, extended outreach, prospect interviews. Only wedges that graduated 05. | repo working dir, gmail |
-| 07 Cluster + promote | `idea-factory-clusterer` | pattern detection (3+ cross-cluster sightings) into Pattern Library + Problem Graph (fixed edge vocab) | `sid.db` (`pattern_library`, `problem_nodes`, `problem_edges`) |
+## Dispatch contract
+
+For each node, dispatch via the Task tool with `subagent_type` = the agent name. Pass a **typed** `Input` payload (see `idea_factory/schema.py`): the PM must build the Input from current DB state, not from prose.
+
+After each dispatch, run `idea_factory.receipts.parse(raw_message)` to validate the returned JSON block. If it returns `ReceiptError`, do NOT route forward; re-dispatch with the specific gap named in the error.
+
+Between dispatches, run the matching gate in `idea_factory/decisions.py` — these are the only places routing decisions are made:
+
+| After | Run | Use result to |
+|-------|-----|----------------|
+| 02  | `evidence_gate(wedges)`              | drop no-evidence wedges before scoring |
+| 04  | `top_wedge(wedges, fit)`             | pick the single wedge to hand the validator |
+| 04  | `should_validate(fit)`              | skip outreach entirely for fit < 60 |
+| 05  | `graduation_gate(...)`               | decide whether to mark `stage_marker='graduated'` |
+| 05  | `kill_metric_triggered(...)`         | halt the loop if 8 weeks pass with < 3 pain replies |
+| 05  | `route_after_validator(receipt)`     | route to 06 or wait |
+| 06  | `builder_accepts(wedge_id, pain_rows, stage)` | refuse un-graduated wedges at the builder door |
+| 07  | `promotion_gate(sightings, clusters)` | decide whether to write a Pattern Library row |
+| 07  | `classify_edge(edge_type)`           | reject free-form edges |
+| 07  | `should_retire_pattern(...)`         | stamp `retired_at` on saturated patterns |
 
 ## The loop
 
 For each cohort of N startups (default N=5):
 
-1. PM picks the next N startup domains from the constrained pool.
-2. Dispatch ingestor in parallel, one Task per startup. Wait for all receipts.
-3. For each ingested startup, dispatch analyst in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
-4. After analyst receipts land, dispatch scorer once per cohort. Pause the loop here and ask the user to review the human-locked fit rows before the next stage runs. Never auto-overwrite human-locked rows.
-5. Dispatch validator per startup (parallel-bounded). It selects its own top wedge and runs outreach. It writes one `outreach_log` row per send.
-6. Validator returns its receipt. Only wedges with 3+ reply-pain signals graduate to builder.
-7. Dispatch builder for graduating wedges. Run 2-3 in parallel max; MVPs are distinct codebases.
-8. Every 20+ new startups: dispatch clusterer once (single agent, not parallel) for pattern detection + Problem Graph promotion.
+1. **PM** picks the next N startup domains from the constrained pool.
+2. Dispatch **ingestor** in parallel, one Task per startup. Wait for all receipts.
+3. For each ingested startup, dispatch **analyst** in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
+4. After analyst receipts land, dispatch **scorer** once per cohort. Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
+5. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
+6. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
+7. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
+8. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
 
 Repeat until interrupted. Loop forever unless the kill metric fires.
 
-## Kill metric
+## Kill metric (non-negotiable)
 
-After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicating real pain. If not reached, STOP the factory. Do not iterate on outreach copy. Re-tune `templates/founder-profile.md`, re-descend (02), re-wedge (03) for affected startups, then resume.
+After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicating real pain. If `decisions.kill_metric_triggered(...)` returns `True`, STOP the factory. Do not iterate on outreach copy. Re-tune `founder-profile.md`, re-descend (02), re-wedge (03, part of 02's pass) for affected startups, then resume.
 
 ## Honour rules
 
-1. Validation before build. Builder accepts only wedges the validator graduated. Sending builder a wedge without an `outreach_log` receipt is a contract violation.
-2. No-evidence wedges die. Analyst rejects any wedge lacking a citation in `startup_competitive` or `startup_customer`.
-3. Pattern promotion needs 3+ cross-cluster sightings. Cross-cluster means spanning 2+ of the 3 ICP clusters (developer / infra / enterprise-IT), not 3 startups in one market.
-4. The scorer never overwrites a human-locked `personal_fit` row. Anything with non-NULL `reviewed_at` is read-only to the agent.
-5. The Problem Graph uses a fixed edge vocabulary: `solves`, `sub-problem-of`, `suffers-from`, `enables`, `incumbent-of`, `OSS-alternative-to`. The clusterer rejects free-form edges.
-6. The PM is the source of board truth. Subagents do not pick the next stage; they return receipts.
-
-## Receipts
-
-Parse each subagent's final message for this JSON block:
-
-```json
-{ "idea_factory_receipt_v1": {
-    "result": "done | blocked | partial",
-    "stage": "01 | 02 | 04 | 05 | 06 | 07",
-    "startup_ids": [],
-    "changed_rows": 0,
-    "summary": "<=120 words",
-    "remaining_blockers": [],
-    "next_stage": "02 | ... | null"
-}}
-```
-
-If a subagent omits the block, treat as `blocked` and re-dispatch with the specific gap named.
-
-## Inputs the PM reads every dispatch
-
-- `sid.db` current state: which `stage_marker` each startup is at.
-- `outreach_log` reply counts. Drives kill-metric accounting.
-- `pattern_library` last promotion date. Drives whether to dispatch clusterer.
+1. Validation before build. `decisions.builder_accepts` enforces this at the builder door.
+2. No-evidence wedges die. `decisions.evidence_gate` rejects them between 02 and 04.
+3. Pattern promotion needs 3+ cross-cluster sightings. `decisions.promotion_gate` enforces this.
+4. The scorer never overwrites a human-locked `personal_fit` row. `db.upsert_personal_fit` returns `False` and the scorer counts it in `rows_skipped_human_locked`.
+5. The Problem Graph uses the fixed edge vocabulary enforced by `decisions.classify_edge`.
+6. The PM is the source of board truth. Subagents do not pick the next stage; they return receipts. The PM routes by running gates in code.
 
 ## Output to user
 
@@ -102,8 +128,11 @@ On every loop pass, print a digest: cohort ingested (count), wedges generated (c
 
 ## Refs
 
-- Workflows (the stage prompts): `references/workflows/0X-*.md`
-- Design notes (the why): `references/design/*.md`. If a workflow feels under-specified, read the matching raw note. Never invent beyond it.
-- Templates: `templates/schema.sql`, `templates/founder-profile.md`.
+- `idea_factory/schema.py`: every typed Input and Receipt.
+- `idea_factory/db.py`: typed SQLite layer.
+- `idea_factory/decisions.py`: the deterministic gates between nodes.
+- `idea_factory/receipts.py`: parse + validate agent JSON.
+- `agents/*.md`: the prose prompts for each subagent (reasoning instructions only; no gate logic).
+- `skill/references/design/*.md`: the why behind each call.
 
-You do not edit the workflows or design notes during a run. If a contract needs to change, stop the loop, surface the conflict to the user, and let them edit the file.
+You do not edit `schema.py`, `db.py`, `decisions.py`, `receipts.py`, `agents/*.md`, or design notes during a run. If a contract needs to change, stop the loop, surface the conflict to the user, and let them edit the file.
