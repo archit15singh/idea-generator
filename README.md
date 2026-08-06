@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 162 | **157 scored** + **5 ingested** (ids 166–170) |
-| `analysed` (cohort) | 157 | ingest-23 backlog awaiting analyse |
-| `wedges` | 3140 | **157 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 727 | post analyse-22 |
+| `startups` | 162 | **162 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 162 | full pool analysed |
+| `wedges` | 3240 | **162 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 741 | post analyse-23 |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈30 |
-| `personal_fit` | 157 | Martian=58; Egress=54; Protect AI=47; Sierra=33; Artisan=31 |
+| `personal_fit` | 162 | WarpStream=56; Paubox=48; Feedzai=48; Decagon=33; Pilot=26 |
 | `pattern_library` | **18** | +gateway routing; +email auth/DLP |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-23: Paubox (#166), Decagon (#167), Pilot (#168), Feedzai (#169), WarpStream (#170). Railway skipped (dupe #21). Primary mix Better memory 48, Better evaluation 44, AI-native 23, Developer-first 23.
+**`plan_recursive_fanout` next_action = `ingest`**. Analyse-23 E2E done: Paubox (#166 API-first), Decagon (#167 Better evaluation), Pilot (#168 Cheaper), Feedzai (#169 More accurate), WarpStream (#170 Developer-first). Primary mix Better memory 48, Better evaluation 45, Developer-first 24, AI-native 23.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,15 +119,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **153/157** full (4 thin-evidence legacy); wedges 3140; personal_fit 157; **157 primary**; **patterns 18**; startups **162**. Latest: **ingest-23** — Paubox, Decagon, Pilot, Feedzai, WarpStream → ingested (Railway dupe skipped). next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 166–170 then score/select.
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **158/162** full (4 thin-evidence legacy); wedges 3240; personal_fit 162; **162 primary**; **patterns 18**; startups 162. Latest: **analyse-23** — Paubox/Decagon/Pilot/Feedzai/WarpStream full E2E. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 166–170 then score/select.
+1. **Ingest** next batch (≤5) then analyse→score→select.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
 3. Further CANONICAL expand past 27; next cluster after +20 startups.
 
