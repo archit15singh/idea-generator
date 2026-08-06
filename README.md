@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 137 | **137 scored** E2E (full cohort) |
-| `analysed` (cohort) | 137 | analyse-19 drained ids 141–145 |
+| `startups` | 142 | **137 scored** + **5 ingested** (ids 146–150) |
+| `analysed` (cohort) | 137 | ingest-19 backlog; 3 new parents still need analysed |
 | `wedges` | 2740 | **137 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 660 | +22 from Neon/EasyDMARC/Harvey/Reworkd/Sardine |
+| `infrastructure_ops` | 660 | prior analyse-19 |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
-| `market_segments` | 123 | CANONICAL **27** (24 analysed + 3 new without analysed) |
-| `candidate_startups` | 277 | +11 from expand-27 scout |
+| `market_segments` | 123 | CANONICAL **27** (24 analysed + 3 new) |
+| `candidate_startups` | 277 | pending_ingest≈35 |
 | `personal_fit` | 137 | Langbase=68; Sublime=65; Abnormal=62; Sardine=53; EasyDMARC=50 |
 | `pattern_library` | **16** | +Agent browser/computer-use session infrastructure |
 
-**`plan_recursive_fanout` next_action = `ingest`**. CANONICAL expanded **24→27**: Agent Guardrails and Policy, Computer Use Infrastructure, Model Gateways (+9 segments, +11 candidates). Markets without analysed: those three. Primary mix Better memory 42, Better evaluation 39, AI-native 20.
+**`plan_recursive_fanout` next_action = `analyse`**. Ingest-19: Guardrails AI (#146), Adept (#147), OpenRouter (#148), Convex (#149), Postmark (#150). Primary mix Better memory 42, Better evaluation 39, AI-native 20.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27**; e2e **137/137** scored; wedges 2740; personal_fit 137; infra_ops 660; **137 primary**; segments 123; candidates 277; **patterns 16**. Latest: **expand-27** markets + scout segments/candidates. next **ingest** (prefer new parents). **88 tests green.**
-- **Next fire:** `ingest` preferring Agent Guardrails / Computer Use / Model Gateways candidates, then analyse.
+- **Done (pushed):** CANONICAL **27**; e2e **137/137** scored; wedges 2740; personal_fit 137; **137 primary**; segments 123; candidates 277; startups 142. Latest: **ingest-19** — Guardrails AI, Adept, OpenRouter, Convex, Postmark → ingested. next **analyse**. **88 tests green.**
+- **Next fire:** `analyse` ids 146–150 (covers 3 new parents + Convex/Postmark).
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Ingest** candidates on the 3 new parents (Guardrails AI, OpenRouter, MultiOn, etc.).
-2. Analyse → score → select to get markets_with_analysed 27/27.
-3. Next cluster after +20 startups (clusterer needs ≥20 new since last).
+1. **Analyse** ids 146–150 then score/select → markets_with_analysed toward 27/27.
+2. Further CANONICAL expand or ingest remaining prefer-queue.
+3. Next cluster after +20 startups.
 
 ## Subagent dispatch contract
 
