@@ -17,6 +17,7 @@ from typing import Optional, get_args
 
 from idea_factory.schema import (
     ICP_CLUSTERS,
+    InfraNodeFitRow,
     PersonalFitRow,
     ValidatorReceipt,
     WedgeRow,
@@ -333,3 +334,50 @@ def classify_infra_edge(edge_type: str) -> Optional[str]:
     if edge_type in ALLOWED_INFRA_EDGE_TYPES:
         return edge_type
     return None
+
+
+# --- meta-loop: rank convergent infra nodes by founder fit * conviction ---
+
+
+def rank_infra_nodes_by_fit(
+    scored: list[tuple[int, str, InfraNodeFitRow]],
+    sightings: dict[int, int],
+    clusters: dict[int, int],
+    cohort_size: int,
+) -> list[tuple[tuple[int, str], float]]:
+    """Pure. Returns [(infra_node_id, canonical_name), score] ranked desc.
+
+    score = fit_norm (0..1) * 0.5
+          + convergence_norm (sightings/cohort, 0..1) * 0.3
+          + cross_cluster_norm (distinct clusters / 3, 0..1) * 0.2
+
+    The v2 conviction loop doesn't just take the best founder fit; it takes
+    the best FIT * COHORT-CONVICTION. A node sighted by 8/8 startups that
+    scores 0.6 fit beats a 4/8 node that scores 0.9 fit — the recurring
+    layer is the bigger opportunity and the founder fit is still real.
+    """
+    ranked: list[tuple[tuple[int, str], float]] = []
+    for node_id, canonical, fit in scored:
+        fit_total = fit.total if fit.total is not None else sum(
+            [fit.technical_advantage, fit.interest, fit.existing_knowledge,
+             fit.sales_ability, fit.long_term_moat, fit.build_speed,
+             fit.market_size, fit.distribution_fit]
+        )
+        fit_norm = fit_total / 80.0
+        conv_norm = sightings.get(node_id, 0) / max(cohort_size, 1)
+        cluster_norm = min(clusters.get(node_id, 0), 3) / 3.0
+        score = (fit_norm * 0.5) + (conv_norm * 0.3) + (cluster_norm * 0.2)
+        ranked.append(((node_id, canonical), round(score, 4)))
+    ranked.sort(key=lambda t: t[1], reverse=True)
+    return ranked
+
+
+def top_infra_node(
+    scored: list[tuple[int, str, InfraNodeFitRow]],
+    sightings: dict[int, int],
+    clusters: dict[int, int],
+    cohort_size: int,
+) -> Optional[tuple[int, str]]:
+    """The single infrastructure layer to bet on (or None if nothing scored)."""
+    ranked = rank_infra_nodes_by_fit(scored, sightings, clusters, cohort_size)
+    return ranked[0][0] if ranked else None

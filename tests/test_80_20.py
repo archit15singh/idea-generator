@@ -48,6 +48,8 @@ from idea_factory.schema import (
     GTMRow,
     InfrastructureEdgeRow,
     InfrastructureNodeRow,
+    InfraNodeFitRow,
+    InfraNodeScorerInput,
     IngestorInput,
     IngestorReceipt,
     MarketScoutInput,
@@ -934,3 +936,180 @@ def test_promotion_gate_uses_controlled_icp_vocab(db):
     assert promotion_gate(3, ["developer", "infra"]) is True
     # a bogus cluster doesn't count even at 3 sightings
     assert promotion_gate(3, ["developer", "bogus"]) is False
+
+
+# --- meta-loop: infra-node founder-fit scoring (v2 target) ---
+
+
+def test_infra_node_fit_total_auto_computes():
+    f = InfraNodeFitRow(
+        infra_node_id=1,
+        technical_advantage=10, interest=10, existing_knowledge=2,
+        sales_ability=8, long_term_moat=10, build_speed=10,
+        market_size=2, distribution_fit=8,
+    )
+    assert f.total == 60
+    # shape matters: same total but wildly different profile
+    f2 = InfraNodeFitRow(
+        infra_node_id=1,
+        technical_advantage=1, interest=1, existing_knowledge=1,
+        sales_ability=1, long_term_moat=1, build_speed=1,
+        market_size=1, distribution_fit=1,
+    )
+    assert f2.total == 8
+
+
+def test_db_infra_personal_fit_human_lock(db):
+    nid = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Memory layer", internal_platform="Memory",
+        sightings=4, clusters_seen=["developer", "infra"], convergence=True,
+    ))
+    wrote = db.upsert_infra_personal_fit(InfraNodeFitRow(
+        infra_node_id=nid, technical_advantage=9, interest=10, existing_knowledge=10,
+        sales_ability=5, long_term_moat=9, build_speed=8,
+        market_size=8, distribution_fit=7,
+    ))
+    assert wrote is True
+    db.lock_infra_personal_fit(nid, "archit")
+    # human-locked; agents cannot overwrite
+    wrote2 = db.upsert_infra_personal_fit(InfraNodeFitRow(
+        infra_node_id=nid, technical_advantage=1, interest=1, existing_knowledge=1,
+        sales_ability=1, long_term_moat=1, build_speed=1,
+        market_size=1, distribution_fit=1,
+    ))
+    assert wrote2 is False
+    fit = db.get_infra_personal_fit(nid)
+    assert fit is not None
+    assert fit.total == 66  # not overwritten
+    assert fit.reviewed_by == "archit"
+
+
+def test_db_convergent_infra_nodes_filters_on_flag(db):
+    conv_id = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Memory layer", internal_platform="Memory",
+        sightings=4, convergence=True,
+    ))
+    nonconv_id = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Scheduling layer", internal_platform="Scheduling",
+        sightings=2, convergence=False,
+    ))
+    conv = dict(db.convergent_infra_nodes())
+    assert conv_id in conv and nonconv_id not in conv
+    assert conv[conv_id].canonical_name == "Memory layer"
+
+
+def test_db_startups_backing_infra_node(db):
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    nid = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Eval layer", internal_platform="Evaluation",
+        sightings=1, convergence=True,
+    ))
+    db.insert_infrastructure_edge(InfrastructureEdgeRow(
+        startup_id=sid, infra_node_id=nid, edge_type="needs",
+        source_ref="infra_ops:Evaluation",
+    ))
+    backing = db.startups_backing_infra_node(nid)
+    assert [(s.id, s.startup) for s in backing] == [(sid, "A")]
+
+
+def test_rank_infra_nodes_weights_conviction_over_fit():
+    from idea_factory.decisions import rank_infra_nodes_by_fit, top_infra_node
+    # Node A: 8/8 sightings, 3 clusters, moderate fit (0.7*80=56)
+    a_fit = InfraNodeFitRow(
+        infra_node_id=1, technical_advantage=7, interest=7, existing_knowledge=7,
+        sales_ability=7, long_term_moat=7, build_speed=7, market_size=7, distribution_fit=7,
+    )
+    # Node B: 4/8 sightings, 1 cluster, perfect fit (1.0*80=80)
+    b_fit = InfraNodeFitRow(
+        infra_node_id=2, technical_advantage=10, interest=10, existing_knowledge=10,
+        sales_ability=10, long_term_moat=10, build_speed=10, market_size=10, distribution_fit=10,
+    )
+    ranked = rank_infra_nodes_by_fit(
+        scored=[(1, "Memory layer", a_fit), (2, "Scheduling layer", b_fit)],
+        sightings={1: 8, 2: 4}, clusters={1: 3, 2: 1}, cohort_size=8,
+    )
+    # A wins: 0.5*0.7 + 0.3*1.0 + 0.2*1.0 = 0.85 vs B: 0.5*1.0 + 0.3*0.5 + 0.2*0.33 = 0.716
+    assert ranked[0][0][0] == 1
+    assert top_infra_node([(1, "Memory layer", a_fit), (2, "Scheduling layer", b_fit)],
+                          {1: 8, 2: 4}, {1: 3, 2: 1}, 8) == (1, "Memory layer")
+
+
+def test_top_infra_node_returns_none_when_nothing_scored():
+    from idea_factory.decisions import top_infra_node
+    assert top_infra_node([], {}, {}, 8) is None
+
+
+def test_parse_infra_scorer_receipt_discriminates_on_stage_04():
+    raw = ('{"schema_version":"idea_factory_receipt_v1","result":"done","stage":"04",'
+           '"changed_rows":1,"summary":"Memory layer scored","infra_nodes_scored":1,'
+           '"infra_nodes_skipped_human_locked":0,"top_infra_node":"Memory layer",'
+           '"shape_outliers":[],"next_stage":"04"}')
+    r = parse(raw)
+    from idea_factory.schema import InfraScorerReceipt
+    assert isinstance(r, InfraScorerReceipt)
+    assert r.infra_nodes_scored == 1
+    assert r.top_infra_node == "Memory layer"
+    assert r.next_stage == "04"
+
+
+def test_build_infra_node_scorer_input_round_trips(db):
+    from idea_factory.pm import build_infra_node_scorer_input
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    nid = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Memory layer", internal_platform="Memory",
+        sightings=1, clusters_seen=["developer"], convergence=True,
+        mini_spec="shared agent memory",
+    ))
+    db.insert_infrastructure_edge(InfrastructureEdgeRow(
+        startup_id=sid, infra_node_id=nid, edge_type="needs",
+        source_ref="infra_ops:Memory",
+    ))
+    inp = build_infra_node_scorer_input(db, nid, founder_profile_path="skill/templates/founder-profile.md")
+    assert isinstance(inp, InfraNodeScorerInput)
+    assert inp.infra_node_id == nid
+    assert inp.node.canonical_name == "Memory layer"
+    assert len(inp.backing_startups) == 1
+    assert inp.backing_startups[0].startup == "A"
+    assert inp.founder_profile_path == "skill/templates/founder-profile.md"
+    assert inp.existing_fit is None
+
+
+def test_run_infra_fit_digest_ranks_and_picks_winner(db):
+    from idea_factory.pm import run_infra_convergence, run_infra_fit_digest
+    from idea_factory.schema import InfrastructureOpRow
+
+    # 3 analysed startups all flagged broader on Memory (converges at 2/3)
+    seg = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="agent memory",
+        icp_cluster="developer", rationale="x",
+    ))
+    from idea_factory.schema import CandidateStartupRow
+    for i, name in enumerate(["A", "B", "C"]):
+        website = f"https://{name.lower()}.example"
+        sid = db.upsert_startup(StartupRow(startup=name, website=website))
+        db.insert_candidate_startup(CandidateStartupRow(
+            name=name, website=website, market_segment_id=seg,
+        ))
+        db.replace_infrastructure_ops(sid, [
+            InfrastructureOpRow(
+                startup_id=sid, internal_platform="Memory",
+                description="rewrites", broader_applicability=1, evidence="e",
+            ),
+        ])
+        db.set_stage_marker(sid, "analysed")
+
+    run_infra_convergence(db, fraction=0.5)
+    conv = db.convergent_infra_nodes()
+    assert len(conv) >= 1
+    memory_id = next(nid for nid, n in conv if n.canonical_name == "Memory layer")
+
+    # score the convergent node like the scorer would
+    db.upsert_infra_personal_fit(InfraNodeFitRow(
+        infra_node_id=memory_id, technical_advantage=9, interest=10, existing_knowledge=10,
+        sales_ability=6, long_term_moat=9, build_speed=8, market_size=8, distribution_fit=7,
+    ))
+    digest = run_infra_fit_digest(db, "skill/templates/founder-profile.md")
+    assert digest["cohort"] == 3
+    assert digest["scored_nodes"] >= 1
+    assert digest["top_infra_node"] is not None
+    assert digest["top_infra_node"]["canonical_name"] == "Memory layer"

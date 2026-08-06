@@ -354,6 +354,51 @@ class InfrastructureEdgeRow(BaseModel):
     created_at: Optional[datetime] = None
 
 
+class InfraNodeFitRow(BaseModel):
+    """Founder fit projected onto a canonical Infrastructure Node (the meta-loop
+    scoring target).
+
+    Parallel to `PersonalFitRow` (same 8 axes, same auto-computed total, same
+    human-lock semantics) but keyed on `infra_node_id` instead of `startup_id`.
+    The v2 thesis: bet on the shared layer >= half the cohort needs, so fit is
+    scored against the LAYER (its mini_spec + backing startups), not a
+    per-startup wedge.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    infra_node_id: int
+    technical_advantage: int = Field(ge=0, le=10)
+    interest: int = Field(ge=0, le=10)
+    existing_knowledge: int = Field(ge=0, le=10)
+    sales_ability: int = Field(ge=0, le=10)
+    long_term_moat: int = Field(ge=0, le=10)
+    build_speed: int = Field(ge=0, le=10)
+    market_size: int = Field(ge=0, le=10)
+    distribution_fit: int = Field(ge=0, le=10)
+    total: Optional[int] = Field(default=None, ge=0, le=80)
+    reviewed_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+
+    def model_post_init(self, __ctx) -> None:
+        if self.total is None:
+            object.__setattr__(
+                self,
+                "total",
+                sum(
+                    [
+                        self.technical_advantage,
+                        self.interest,
+                        self.existing_knowledge,
+                        self.sales_ability,
+                        self.long_term_moat,
+                        self.build_speed,
+                        self.market_size,
+                        self.distribution_fit,
+                    ]
+                ),
+            )
+
+
 # --- Node inputs (what the PM hands each subagent) ---
 
 
@@ -427,6 +472,23 @@ class ScorerInput(BaseModel):
     wedges: list[WedgeRow] = Field(min_length=1)
     founder_profile_path: str
     existing_fit: Optional[PersonalFitRow] = None  # if reviewed_at set, skip
+
+
+class InfraNodeScorerInput(BaseModel):
+    """Handed to idea-factory-scorer for the meta-loop (v2) scoring target.
+
+    The PM builds one of these per convergent infrastructure node
+    (`infrastructure_nodes.convergence=1`). The scorer projects the founder
+    profile onto the LAYER, not a per-startup wedge: the node's mini_spec +
+    the backing startups that sighted the need are the context it reads.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    infra_node_id: int
+    node: InfrastructureNodeRow
+    backing_startups: list[StartupRow] = Field(default_factory=list)
+    founder_profile_path: str
+    existing_fit: Optional[InfraNodeFitRow] = None  # if reviewed_at set, skip
 
 
 class ValidatorInput(BaseModel):
@@ -521,6 +583,22 @@ class ScorerReceipt(BaseReceipt):
     next_stage: Optional[str] = "05"
     rows_scored: int = Field(ge=0)
     rows_skipped_human_locked: int = Field(ge=0)
+    shape_outliers: list[str] = Field(default_factory=list)
+
+
+class InfraScorerReceipt(BaseReceipt):
+    """Scorer receipt for the meta-loop (v2) scoring target: infra nodes.
+
+    Shares stage 04 but routes to the meta-loop branch instead of the
+    per-startup validator. The PM parses this to know which infra nodes got
+    founder-fit scores and which converged layer won the fit * conviction rank.
+    """
+
+    stage: str = "04"
+    next_stage: Optional[str] = "04"   # stays in 04; PM ranks + surfaces
+    infra_nodes_scored: int = Field(ge=0)
+    infra_nodes_skipped_human_locked: int = Field(ge=0)
+    top_infra_node: Optional[str] = None  # canonical_name of the winner
     shape_outliers: list[str] = Field(default_factory=list)
 
 

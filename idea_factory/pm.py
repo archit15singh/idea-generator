@@ -22,6 +22,8 @@ from idea_factory.schema import (
     BuilderInput,
     CandidateStartupRow,
     ClustererInput,
+    InfraNodeFitRow,
+    InfraNodeScorerInput,
     MarketScoutInput,
     MarketSegmentRow,
     OutreachLogRow,
@@ -101,6 +103,73 @@ def build_scorer_input(
         founder_profile_path=founder_profile_path,
         existing_fit=existing,
     )
+
+
+def build_infra_node_scorer_input(
+    db,
+    infra_node_id: int,
+    founder_profile_path: str,
+) -> InfraNodeScorerInput:
+    """Build the scorer's meta-loop (v2) input for one convergent infra node.
+
+    The scorer projects the founder profile onto the LAYER: the node's
+    canonical_name + mini_spec + the startups that sighted the need give it
+    the context to judge 8-axis fit. Only convergent nodes should reach here
+    (the PM filters to `convergence=1` first); this builder is per-node, so
+    the PM dispatches the scorer once per convergent layer.
+    """
+    node_by_id = dict(db.infrastructure_nodes())
+    node = node_by_id.get(infra_node_id)
+    if node is None:
+        raise ValueError(f"infra node {infra_node_id} not found; run clusterer first")
+    backing = db.startups_backing_infra_node(infra_node_id)
+    existing = db.get_infra_personal_fit(infra_node_id)
+    return InfraNodeScorerInput(
+        infra_node_id=infra_node_id,
+        node=node,
+        backing_startups=backing,
+        founder_profile_path=founder_profile_path,
+        existing_fit=existing,
+    )
+
+
+def run_infra_fit_digest(db, founder_profile_path: str, fraction: float = 0.5):
+    """The PM-facing meta-loop scorecard: for every convergent infra node,
+    emit the canonical name, its founder-fit score (if scored), the sightings
+    and clusters that drove convergence, and — if enough nodes are scored —
+    the single 'bet on this layer' winner from decisions.top_infra_node.
+
+    This is the v2 conviction loop: it turns the Infrastructure Graph into a
+    ranked, founder-fit-weighted list of the layers to actually build, instead
+    of a flat list of per-startup wedges.
+    """
+    from idea_factory.decisions import rank_infra_nodes_by_fit, top_infra_node
+
+    conv = db.convergent_infra_nodes()
+    scored: list[tuple[int, str, InfraNodeFitRow]] = []
+    sightings: dict[int, int] = {}
+    clusters: dict[int, int] = {}
+    for node_id, node in conv:
+        sightings[node_id] = node.sightings
+        clusters[node_id] = len(node.clusters_seen)
+        fit = db.get_infra_personal_fit(node_id)
+        if fit is not None:
+            scored.append((node_id, node.canonical_name, fit))
+
+    cohort = db.count_analysed_startups()
+    ranked = rank_infra_nodes_by_fit(scored, sightings, clusters, cohort)
+    winner = top_infra_node(scored, sightings, clusters, cohort)
+    return {
+        "cohort": cohort,
+        "convergent_nodes": len(conv),
+        "scored_nodes": len(scored),
+        "ranked": [
+            {"infra_node_id": nid, "canonical_name": name, "score": s}
+            for (nid, name), s in ranked
+        ],
+        "top_infra_node": {"infra_node_id": winner[0], "canonical_name": winner[1]}
+        if winner else None,
+    }
 
 
 def build_validator_input(

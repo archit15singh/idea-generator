@@ -111,6 +111,8 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 | 02  | `evidence_gate(wedges)`              | drop no-evidence wedges before scoring |
 | 04  | `top_wedge(wedges, fit)`             | pick the single wedge to hand the validator |
 | 04  | `should_validate(fit)`              | skip outreach entirely for fit < 60 |
+| 04  | `rank_infra_nodes_by_fit(scored, ...)` | rank convergent infra nodes by fit * conviction * cross-cluster |
+| 04  | `top_infra_node(...)`                | the single layer to bet on (the v2 conviction-loop winner) |
 | 05  | `graduation_gate(...)`               | decide whether to mark `stage_marker='graduated'` |
 | 05  | `kill_metric_triggered(...)`         | halt the loop if 8 weeks pass with < 3 pain replies |
 | 05  | `route_after_validator(receipt)`     | route to 06 or wait |
@@ -129,11 +131,12 @@ For each cohort (one cohort = one full market-scout pass):
 2. Dispatch **market-scout** ONCE per cohort. It recursively breaks each market in `pm.CANONICAL_MARKETS` into sub-markets, classifies each to one of the 3 ICP clusters, and writes `market_segments` + `candidate_startups`. Stamp `runtime_meta.started_at` via `pm.mark_runtime_started(db)` on the first successful pass.
 3. Fan out: query `db.candidates_for_ingest()`, dispatch **ingestor** in parallel per candidate.
 4. For each ingested startup, dispatch **analyst** in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
-5. After analyst receipts land, dispatch **scorer** once per cohort. Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
-6. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
-7. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
-8. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
-9. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
+5. After analyst receipts land, dispatch **scorer** once per cohort (Mode A, per-startup). Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
+6. **Meta-loop scoring (v2, after the digest):** run `run_infra_convergence(db)` (the digest). For each convergent infra node (≥half the cohort), build `pm.build_infra_node_scorer_input(db, infra_node_id, founder_profile_path)` and dispatch **scorer** in Mode B (meta-loop infra-node scoring). The scorer projects the founder profile onto the LAYER and writes `infra_personal_fit`. Then run `decisions.rank_infra_nodes_by_fit` + `top_infra_node` to get the single layer to bet on; surface it to the user alongside the per-startup wedge ranking. This is the v2 conviction-loop winner.
+7. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
+8. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
+9. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
+10. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
 
 Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-runs the market scout (markets evolve; new YC batches drop; former blanks become populated).
 
@@ -152,6 +155,10 @@ NOT wait for the 20-startup clusterer threshold. The PM surfaces:
 - convergent layers (sighted on ≥half the analysed cohort), in sightings-desc order
 - cross-cluster convergent layers (covering ≥2 of the 3 ICP clusters) — these are the candidate infrastructure plays
 - the smallest cumulative cohort that has pushed each layer over the threshold, so the user can watch conviction build
+
+After the digest, the PM dispatches the scorer (Mode B) on each convergent
+node and runs `top_infra_node` to surface THE layer to bet on. The digest +
+scoring is the v2 conviction loop's complete output.
 
 ## Kill metric (non-negotiable)
 

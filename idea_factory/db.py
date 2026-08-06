@@ -26,6 +26,7 @@ from idea_factory.schema import (
     GTMRow,
     InfrastructureEdgeRow,
     InfrastructureNodeRow,
+    InfraNodeFitRow,
     IngestorInput,
     InfrastructureOpRow,
     MarketSegmentRow,
@@ -659,3 +660,105 @@ class DB:
                 (r["startup_id"], r["startup"], int(r["broader_applicability"] or 0))
             )
         return out
+
+    # --- meta-loop: founder-fit on convergent infra nodes ---
+
+    def upsert_infra_personal_fit(self, row: InfraNodeFitRow, force: bool = False) -> bool:
+        """Returns False if a human-locked row exists and force=False (skip)."""
+        existing = self._conn.execute(
+            "SELECT reviewed_at FROM infra_personal_fit WHERE infra_node_id = ?",
+            (row.infra_node_id,),
+        ).fetchone()
+        if existing and existing["reviewed_at"] and not force:
+            return False
+        with self.tx() as cur:
+            cur.execute(
+                """
+                INSERT INTO infra_personal_fit
+                  (infra_node_id, technical_advantage, interest, existing_knowledge,
+                   sales_ability, long_term_moat, build_speed, market_size,
+                   distribution_fit, total, reviewed_at, reviewed_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(infra_node_id) DO UPDATE SET
+                  technical_advantage=excluded.technical_advantage,
+                  interest=excluded.interest, existing_knowledge=excluded.existing_knowledge,
+                  sales_ability=excluded.sales_ability, long_term_moat=excluded.long_term_moat,
+                  build_speed=excluded.build_speed, market_size=excluded.market_size,
+                  distribution_fit=excluded.distribution_fit, total=excluded.total,
+                  updated_at=datetime('now')
+                """,
+                (row.infra_node_id, row.technical_advantage, row.interest,
+                 row.existing_knowledge, row.sales_ability, row.long_term_moat,
+                 row.build_speed, row.market_size, row.distribution_fit, row.total,
+                 row.reviewed_at.isoformat() if row.reviewed_at else None,
+                 row.reviewed_by),
+            )
+        return True
+
+    def lock_infra_personal_fit(self, infra_node_id: int, reviewed_by: str) -> None:
+        with self.tx() as cur:
+            cur.execute(
+                "UPDATE infra_personal_fit SET reviewed_at = datetime('now'), reviewed_by = ? "
+                "WHERE infra_node_id = ?",
+                (reviewed_by, infra_node_id),
+            )
+
+    def get_infra_personal_fit(self, infra_node_id: int) -> Optional[InfraNodeFitRow]:
+        r = self._conn.execute(
+            "SELECT * FROM infra_personal_fit WHERE infra_node_id = ?", (infra_node_id,)
+        ).fetchone()
+        if not r:
+            return None
+        return InfraNodeFitRow(
+            infra_node_id=r["infra_node_id"],
+            technical_advantage=r["technical_advantage"],
+            interest=r["interest"], existing_knowledge=r["existing_knowledge"],
+            sales_ability=r["sales_ability"], long_term_moat=r["long_term_moat"],
+            build_speed=r["build_speed"], market_size=r["market_size"],
+            distribution_fit=r["distribution_fit"], total=r["total"],
+            reviewed_at=r["reviewed_at"], reviewed_by=r["reviewed_by"],
+        )
+
+    def convergent_infra_nodes(self) -> list[tuple[int, InfrastructureNodeRow]]:
+        """Read the converged infra nodes (sighted on >= half the cohort)."""
+        rows = self._conn.execute(
+            "SELECT * FROM infrastructure_nodes WHERE convergence = 1 AND retired_at IS NULL "
+            "ORDER BY sightings DESC, id"
+        ).fetchall()
+        return [
+            (r["id"], InfrastructureNodeRow(
+                id=r["id"], canonical_name=r["canonical_name"],
+                internal_platform=r["internal_platform"],
+                aliases=_json_loads_list(r["aliases"]),
+                sightings=r["sightings"],
+                clusters_seen=_json_loads_list(r["clusters_seen"]),
+                convergence=bool(r["convergence"]),
+                mini_spec=r["mini_spec"],
+                retired_at=r["retired_at"],
+                created_at=r["created_at"],
+            ))
+            for r in rows
+        ]
+
+    def startups_backing_infra_node(self, infra_node_id: int) -> list[StartupRow]:
+        """The startups that sighted a convergent infra node (the scorer's context)."""
+        rows = self._conn.execute(
+            """
+            SELECT DISTINCT s.* FROM startups s
+            JOIN infrastructure_edges e ON e.startup_id = s.id
+            WHERE e.infra_node_id = ?
+            ORDER BY s.id
+            """,
+            (infra_node_id,),
+        ).fetchall()
+        return [
+            StartupRow(
+                id=r["id"], startup=r["startup"], website=r["website"],
+                yc_batch=r["yc_batch"], founders=_json_loads_list(r["founders"]),
+                category=r["category"], funding=r["funding"],
+                open_source=bool(r["open_source"]) if r["open_source"] is not None else None,
+                pricing=r["pricing"], stage=r["stage"], stage_marker=r["stage_marker"],
+                source_url=r["source_url"], raw=r["raw"],
+            )
+            for r in rows
+        ]

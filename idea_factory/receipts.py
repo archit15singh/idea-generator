@@ -23,6 +23,7 @@ from idea_factory.schema import (
     BuilderReceipt,
     ClustererReceipt,
     IngestorReceipt,
+    InfraScorerReceipt,
     MarketScoutReceipt,
     ScorerReceipt,
     ValidatorReceipt,
@@ -37,6 +38,10 @@ RECEIPT_BY_STAGE = {
     "06": BuilderReceipt,
     "07": ClustererReceipt,
 }
+
+# Stage 04 is shared by the per-startup scorer and the infra-node scorer.
+# Disambiguate on a field that only the infra scorer emits.
+_INFRA_SCORER_DISCRIMINATOR = "infra_nodes_scored"
 
 # Accept ```json fenced blocks. Bare JSON (with or without surrounding prose)
 # is handled by a balanced-brace scan with json.JSONDecoder.raw_decode.
@@ -88,8 +93,9 @@ def _extract_json(raw: str) -> Optional[dict]:
 
 
 def parse(raw: str) -> Union[
-    IngestorReceipt, AnalystReceipt, ScorerReceipt, ValidatorReceipt,
-    BuilderReceipt, ClustererReceipt, MarketScoutReceipt, ReceiptError,
+    IngestorReceipt, AnalystReceipt, ScorerReceipt, InfraScorerReceipt,
+    ValidatorReceipt, BuilderReceipt, ClustererReceipt, MarketScoutReceipt,
+    ReceiptError,
 ]:
     """Extract + validate. Returns the typed receipt, or a ReceiptError."""
     if not raw or not raw.strip():
@@ -119,6 +125,10 @@ def parse(raw: str) -> Union[
         )
 
     cls = RECEIPT_BY_STAGE[stage]
+    # Stage 04 discriminator: the infra-node scorer receipt carries
+    # `infra_nodes_scored`; the per-startup scorer receipt doesn't.
+    if stage == "04" and _INFRA_SCORER_DISCRIMINATOR in payload:
+        cls = InfraScorerReceipt
     try:
         return cls.model_validate(payload)
     except Exception as e:  # pydantic ValidationError carries rich details
