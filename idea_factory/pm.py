@@ -36,7 +36,8 @@ from idea_factory.schema import (
 
 # The DAG NEVER starts from a flat startup list. It starts from markets.
 # The market scout recursively breaks each into sub-markets and candidates.
-# 20 markets = design target (3 ICP clusters × verticals + orthogonal wedges).
+# Pool starts at 20 (3 ICP clusters × verticals) and expands continuously with
+# founder-relevant parents — do not freeze at 20.
 
 CANONICAL_MARKETS = [
     # developer / founder ICP
@@ -45,6 +46,7 @@ CANONICAL_MARKETS = [
     "Agent Infrastructure",
     "Technical Founder Tools",
     "Developer Infrastructure",
+    "AI Coding Agents",
     # platform / infra ICP
     "Knowledge Management",
     "AI Infrastructure",
@@ -54,6 +56,8 @@ CANONICAL_MARKETS = [
     "Vector Search and Retrieval",
     "API and Integration Platforms",
     "Workflow Orchestration",
+    "Agent Memory",
+    "Streaming Infrastructure",
     # enterprise / security ICP
     "Cybersecurity",
     "Enterprise AI",
@@ -62,6 +66,7 @@ CANONICAL_MARKETS = [
     "Email Security",
     "Identity and Access",
     "Security Automation",
+    "Fraud Detection",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.

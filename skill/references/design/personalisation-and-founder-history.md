@@ -8,17 +8,19 @@ The original instinct, analyze 100 random YC startups, maximises for breadth. Th
 - The goal is not "ideas generated", it is "intuition developed." Intuition is market-specific, not market-agnostic.
 - Founder-market fit is the highest-value variable. Constraining to markets you already understand compounds your unfair advantages instead of fighting them.
 
-## The 20 markets
+## The canonical market pool (starts at 20; expands)
 
-**Source of truth:** `idea_factory.pm.CANONICAL_MARKETS` (20 entries). Scout fan-out and `market_coverage` read that list, not this table.
+**Source of truth:** `idea_factory.pm.CANONICAL_MARKETS` (live length ≥20; expand with founder-relevant parents — do not freeze at 20). Scout fan-out and `market_coverage` read that list, not this table.
 
 | Cluster | Markets |
 |---------|---------|
-| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure |
-| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration |
-| **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation |
+| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure, **AI Coding Agents** |
+| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration, **Agent Memory**, **Streaming Infrastructure** |
+| **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation, **Fraud Detection** |
 
-## These are clusters, not 20 fully independent dimensions
+**2026-08 expansion (founder profile):** Agent Memory (Memori/PyCon thesis), Streaming Infrastructure (Kafka day-job), AI Coding Agents (persistent coding-agent context), Fraud Detection (Abnormal entity-scoring / BEC-adjacent).
+
+## These are clusters, not fully independent dimensions
 
 Cross-market pattern transfer is the point (e.g. "agent eval" / memory / observability show up across developer + infra). Treat the list as ~3 ICP clusters × verticals. Use `pm.plan_recursive_fanout` + `pm.market_coverage` to track which parents still lack segments or analysed startups.
 

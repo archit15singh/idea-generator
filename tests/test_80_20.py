@@ -1331,17 +1331,24 @@ def test_board_status_after_cohort_lists_actionable_blockers(db):
 # --- recursive fan-out planning ---
 
 
-def test_canonical_markets_is_twenty():
-    assert len(CANONICAL_MARKETS) == 20
-    assert len(set(CANONICAL_MARKETS)) == 20  # no dupes
+def test_canonical_markets_pool_size():
+    # Pool expands past the original 20 with founder-relevant parents.
+    assert len(CANONICAL_MARKETS) >= 20
+    assert len(set(CANONICAL_MARKETS)) == len(CANONICAL_MARKETS)  # no dupes
+    for required in (
+        "AI Engineering", "Agent Memory", "Streaming Infrastructure",
+        "AI Coding Agents", "Fraud Detection",
+    ):
+        assert required in CANONICAL_MARKETS
 
 
 def test_uncovered_markets_and_scout_fanout(db):
     from idea_factory.pm import uncovered_markets, scout_fanout_inputs, market_coverage
 
-    assert len(uncovered_markets(db)) == 20
+    pool_n = len(CANONICAL_MARKETS)
+    assert len(uncovered_markets(db)) == pool_n
     inputs = scout_fanout_inputs(db, markets_per_agent=2)
-    assert len(inputs) == 10  # 20 markets / 2
+    assert len(inputs) == (pool_n + 1) // 2
     assert all(len(i.markets) <= 2 for i in inputs)
     # seed one market's segment → drops out of uncovered
     db.upsert_market_segment(MarketSegmentRow(
@@ -1350,9 +1357,9 @@ def test_uncovered_markets_and_scout_fanout(db):
     ))
     left = uncovered_markets(db)
     assert "AI Engineering" not in left
-    assert len(left) == 19
+    assert len(left) == pool_n - 1
     cov = market_coverage(db)
-    assert cov["pool_size"] == 20
+    assert cov["pool_size"] == pool_n
     assert cov["with_segments"] == 1
 
 
