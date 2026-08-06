@@ -233,9 +233,16 @@ def run_infra_convergence(db, fraction: float = 0.5):
     grouped = db.infrastructure_ops_grouped_by_platform()
     cohort = db.count_analysed_startups()
     digest = []
-    for platform, sightings in grouped.items():
-        # one canonical node per platform slot
+    for platform, raw_sightings in grouped.items():
+        if not raw_sightings:
+            continue  # defensive: skip empty platform slots
         canonical = f"{platform} layer"
+
+        # Upsert the node ONCE per platform to get its id; we update its
+        # sightings/convergence columns with a single follow-up upsert at
+        # the end of this loop iteration (avoids N redundant upserts for an
+        # N-startup sighting list, and gives a clean single-source-of-truth
+        # write per node per pass).
         node_id = db.upsert_infrastructure_node(InfrastructureNodeRow(
             canonical_name=canonical,
             internal_platform=platform,
@@ -245,9 +252,9 @@ def run_infra_convergence(db, fraction: float = 0.5):
             convergence=False,
             mini_spec=None,
         ))
-        seen_startups = set()
-        seen_clusters = set()
-        for startup_id, _name, broader in sightings:
+
+        seen_startups: set[int] = set()
+        for startup_id, _name, broader in raw_sightings:
             edge_kind = "needs" if broader else "builds"
             db.insert_infrastructure_edge(InfrastructureEdgeRow(
                 startup_id=startup_id,
@@ -256,19 +263,23 @@ def run_infra_convergence(db, fraction: float = 0.5):
                 source_ref=f"infra_ops:{platform}",
             ))
             seen_startups.add(startup_id)
-        # cross-cluster via the originating market segment of each startup
-        rows = db._conn.execute(
-            """
-            SELECT DISTINCT ms.icp_cluster FROM startups s
-            JOIN candidate_startups cs ON cs.website = s.website
-            JOIN market_segments ms ON ms.id = cs.market_segment_id
-            WHERE s.id IN (%s)
-            """ % ",".join("?" * len(seen_startups)),
-            tuple(seen_startups),
-        ).fetchall()
-        for r in rows:
-            if r["icp_cluster"]:
-                seen_clusters.add(r["icp_cluster"])
+
+        # Cross-cluster coverage: which ICP clusters do those startups hang off?
+        seen_clusters: set[str] = set()
+        if seen_startups:
+            placeholders = ",".join("?" * len(seen_startups))
+            rows = db._conn.execute(
+                f"""
+                SELECT DISTINCT ms.icp_cluster FROM startups s
+                JOIN candidate_startups cs ON cs.website = s.website
+                JOIN market_segments ms ON ms.id = cs.market_segment_id
+                WHERE s.id IN ({placeholders})
+                """,
+                tuple(seen_startups),
+            ).fetchall()
+            for r in rows:
+                if r["icp_cluster"]:
+                    seen_clusters.add(r["icp_cluster"])
 
         g = infra_convergence_gate(
             sightings=len(seen_startups),
@@ -276,6 +287,7 @@ def run_infra_convergence(db, fraction: float = 0.5):
             distinct_clusters=len(seen_clusters),
             fraction=fraction,
         )
+        # Single update per node with the final sightings + convergence flag.
         db.upsert_infrastructure_node(InfrastructureNodeRow(
             canonical_name=canonical,
             internal_platform=platform,

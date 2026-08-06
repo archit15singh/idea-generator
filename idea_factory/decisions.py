@@ -13,13 +13,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, get_args
 
 from idea_factory.schema import (
+    ICP_CLUSTERS,
     PersonalFitRow,
     ValidatorReceipt,
     WedgeRow,
 )
+
+# The set of acceptable ICP clusters, derived from the controlled vocabulary
+# instead of re-typing the literals here. If `ICP_CLUSTERS` adds a fourth
+# cluster, promotion_gate picks it up automatically.
+VALID_ICP_CLUSTERS = set(get_args(ICP_CLUSTERS))
 
 
 # --- between Analyst node and Scorer node: evidence gate ---
@@ -186,7 +192,7 @@ def promotion_gate(
     """
     if sightings < MIN_SIGHTINGS:
         return False
-    distinct_valid = {c for c in clusters_seen if c in ("developer", "infra", "enterprise-IT")}
+    distinct_valid = {c for c in clusters_seen if c in VALID_ICP_CLUSTERS}
     return len(distinct_valid) >= MIN_CLUSTERS
 
 

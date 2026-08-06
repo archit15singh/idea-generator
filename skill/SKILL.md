@@ -137,6 +137,22 @@ For each cohort (one cohort = one full market-scout pass):
 
 Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-runs the market scout (markets evolve; new YC batches drop; former blanks become populated).
 
+### Meta-loop digest (after every analyst pass, non-negotiable)
+
+After step 4 (analyst receipts land and you've run `evidence_gate`), the PM
+MUST run the Infrastructure Graph convergence digest:
+
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_convergence; import json; print(json.dumps(run_infra_convergence(DB('sid.db')), indent=2, default=str))"
+```
+
+Print the convergent rows (`convergence=True`) to the user. This is the
+single highest-leverage output of the loop and runs continuously — it does
+NOT wait for the 20-startup clusterer threshold. The PM surfaces:
+- convergent layers (sighted on ≥half the analysed cohort), in sightings-desc order
+- cross-cluster convergent layers (covering ≥2 of the 3 ICP clusters) — these are the candidate infrastructure plays
+- the smallest cumulative cohort that has pushed each layer over the threshold, so the user can watch conviction build
+
 ## Kill metric (non-negotiable)
 
 After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicating real pain. If `decisions.kill_metric_triggered(...)` returns `True`, STOP the factory. Do not iterate on outreach copy. Re-tune `founder-profile.md`, re-descend (02), re-wedge (03, part of 02's pass) for affected startups, then resume.

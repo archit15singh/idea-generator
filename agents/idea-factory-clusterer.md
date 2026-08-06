@@ -71,7 +71,7 @@ For each existing pattern, check `decisions.should_retire_pattern`. If `True`, `
 
 ### 6. Commit
 
-One transaction for the whole stage-07 run.
+One transaction for the whole stage-07 run. **At the end** of a true stage-07 pass (i.e. when `decisions.promotion_gate` ran on enough sightings — NOT the shortcut digest), call `pm.mark_clusterer_run(db)` so the next dispatch sees the new `last_run_at` and counts only *new* startups since this pass. Without this, the clusterer re-runs on the same cohort every dispatch.
 
 ## Shortcut: deterministic infra-graph build
 

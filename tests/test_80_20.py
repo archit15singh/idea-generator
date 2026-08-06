@@ -54,6 +54,7 @@ from idea_factory.schema import (
     MarketScoutReceipt,
     MarketSegmentRow,
     OutreachLogRow,
+    PatternLibraryRow,
     PersonalFitRow,
     ProblemEdgeRow,
     ProblemNodeRow,
@@ -64,6 +65,7 @@ from idea_factory.schema import (
     TechnicalRow,
     ValidatorInput,
     ValidatorReceipt,
+    WaitlistRow,
     WedgeRow,
 )
 from idea_factory.pm import CANONICAL_MARKETS, default_scout_input
@@ -840,3 +842,95 @@ def test_parse_market_scout_receipt_with_segments_and_candidates():
     assert r.segments[0].segment_name == "IDE agents"
     assert r.candidates[0].name == "Cursor"
     assert r.next_stage == "01"
+
+
+# --- coverage gap fillers: builders + lightweight db methods + gates ---
+
+
+def test_html_to_summary_strips_tags_and_truncates():
+    from idea_factory.pm import html_to_summary
+    s = html_to_summary("<html><body><p>Hello   <b>World</b></p></body></html>", max_chars=200)
+    assert "Hello" in s and "World" in s and "<" not in s
+    big = "<p>" + ("x " * 1000) + "</p>"
+    out = html_to_summary(big, max_chars=1200)
+    assert len(out) <= 1200 + len(" ...[truncated]")
+
+
+def test_build_builder_input_round_trips(db):
+    from idea_factory.pm import build_builder_input
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+    ])
+    wedge = db.get_wedges(sid)[0]
+    # BuilderInput.pain_replies is min_length=3 — matches the builder_accepts
+    # preconditions (>= 3 pain-signal replies). Seed exactly that many so
+    # the builder can be handed a contract-shaped input.
+    for i in range(3):
+        oid = db.insert_outreach_send(OutreachLogRow(
+            wedge_id=wedge.id, startup_id=sid, message_id=f"m-{i}",
+            prospect_persona="eng lead",
+        ))
+        db.mark_outreach_reply(oid, pain_signal=True)
+    inp = build_builder_input(db, sid, wedge.id)
+    assert isinstance(inp, BuilderInput)
+    assert inp.startup_id == sid
+    assert inp.wedge.id == wedge.id
+    assert inp.sid.startup == "A"
+    assert len(inp.pain_replies) == 3
+    # build_builder_input raises ValueError before any outreach lands
+    sid2 = db.upsert_startup(StartupRow(startup="B", website="https://b.example"))
+    db.replace_wedges(sid2, [WedgeRow(startup_id=sid2, wedge_type="Cheaper",
+                                     description="d", evidence="c")])
+    w2 = db.get_wedges(sid2)[0]
+    with pytest.raises(Exception):
+        build_builder_input(db, sid2, w2.id)
+
+
+def test_mark_wedge_selected_round_trips(db):
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+    ])
+    w = db.get_wedges(sid)[0]
+    assert w.selected is False
+    db.mark_wedge_selected(w.id, True)
+    assert db.get_wedges(sid)[0].selected is True
+
+
+def test_upsert_pattern_idempotent_on_canonical_name(db):
+    row = PatternLibraryRow(
+        canonical_name="Agent memory", aliases=["context retention"],
+        sightings=3, mini_spec="shared agent memory layer",
+    )
+    db.upsert_pattern(row)
+    row.sightings = 5
+    db.upsert_pattern(row)  # idempotent on canonical_name; sightings update
+    # no easy read-back helper; assert via raw select
+    r = db._conn.execute(
+        "SELECT sightings, mini_spec FROM pattern_library WHERE canonical_name = ?",
+        ("Agent memory",),
+    ).fetchone()
+    assert r["sightings"] == 5
+    assert r["mini_spec"] == "shared agent memory layer"
+
+
+def test_insert_waitlist_round_trips(db):
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+    ])
+    w = db.get_wedges(sid)[0]
+    wid = db.insert_waitlist(WaitlistRow(wedge_id=w.id, source="landing", referrer="x"))
+    assert wid > 0
+
+
+def test_promotion_gate_uses_controlled_icp_vocab(db):
+    # promotion_gate validates clusters against ICP_CLUSTERS via
+    # get_args(); a bogus cluster name does not count toward MIN_CLUSTERS.
+    from idea_factory.decisions import VALID_ICP_CLUSTERS, promotion_gate
+    assert VALID_ICP_CLUSTERS == {"developer", "infra", "enterprise-IT"}
+    # 3 sightings covering 2 valid clusters -> True
+    assert promotion_gate(3, ["developer", "infra"]) is True
+    # a bogus cluster doesn't count even at 3 sightings
+    assert promotion_gate(3, ["developer", "bogus"]) is False
