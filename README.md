@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 87 | 82 `scored` + 5 freshly `analysed` (Sourcegraph, Prismatic, Bland AI, Range, Census — await score_a) |
-| `analysed` (cohort) | 87 | recursive_path + 20 wedges each; 5 lack personal_fit/primary |
-| `wedges` | 1740 | +100 this wave; **82 primary** until score_a+select |
-| `infrastructure_ops` | 433 | +22 this wave |
+| `startups` | 87 | all `scored` (Sourcegraph, Prismatic, Bland AI, Range, Census finished score_a+select) |
+| `analysed` (cohort) | 87 | full E2E: path + wedges + fit + primary shortlist |
+| `wedges` | 1740 | **87 primary** (`selected=1`) + rank2/3 shortlists |
+| `infrastructure_ops` | 433 | analyst per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top = Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B layer scores (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL markets covered + analysed |
-| `candidate_startups` | 251 | analyse backlog clear; score_a next |
-| `personal_fit` | 82 | Mode A needed for ids 91–95 |
-| `pattern_library` | 11 | clusterer ready after score/select drain |
+| `candidate_startups` | 251 | pending_ingest high; cluster next then ingest |
+| `personal_fit` | 87 | Mode A complete for full cohort |
+| `pattern_library` | 11 | **clusterer ready** (20 new since last run) |
 
-**`plan_recursive_fanout` next_action = `score_a`** on ids `[91–95]`. Primary mix (scored set): Better memory 24, Better evaluation 21, Developer-first 13, AI-native 11, Open source 8.
+**`plan_recursive_fanout` next_action = `cluster`**. Primary mix: Better memory 24, Better evaluation 22, Developer-first 14, AI-native 13, Open source 8 (~28% top — under 40% collapse).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 87 startups; 1740 wedges; 433 infra_ops; 82 primary. Latest: analyse Sourcegraph / Prismatic / Bland AI / Range / Census (ids 91–95). **88 tests green.**
-- **Next fire:** `score_a` on 91–95 → select → cluster (ready) → ingest continue → expand CANONICAL beyond 20.
+- **Done (pushed):** 20/20 CANONICAL markets; 87 startups all scored; 1740 wedges; 433 infra_ops; **87 primary**. Latest: score_a+select on Sourcegraph/Prismatic/Bland/Range/Census (ids 91–95). **88 tests green.**
+- **Next fire:** `cluster` (20 new since last) → ingest continue → expand CANONICAL beyond 20.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
