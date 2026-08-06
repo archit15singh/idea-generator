@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 112 | all **112 scored** E2E complete (primary + shortlist) |
-| `analysed` (cohort) | 112 | full cohort analysed + scored + selected |
+| `startups` | 117 | 112 scored E2E + **5 ingested** (Augment/Fern/Langbase/DeltaStream/Render) |
+| `analysed` (cohort) | 112 | prior cohort complete; analyse backlog = 5 |
 | `wedges` | 2240 | **112 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 540 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈40; next Augment Code/Fern/Langbase/… |
-| `personal_fit` | 112 | all scored; Cognee=69 home-turf; Deel=25 non-goal |
+| `candidate_startups` | 266 | fanout pending after analyse drain; 5 just ingested |
+| `personal_fit` | 112 | prior cohort; 5 await analyse→score |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Select complete for 112; primary mix Better memory 32, Better evaluation 30, AI-native 17, Developer-first 15 (cap OK ~28.6%).
+**`plan_recursive_fanout` next_action = `analyse`**. Ingest-14 complete (ids 121–125); backlog=5 (cap). Primary mix Better memory 32, Better evaluation 30, AI-native 17.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **112/112**; wedges 2240; personal_fit 112; infra_ops 540; **112 primary**; **patterns 15**. Latest: **select** — Poolside→Better evaluation; Stainless→Better memory; Cognee→AI-native; Deel→Better evaluation; Decodable→Better memory. next **ingest**. **88 tests green.**
-- **Next fire:** `ingest` (Augment Code, Fern, Langbase, DeltaStream, Render) or CANONICAL expand.
+- **Done (pushed):** CANONICAL 24/24; e2e **112/117**; wedges 2240; personal_fit 112; **112 primary**; **patterns 15**. Latest: **ingest-14** — Augment Code, Fern, Langbase, DeltaStream, Render (ids 121–125) → `ingested`. next **analyse**. **88 tests green.**
+- **Next fire:** `analyse` drain on ids 121–125; then score_a → select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
