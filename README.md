@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 97 | 92 `scored` + 5 `ingested` (Quack AI, Hookdeck, Rivet, Lattice, Sequin) |
-| `analysed` (cohort) | 92 | scored set full E2E; 5 await analyse |
-| `wedges` | 1840 | **92 primary** until analyse→score_a→select |
-| `infrastructure_ops` | 454 | per-startup platform needs |
+| `startups` | 97 | 92 `scored` + 5 `analysed` (Quack AI, Hookdeck, Rivet, Lattice, Sequin) |
+| `analysed` (cohort) | 97 | all 97 analysed; 5 await score_a |
+| `wedges` | 1940 | **92 primary** until score_a→select on 101–105 |
+| `infrastructure_ops` | 474 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL covered + analysed |
-| `candidate_startups` | 251 | analyse backlog=5 (ingest paused) |
-| `personal_fit` | 92 | 5 await analyse→score |
-| `pattern_library` | 13 | 10 new since last cluster |
+| `candidate_startups` | 251 | pending_ingest≈40; 8 ingest batches when score drains |
+| `personal_fit` | 92 | 5 await score_a |
+| `pattern_library` | 13 | cluster needs ≥20 new since last |
 
-**`plan_recursive_fanout` next_action = `analyse`** on ids `[101–105]`. Primary mix (scored): Better memory 24, Better evaluation 23, Developer-first 15, AI-native 13.
+**`plan_recursive_fanout` next_action = `score_a`** on ids `[101–105]`. Primary mix (scored): Better memory 24, Better evaluation 23, Developer-first 15, AI-native 13.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 97 startups (92 scored + 5 ingested); 1840 wedges; 454 infra_ops; 92 primary; 13 patterns. Latest: ingest Quack AI / Hookdeck / Rivet / Lattice / Sequin (ids 101–105; Quack site dead→GitHub; Sequin sequin.io shutdown note vs sequinstream CDC OSS). **88 tests green.**
-- **Next fire:** `analyse` drain on 101–105 → score_a → select → expand CANONICAL beyond 20.
+- **Done (pushed):** 20/20 CANONICAL markets; 97 startups (92 scored + 5 analysed); 1940 wedges; 474 infra_ops; 92 primary; 13 patterns. Latest: **analyse** Quack AI / Hookdeck / Rivet / Lattice / Sequin (ids 101–105) — L1–L10 + 20 wedges each + infra_ops. **88 tests green.**
+- **Next fire:** `score_a` on 101–105 → select → expand CANONICAL beyond 20 / drain ingest.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
-  - **Clusterer (07)** — 15 new since last run; needs 20 (or on-demand `min_new_since_last=0`).
+  - **Clusterer (07)** — 10 new since last run; needs 20 (or on-demand `min_new_since_last=0`).
 
 ## The next highest-ROI moves
 
 1. **score_a wave** on the 5 freshly analysed startups, then select shortlist ranks.
-2. **Drain pending_ingest** (169 candidates; planner shows 8 ingest batches) without letting `ingested_awaiting_analyse` hit ≥5.
+2. **Drain pending_ingest** (planner shows 8 ingest batches / ~40 pending) without letting `ingested_awaiting_analyse` hit ≥5.
 3. **Expand market pool** past 20 founder-relevant parents when queues drain (memory, agents, AI infra, email/BEC, observability, vector/RAG, devtools, identity, data infra gaps).
 4. **Clusterer** once ≥20 new startups since last run (or force on-demand).
 
