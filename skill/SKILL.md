@@ -70,8 +70,8 @@ Trigger when the user wants to run the loop (ingesting, descending, wedging, val
                │ (every ≥20 new startups:)
                ▼
         ┌────────────┐
-        │ 07 clusterer│ (cross-cluster pattern promotion; Problem Graph)
-        └──────┬──────┘
+        │ 07 clusterer│ (cross-cluster pattern promotion; Problem Graph
+        └──────┬──────┘  + Infrastructure Graph + meta-loop convergence)
                │
                ▼
         (08 query os — on demand)
@@ -80,6 +80,22 @@ Trigger when the user wants to run the loop (ingesting, descending, wedging, val
 The DAG's entry contract is non-negotiable: **start from `pm.default_scout_input()`, dispatch the market scout, wait for its receipt, fan out on the candidates.** Do not skip ahead to scrape random startups. The "constrained 20-market pool" premise collapses if the entry point does.
 
 Stages 03 and 08 are not nodes — 03 (wedge-gen) is fused into 02; 08 is a query surface.
+
+### Quick meta-loop digest (PM may run on demand)
+
+The Infrastructure Graph feeds the v2 "conviction loop":
+20 YC startups → extract recurring infrastructure needs → identify the
+shared layers ≥ half the cohort needs → bet on one. To get the digest
+without waiting for the 20+-startup promotion threshold, run:
+
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_convergence; import json; print(json.dumps(run_infra_convergence(DB('sid.db')), indent=2, default=str))"
+```
+
+Returns one row per `internal_platform` slot with `sightings / cohort`,
+`convergence` (bool), `clusters`, and the backing startups. The PM
+prints this as a digest after every analyst cohort so the meta-loop runs
+continuously, not gated behind the 20-startup pattern threshold.
 
 ## Dispatch contract
 
@@ -100,7 +116,9 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 | 05  | `route_after_validator(receipt)`     | route to 06 or wait |
 | 06  | `builder_accepts(wedge_id, pain_rows, stage)` | refuse un-graduated wedges at the builder door |
 | 07  | `promotion_gate(sightings, clusters)` | decide whether to write a Pattern Library row |
-| 07  | `classify_edge(edge_type)`           | reject free-form edges |
+| 07  | `classify_edge(edge_type)`           | reject free-form Problem-Graph edges |
+| 07  | `classify_infra_edge(edge_type)`     | reject free-form Infrastructure-Graph edges |
+| 07  | `infra_convergence_gate(node, cohort)` | flag a node 'convergence=1' when sighted on >= half the cohort |
 | 07  | `should_retire_pattern(...)`         | stamp `retired_at` on saturated patterns |
 
 ## The loop

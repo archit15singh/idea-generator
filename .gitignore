@@ -8,4 +8,4 @@ dist/
 sid.db
 scrapes/
 .mvp/
-.pytest_cache/
+.pytest_cache/_analyst_run_*.py

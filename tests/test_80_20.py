@@ -26,6 +26,9 @@ from idea_factory.decisions import (
     classify_edge,
     evidence_gate,
     graduation_gate,
+    infra_convergence_gate,
+    infra_convergence_threshold,
+    classify_infra_edge,
     kill_metric_triggered,
     promotion_gate,
     route_after_validator,
@@ -43,6 +46,8 @@ from idea_factory.schema import (
     CompetitiveRow,
     CustomerRow,
     GTMRow,
+    InfrastructureEdgeRow,
+    InfrastructureNodeRow,
     IngestorInput,
     IngestorReceipt,
     MarketScoutInput,
@@ -539,6 +544,31 @@ def test_parse_bare_json_block():
     assert r.wedges_accepted == 20
 
 
+def test_parse_bare_json_with_prose_no_fence():
+    # agents often emit `Here is the result: {...} done.`
+    raw = ('Here is the result.\n'
+           '{"schema_version":"idea_factory_receipt_v1","result":"done",'
+           '"stage":"01","changed_rows":3,"summary":"ok",'
+           '"ingested":[1,2,3],"failed":[]} thanks.')
+    r = parse(raw)
+    assert isinstance(r, IngestorReceipt)
+    assert r.ingested == [1, 2, 3]
+
+
+def test_parse_picks_receipt_block_over_earlier_unrelated_json():
+    # a stray JSON snippet earlier in the message must not be mistaken for
+    # the receipt; the balanced scan keys off the schema_version marker.
+    raw = ('Stats so far: {"wedges": 9, "ops": 2}.\n'
+           'receipt:{"schema_version":"idea_factory_receipt_v1","result":"done",'
+           '"stage":"05","changed_rows":30,"summary":"ok","sends":30,"replies":4,'
+           '"pain_signal_replies":4,"reply_rate":0.1333,"graduated":true,'
+           '"kill_metric_triggered":false}')
+    r = parse(raw)
+    assert isinstance(r, ValidatorReceipt)
+    assert r.graduated is True
+    assert r.pain_signal_replies == 4
+
+
 def test_parse_rejects_missing_schema_version():
     r = parse('{"result":"done","stage":"01","changed_rows":0,"summary":"x"}')
     assert hasattr(r, "reason")
@@ -669,3 +699,144 @@ def test_end_to_end_cohort_flow(db, monkeypatch):
     # kill metric: scenario is young, plenty of pain replies, must not trigger
     now = datetime.now(timezone.utc)
     assert kill_metric_triggered(now, now, pain_replies) is False
+
+
+# --- meta-loop: Infrastructure Graph + convergence gate ---
+
+
+def test_infra_convergence_threshold_uses_ceil():
+    assert infra_convergence_threshold(5, 0.5) == 3   # ceil(2.5)
+    assert infra_convergence_threshold(4, 0.5) == 2
+    assert infra_convergence_threshold(20, 0.5) == 10
+
+
+def test_infra_convergence_gate_fires_at_half():
+    g = infra_convergence_gate(sightings=3, cohort_size=5, distinct_clusters=2)
+    assert g.converged is True
+    assert g.threshold == 3
+    assert g.distinct_clusters == 2
+
+
+def test_infra_convergence_gate_does_not_fire_below_half():
+    g = infra_convergence_gate(sightings=2, cohort_size=5, distinct_clusters=1)
+    assert g.converged is False
+
+
+def test_infra_convergence_gate_under_two_startups_never_converges():
+    # no meta-signal from < 2 sightings, even at full coverage
+    assert infra_convergence_gate(sightings=1, cohort_size=1).converged is False
+
+
+def test_classify_infra_edge_canonicalizes_or_rejects():
+    assert classify_infra_edge("needs") == "needs"
+    assert classify_infra_edge("wants") is None
+    assert classify_infra_edge("builds") == "builds"
+
+
+def test_db_infrastructure_node_idempotent(db):
+    nid = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Memory layer", internal_platform="Memory",
+        aliases=["Memory"], sightings=3, clusters_seen=["developer", "infra"],
+        convergence=True, mini_spec="shared agent memory",
+    ))
+    nid2 = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Memory layer", internal_platform="Memory",
+        aliases=["Memory"], sightings=4, clusters_seen=["developer"],
+        convergence=False, mini_spec="v2",
+    ))
+    assert nid == nid2
+    rows = dict(db.infrastructure_nodes())
+    node = rows[nid]
+    assert node.sightings == 4
+    assert node.mini_spec == "v2"
+    # COALESCE keeps platform when re-upsert omits it
+    assert node.internal_platform == "Memory"
+
+
+def test_db_infrastructure_edge_idempotent(db):
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    nid = db.upsert_infrastructure_node(InfrastructureNodeRow(
+        canonical_name="Eval layer", internal_platform="Evaluation",
+        aliases=["Evaluation"], sightings=1,
+    ))
+    edge = InfrastructureEdgeRow(
+        startup_id=sid, infra_node_id=nid, edge_type="needs",
+        source_ref="infra_ops:Evaluation",
+    )
+    assert db.insert_infrastructure_edge(edge) is True
+    assert db.insert_infrastructure_edge(edge) is False  # idempotent
+    sig = db.infrastructure_node_sightings(nid)
+    assert sig == [(sid, "A")]
+
+
+def test_pm_run_infra_convergence_builds_graph_and_flags_convergent(db):
+    # 3 analysed startups across two ICP clusters, all flagged broader
+    # applicability on Memory -> 'needs' edges -> Memory layer converges.
+    from idea_factory.pm import run_infra_convergence
+    from idea_factory.schema import InfrastructureOpRow
+
+    seg_dev = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="agent memory",
+        icp_cluster="developer", rationale="x",
+    ))
+    seg_inf = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="AI Infrastructure", segment_name="infra",
+        icp_cluster="infra", rationale="y",
+    ))
+    cohort_inputs = [
+        ("MemOnly", seg_dev, "Cost optimization"),
+        ("MemShared", seg_inf, "Tracing/observability"),
+        ("Other", seg_dev, "Tracing/observability"),
+    ]
+    for name, seg_i, second_platform in cohort_inputs:
+        website = f"https://{name.lower()}.example"
+        sid = db.upsert_startup(StartupRow(startup=name, website=website))
+        db.insert_candidate_startup(CandidateStartupRow(
+            name=name, website=website, market_segment_id=seg_i,
+        ))
+        db.replace_infrastructure_ops(sid, [
+            InfrastructureOpRow(
+                startup_id=sid, internal_platform="Memory",
+                description="every agent rewrites this internally",
+                broader_applicability=1, evidence="competitive.moat=NULL",
+            ),
+            InfrastructureOpRow(
+                startup_id=sid, internal_platform=second_platform,
+                description="cost logging", broader_applicability=1,
+                evidence="gpt-4 spend",
+            ),
+        ])
+        db.set_stage_marker(sid, "analysed")
+
+    cohort = db.count_analysed_startups()
+    assert cohort == 3
+    digest = run_infra_convergence(db, fraction=0.5)
+    # threshold for a 3-cohort is 2; Memory sighted on 3/3 -> converges
+    mem = next(d for d in digest if d["platform"] == "Memory")
+    assert mem["sightings"] == 3
+    assert mem["convergence"] is True
+    assert mem["cohort"] == 3
+    assert set(mem["clusters"]) == {"developer", "infra"}  # cross-cluster
+    # nodes table reflects the same convergence flag
+    rows = dict(db.infrastructure_nodes())
+    mem_node = next(v for k, v in rows.items() if v.canonical_name == "Memory layer")
+    assert mem_node.convergence is True
+    assert mem_node.sightings == 3
+
+
+def test_parse_market_scout_receipt_with_segments_and_candidates():
+    # full scout receipt round-trip exercises the MarketScoutReceipt union member
+    raw = (
+        '{"schema_version":"idea_factory_receipt_v1","result":"done","stage":"00",'
+        '"changed_rows":2,"summary":"ok","markets_processed":1,"segments_created":1,'
+        '"candidates_emitted":1,"segments":[{"parent_market":"AI Engineering",'
+        '"segment_name":"IDE agents","icp_cluster":"developer","rationale":"r"}],'
+        '"candidates":[{"name":"Cursor","website":"https://cursor.com",'
+        '"market_segment_id":1,"yc_batch":"W24"}]}'
+    )
+    r = parse(raw)
+    assert isinstance(r, MarketScoutReceipt)
+    assert r.candidates_emitted == 1
+    assert r.segments[0].segment_name == "IDE agents"
+    assert r.candidates[0].name == "Cursor"
+    assert r.next_stage == "01"

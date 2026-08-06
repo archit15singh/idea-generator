@@ -38,9 +38,11 @@ RECEIPT_BY_STAGE = {
     "07": ClustererReceipt,
 }
 
-# Accept both ```json fenced and bare JSON. Be liberal with whitespace.
+# Accept ```json fenced blocks. Bare JSON (with or without surrounding prose)
+# is handled by a balanced-brace scan with json.JSONDecoder.raw_decode.
 _FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
-_BARE_RE = re.compile(r'(\{\s*"idea_factory_receipt_v1".*?\})\s*$', re.DOTALL)
+
+_RECEIPT_MARKER = "idea_factory_receipt_v1"
 
 
 @dataclass(frozen=True)
@@ -51,13 +53,34 @@ class ReceiptError:
 
 
 def _extract_json(raw: str) -> Optional[dict]:
+    # 1. fenced block
     m = _FENCE_RE.search(raw)
     if m:
-        return json.loads(m.group(1))
-    m = _BARE_RE.search(raw)
-    if m:
-        return json.loads(m.group(1))
-    # last-resort: try the whole thing
+        try:
+            return json.loads(m.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # 2. balanced-brace scan: walk every '{' position and try to parse one
+    #    whole JSON object. Keep the LAST object that carries the receipt
+    #    marker (agents commonly emit a trailing receipt after prose, and
+    #    sometimes an unrelated JSON snippet earlier in the message).
+    decoder = json.JSONDecoder()
+    last_payload: Optional[dict] = None
+    for i, ch in enumerate(raw):
+        if ch != "{":
+            continue
+        try:
+            obj, _end = decoder.raw_decode(raw[i:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict) and obj.get("schema_version") == _RECEIPT_MARKER:
+            last_payload = obj
+
+    if last_payload is not None:
+        return last_payload
+
+    # 3. last-resort: try the whole thing whitespace-stripped
     try:
         return json.loads(raw.strip())
     except json.JSONDecodeError:
@@ -65,8 +88,8 @@ def _extract_json(raw: str) -> Optional[dict]:
 
 
 def parse(raw: str) -> Union[
-    IngestorReceipt, AnalystReceipt, ScorerReceipt,
-    ValidatorReceipt, BuilderReceipt, ClustererReceipt, ReceiptError,
+    IngestorReceipt, AnalystReceipt, ScorerReceipt, ValidatorReceipt,
+    BuilderReceipt, ClustererReceipt, MarketScoutReceipt, ReceiptError,
 ]:
     """Extract + validate. Returns the typed receipt, or a ReceiptError."""
     if not raw or not raw.strip():

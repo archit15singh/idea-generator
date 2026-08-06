@@ -24,6 +24,8 @@ from idea_factory.schema import (
     CompetitiveRow,
     CustomerRow,
     GTMRow,
+    InfrastructureEdgeRow,
+    InfrastructureNodeRow,
     IngestorInput,
     InfrastructureOpRow,
     MarketSegmentRow,
@@ -548,3 +550,112 @@ class DB:
             "SELECT COUNT(*) FROM startups WHERE updated_at > datetime(?)",
             (since.isoformat(timespec="seconds"),),
         ).fetchone()[0])
+
+    # --- infrastructure graph (the meta-loop capture) ---
+
+    def upsert_infrastructure_node(self, row: InfrastructureNodeRow) -> int:
+        """Idempotent on canonical_name. Returns infra_node_id."""
+        with self.tx() as cur:
+            cur.execute(
+                """
+                INSERT INTO infrastructure_nodes
+                  (canonical_name, internal_platform, aliases, sightings,
+                   clusters_seen, convergence, mini_spec, retired_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(canonical_name) DO UPDATE SET
+                  internal_platform=COALESCE(excluded.internal_platform,
+                                             infrastructure_nodes.internal_platform),
+                  aliases=excluded.aliases, sightings=excluded.sightings,
+                  clusters_seen=excluded.clusters_seen,
+                  convergence=excluded.convergence, mini_spec=excluded.mini_spec,
+                  updated_at=datetime('now')
+                """,
+                (row.canonical_name, row.internal_platform, _json_dumps(row.aliases),
+                 row.sightings, _json_dumps(row.clusters_seen),
+                 int(row.convergence),
+                 row.mini_spec,
+                 row.retired_at.isoformat() if row.retired_at else None),
+            )
+            return int(cur.execute(
+                "SELECT id FROM infrastructure_nodes WHERE canonical_name = ?",
+                (row.canonical_name,),
+            ).fetchone()[0])
+
+    def insert_infrastructure_edge(self, row: InfrastructureEdgeRow) -> bool:
+        """Idempotent. Returns False if the (startup, node, type, source) edge
+        already exists."""
+        with self.tx() as cur:
+            res = cur.execute(
+                """
+                INSERT OR IGNORE INTO infrastructure_edges
+                  (startup_id, infra_node_id, edge_type, source_ref)
+                VALUES (?, ?, ?, ?)
+                """,
+                (row.startup_id, row.infra_node_id, row.edge_type, row.source_ref),
+            )
+            return res.rowcount > 0
+
+    def infrastructure_nodes(self) -> list[tuple[int, InfrastructureNodeRow]]:
+        rows = self._conn.execute(
+            "SELECT * FROM infrastructure_nodes ORDER BY sightings DESC, id"
+        ).fetchall()
+        return [
+            (r["id"], InfrastructureNodeRow(
+                id=r["id"], canonical_name=r["canonical_name"],
+                internal_platform=r["internal_platform"],
+                aliases=_json_loads_list(r["aliases"]),
+                sightings=r["sightings"],
+                clusters_seen=_json_loads_list(r["clusters_seen"]),
+                convergence=bool(r["convergence"]),
+                mini_spec=r["mini_spec"],
+                retired_at=r["retired_at"],
+                created_at=r["created_at"],
+            ))
+            for r in rows
+        ]
+
+    def infrastructure_node_sightings(self, infra_node_id: int) -> list[tuple[int, str]]:
+        """Returns [(startup_id, startup_name), ...] for startups linked to this node."""
+        rows = self._conn.execute(
+            """
+            SELECT DISTINCT s.id, s.startup FROM startups s
+            JOIN infrastructure_edges e ON e.startup_id = s.id
+            WHERE e.infra_node_id = ?
+            ORDER BY s.id
+            """,
+            (infra_node_id,),
+        ).fetchall()
+        return [(r["id"], r["startup"]) for r in rows]
+
+    def count_analysed_startups(self) -> int:
+        """Cohort denominator for the convergence gate. Only analysed+ startups
+        count; a startup doesn't contribute infra signal until the analyst has
+        emitted its infrastructure_ops rows."""
+        return int(self._conn.execute(
+            """
+            SELECT COUNT(*) FROM startups
+            WHERE stage_marker IN ('analysed','scored','validated','graduated','built')
+            """
+        ).fetchone()[0])
+
+    def infrastructure_ops_grouped_by_platform(self) -> dict[str, list[tuple[int, str, int]]]:
+        """Read-side helper for the clusterer. Returns
+        {internal_platform: [(startup_id, startup_name, broader_applicability), ...]}.
+        The clusterer canonicalizes each platform group into one or more
+        InfrastructureNode rows and emits edges per startup sighting.
+        """
+        rows = self._conn.execute(
+            """
+            SELECT i.internal_platform, i.broader_applicability,
+                   s.id AS startup_id, s.startup
+            FROM infrastructure_ops i
+            JOIN startups s ON s.id = i.startup_id
+            ORDER BY i.internal_platform, s.id
+            """
+        ).fetchall()
+        out: dict[str, list[tuple[int, str, int]]] = {}
+        for r in rows:
+            out.setdefault(r["internal_platform"], []).append(
+                (r["startup_id"], r["startup"], int(r["broader_applicability"] or 0))
+            )
+        return out

@@ -152,6 +152,41 @@ CREATE TABLE IF NOT EXISTS problem_edges (
 );
 CREATE INDEX IF NOT EXISTS problem_edges_type_idx ON problem_edges(edge_type);
 
+-- The Infrastructure Graph (parallel to the Problem Graph). The analyst emits
+-- free-form infrastructure_ops rows per startup; the clusterer canonicalizes
+-- them into infrastructure_nodes (one row per recurring internal platform,
+-- e.g. "Universal Agent Memory") and links each startup to the nodes it
+-- needs/builds/uses via infrastructure_edges. This is what powers the
+-- meta-loop convergence question: "which infrastructure layer shows up across
+-- >= half of these startups?". Without canonicalization the clusterer can
+-- only count free-form descriptions, not sightings.
+CREATE TABLE IF NOT EXISTS infrastructure_nodes (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  canonical_name  TEXT UNIQUE NOT NULL,
+  internal_platform TEXT,                       -- the controlled INTERNAL_PLATFORMS slot
+  aliases         TEXT,                          -- JSON array of alias names seen in infra ops rows
+  sightings       INTEGER DEFAULT 0,            -- distinct startups sighted on
+  clusters_seen   TEXT,                          -- JSON array of distinct ICP clusters
+  convergence     INTEGER DEFAULT 0,             -- 1 when sightings >= half of analysed cohort
+  mini_spec       TEXT,
+  retired_at      TEXT,
+  created_at      TEXT DEFAULT (datetime('now')),
+  updated_at      TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS infrastructure_nodes_name_idx ON infrastructure_nodes(canonical_name);
+
+CREATE TABLE IF NOT EXISTS infrastructure_edges (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  startup_id  INTEGER NOT NULL REFERENCES startups(id) ON DELETE CASCADE,
+  infra_node_id INTEGER NOT NULL REFERENCES infrastructure_nodes(id) ON DELETE CASCADE,
+  edge_type   TEXT NOT NULL,                     -- controlled vocab: 'needs' | 'builds' | 'uses' | 'has-gap'
+  source_ref  TEXT,                              -- which infra ops row or wedge backs this edge
+  created_at  TEXT DEFAULT (datetime('now')),
+  UNIQUE(startup_id, infra_node_id, edge_type, source_ref)
+);
+CREATE INDEX IF NOT EXISTS infrastructure_edges_node_idx ON infrastructure_edges(infra_node_id);
+CREATE INDEX IF NOT EXISTS infrastructure_edges_type_idx ON infrastructure_edges(edge_type);
+
 CREATE TABLE IF NOT EXISTS scrape_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   source TEXT NOT NULL,

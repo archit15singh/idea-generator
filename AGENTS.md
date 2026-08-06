@@ -1,0 +1,48 @@
+# idea-generator — project gotchas & commands
+
+## Verify
+```sh
+python3 -m pytest tests/ -q        # 58 tests; load-bearing contract tests
+python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
+```
+- DB at `sid.db` (gitignored). Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. NEVER `rm sid.db`; it's board truth.
+- Receipt validation: `idea_factory.receipts.parse(raw)` returns a typed receipt or `ReceiptError`. It uses a balanced-brace `json.raw_decode` scan keyed off the `schema_version` marker — agents can quote walls of prose around the block.
+- Install skill to OpenCode after edits:
+  ```sh
+  cp -r skill ~/.config/opencode/skills/idea-factory
+  cp agents/* ~/.config/opencode/agents/
+  cp commands/idea-factory.md ~/.config/opencode/commands/
+  ```
+
+## DAG topology (the PM owns)
+```
+00 market-scout -> 01 ingestor -> 02 analyst -> 04 scorer -> 05 validator -> 06 builder
+                                                   -> 07 clusterer (every 20 startups OR on demand)
+```
+- Entry contract non-negotiable: start from `pm.default_scout_input()`, never from a flat startup list.
+- Gates live in code (`idea_factory/decisions.py`); agents cannot override them. Receipts are typed (`idea_factory/schema.py`).
+- Honour rules: (1) validation before build (`builder_accepts`); (2) no-evidence wedges die (`evidence_gate`); (3) scorer never overwrites a human-locked `personal_fit` row; (4) clusterer uses the fixed Problem-Graph edge vocabulary (`classify_edge`) and the new Infrastructure-Graph vocabulary (`classify_infra_edge`).
+
+## Meta-loop (the v2 conviction loop — highest-leverage output)
+The **Infrastructure Graph** (added Aug 2026) converts the per-startup `infrastructure_ops` rows into a canonical `infrastructure_nodes` + `infrastructure_edges` graph and answers the v2 question: *"which infrastructure layer is sighted on ≥half of the analysed cohort?"*. Run it on demand (does NOT need the 20-startup clusterer threshold):
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_convergence; import json; print(json.dumps(run_infra_convergence(DB('sid.db')), indent=2, default=str))"
+```
+Returns one row per `INTERNAL_PLATFORMS` slot; `convergence=True` rows are the candidate infrastructure plays. Echoed in the clusterer receipt's `summary`.
+
+## Subagent dispatch contract
+Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds the typed `Input` from `idea_factory.pm` (`default_scout_input`, `build_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`). After dispatch, parse the returned JSON with `receipts.parse`; if `ReceiptError`, re-dispatch naming the gap. Run gates in code between dispatches — never trust prose for routing.
+
+## Live-run gotchas (learned Aug 06)
+- **YC /companies/<slug> pages routinely 404.** Ingestor's best-effort rule: log the 404 in `scrape_log`, fall back to the company's own homepage. Don't halt on a 404.
+- **Context budget.** `webfetch` returns 60KB+ per startup page. The ingestor MUST compress with `pm.html_to_summary(html, max_chars=1200)` before reasoning, else a 5-startup cohort blows the prompt budget before SID extraction even starts.
+- **SQLite datetime compare.** Schema stores `updated_at` in SQLite's space-format `datetime('now')` (e.g. `2026-08-06 14:33:23`). Boundary comparisons from Python must use `WHERE updated_at > datetime(?)` so SQLite normalises the `?`-bound isoformat T-format string; a bare lexicographic compare returns 0 for same-day updates.
+- **Idempotent edges.** `INSERT OR IGNORE` returns `rowcount > 0` from the executed cursor (the just-executed statement), NOT `cur.total_changes` (cumulative since connection open). Use `res.rowcount`, not `cur.total_changes > 0` — otherwise duplicate inserts are reported as `True`.
+- **Receipt bare-JSON.** Old `_BARE_RE` regex required `{"idea_factory_receipt_v1"` immediately after `{`, but real receipts are `{"schema_version":"idea_factory_receipt_v1"...}`. Don't bring the regex back; the `raw_decode` scan is correct.
+- **`Pydantic extra="forbid"` + raw DB rows.** When you `cls(**dict(r))` from `SELECT *`, filter the row keys to `cls.model_fields` first — `updated_at` and other DB-only columns blow up `extra="forbid"` rows.
+- **Subagent python scratch files.** Agents sometimes persist run scripts as `idea_factory/_*_run_*.py`. These must be `/tmp`-only, never committed. `.gitignore` has `_analyst_run_*.py` and `_*_run_*.py` glob patterns now.
+- **Validator/builder are GATED on real-world side effects** (30 cold emails via gmail MCP; real MVP launches). They block on explicit user approval + (for the validator) gmail recipient pairing. Don't auto-resume — surface the exact blocker to the user.
+- **Scorer blocks on empty `founder-profile.md`.** And on a human-locked `personal_fit` row (any `reviewed_at != NULL`). `db.upsert_personal_fit` returns `False` in that case and the scorer counts `rows_skipped_human_locked`.
+
+## OpenCode skill Synagogue
+`~/.config/opencode/skills/idea-factory/SKILL.md` is a copy, not a symlink. Mirror edits from `skill/SKILL.md` after every change or the running OpenCode session will use stale topology.

@@ -15,5 +15,4 @@ from idea_factory.pm import (  # noqa: F401
     html_to_summary,
     mark_clusterer_run,
     mark_runtime_started,
-    seed_for_cluster,
 )

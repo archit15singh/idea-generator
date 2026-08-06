@@ -11,15 +11,12 @@ If an agent wants to override one of these gates, it can't. It returns a
 
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
 from idea_factory.schema import (
-    ICP_CLUSTERS,
     PersonalFitRow,
-    ProblemEdgeRow,
     ValidatorReceipt,
     WedgeRow,
 )
@@ -257,3 +254,76 @@ def builder_accepts(
     if pain_reply_rows < MIN_PAIN_REPLIES:
         return False, f"only {pain_reply_rows} pain replies, need {MIN_PAIN_REPLIES}"
     return True, "accepted"
+
+
+# --- meta-loop: the Infrastructure Graph convergence gate ---
+
+# The single highest-leverage signal the idea-factory can produce: an
+# internal platform shows up across enough startups that building THE SHARED
+# LAYER beats building any one application of it. Half-the-cohort is the
+# threshold (ceil, so a 5-startup cohort needs 3 sightings; a 20-startup
+# cohort needs 10). Below the threshold the node is interesting context; at
+# or above it, the node becomes a "convergent layer" that the builder should
+# be redirected toward instead of the per-startup wedge.
+
+import math as _math
+
+
+def infra_convergence_threshold(cohort_size: int, fraction: float = 0.5) -> int:
+    """Sightings needed for an infra node to be marked convergent.
+
+    Uses ceil so a 5-startup cohort needs 3 sightings, not 2. Cohorts < 2
+    never converge (no meta-signal with < 2 sightings).
+    """
+    if cohort_size < 2:
+        return cohort_size + 1  # unreachable
+    return int(_math.ceil(cohort_size * fraction))
+
+
+@dataclass(frozen=True)
+class InfraConvergenceResult:
+    converged: bool
+    sightings: int
+    cohort_size: int
+    threshold: int
+    fraction: float
+    distinct_clusters: int
+
+
+def infra_convergence_gate(
+    sightings: int,
+    cohort_size: int,
+    distinct_clusters: int = 1,
+    fraction: float = 0.5,
+) -> InfraConvergenceResult:
+    """Returns converged=True when an infrastructure node has been sighted
+    on >= `fraction` of the analysed cohort (ceil'd) leading in any cluster.
+
+    Requiring cross-cluster coverage is NOT enforced here (unlike
+    promotion_gate). The convergence question is "does half the cohort need
+    this layer" — a strong intrazone signal is still a convergent layer even
+    if it's only one cluster today. Cross-cluster is recorded on the node so
+    a PM can layer a stricter `recurring + cross-cluster` filter when needed.
+    """
+    threshold = infra_convergence_threshold(cohort_size, fraction)
+    converged = cohort_size >= 2 and sightings >= threshold
+    return InfraConvergenceResult(
+        converged=converged,
+        sightings=sightings,
+        cohort_size=cohort_size,
+        threshold=threshold,
+        fraction=fraction,
+        distinct_clusters=distinct_clusters,
+    )
+
+
+# Infrastructure-edge vocabulary enforcement (mirrors classify_edge for the
+# Problem Graph). The clusterer MUST call this before inserting an
+# infrastructure_edges row; free-form edge kinds are rejected.
+ALLOWED_INFRA_EDGE_TYPES = {"needs", "builds", "uses", "has-gap"}
+
+
+def classify_infra_edge(edge_type: str) -> Optional[str]:
+    if edge_type in ALLOWED_INFRA_EDGE_TYPES:
+        return edge_type
+    return None

@@ -67,6 +67,17 @@ EDGE_TYPES = Literal[
     "OSS-alternative-to",
 ]
 
+# Infrastructure-edge vocabulary for the Infrastructure Graph (the meta-loop
+# capture). Distinct from EDGE_TYPES (the Problem Graph) on purpose: the
+# question "which infrastructure does this startup need/own/use?" is not the
+# same relationship kind as "which problem does this wedge solve?".
+INFRA_EDGE_TYPES = Literal[
+    "needs",         # startup needs the infra and doesn't have it (gap signal)
+    "builds",        # startup built it internally (re-implementation signal)
+    "uses",          # startup relies on a 3rd-party for it
+    "has-gap",       # analyst flagged no solution exists at all
+]
+
 ICP_CLUSTERS = Literal["developer", "infra", "enterprise-IT"]
 
 STAGE_MARKERS = Literal[
@@ -305,6 +316,44 @@ class ProblemEdgeRow(BaseModel):
     created_at: Optional[datetime] = None
 
 
+class InfrastructureNodeRow(BaseModel):
+    """A recurring internal-platform need, canonicalized across startups.
+
+    Clusterer builds these from `infrastructure_ops` rows. A node only earns
+    a row when sightings cross 1; the `convergence` flag flips when
+    sightings reach >= half of the analysed cohort (see
+    decisions.infra_convergence_gate).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    id: Optional[int] = None
+    canonical_name: str
+    internal_platform: Optional[INTERNAL_PLATFORMS] = None
+    aliases: list[str] = Field(default_factory=list)
+    sightings: int = 0
+    clusters_seen: list[str] = Field(default_factory=list)
+    convergence: bool = False
+    mini_spec: Optional[str] = None
+    retired_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+
+class InfrastructureEdgeRow(BaseModel):
+    """Links a startup to an Infrastructure Node (needs/builds/uses/has-gap).
+
+    `source_ref` records which infra_ops row or wedge backs the sighting so
+    the edge is auditable back to a real citation, not a hallucinated inference.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    id: Optional[int] = None
+    startup_id: int
+    infra_node_id: int
+    edge_type: INFRA_EDGE_TYPES
+    source_ref: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
 # --- Node inputs (what the PM hands each subagent) ---
 
 
@@ -346,18 +395,6 @@ class CandidateStartupRow(BaseModel):
     market_segment_id: int
     yc_batch: Optional[str] = None
     notes: Optional[str] = None
-
-
-class MarketScoutReceiptStub(BaseModel):
-    """Forward declaration shape. The real MarketScoutReceipt lives in the
-    receipts section; using it here would require BaseReceipt to be defined
-    first. Instead, the scout returns a dict the PM parses with
-    `receipts.parse`. See MarketScoutReceipt below."""
-
-    model_config = ConfigDict(extra="forbid")
-    markets_processed: int = Field(ge=0)
-    segments_created: int = Field(ge=0)
-    candidates_emitted: int = Field(ge=0)
 
 
 class IngestorInput(BaseModel):
@@ -425,14 +462,6 @@ class ClustererInput(BaseModel):
 
 STAGE_VALUES = {"00", "01", "02", "04", "05", "06", "07"}
 NEXT_STAGE_VALUES = {"01", "02", "04", "05", "06", "07", "08", None}
-STAGE_DEFAULTS = {
-    "IngestorReceipt": "01",
-    "AnalystReceipt": "02",
-    "ScorerReceipt": "04",
-    "ValidatorReceipt": "05",
-    "BuilderReceipt": "06",
-    "ClustererReceipt": "07",
-}
 
 
 class BaseReceipt(BaseModel):
