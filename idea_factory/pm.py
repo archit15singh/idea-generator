@@ -67,6 +67,10 @@ CANONICAL_MARKETS = [
     "Identity and Access",
     "Security Automation",
     "Fraud Detection",
+    # expand past 24 — founder-profile gaps (policy engines, computer-use, multi-model)
+    "Agent Guardrails and Policy",
+    "Computer Use Infrastructure",
+    "Model Gateways",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.

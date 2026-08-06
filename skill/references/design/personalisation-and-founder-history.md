@@ -14,11 +14,13 @@ The original instinct, analyze 100 random YC startups, maximises for breadth. Th
 
 | Cluster | Markets |
 |---------|---------|
-| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure, **AI Coding Agents** |
-| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration, **Agent Memory**, **Streaming Infrastructure** |
+| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure, **AI Coding Agents**, **Agent Guardrails and Policy**, **Computer Use Infrastructure** |
+| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration, **Agent Memory**, **Streaming Infrastructure**, **Model Gateways** |
 | **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation, **Fraud Detection** |
 
 **2026-08 expansion (founder profile):** Agent Memory (Memori/PyCon thesis), Streaming Infrastructure (Kafka day-job), AI Coding Agents (persistent coding-agent context), Fraud Detection (Abnormal entity-scoring / BEC-adjacent).
+
+**2026-08 expand-27:** Agent Guardrails and Policy (hard-constraints-in-code / Luffy policy-engine thesis), Computer Use Infrastructure (Browserbase MCP fork, vision browser agents), Model Gateways (OpenRouter multi-provider / cost routing).
 
 ## These are clusters, not fully independent dimensions
 

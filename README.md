@@ -93,12 +93,12 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `infrastructure_ops` | 660 | +22 from Neon/EasyDMARC/Harvey/Reworkd/Sardine |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
-| `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈35 |
+| `market_segments` | 123 | CANONICAL **27** (24 analysed + 3 new without analysed) |
+| `candidate_startups` | 277 | +11 from expand-27 scout |
 | `personal_fit` | 137 | Langbase=68; Sublime=65; Abnormal=62; Sardine=53; EasyDMARC=50 |
 | `pattern_library` | **16** | +Agent browser/computer-use session infrastructure |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Analyse-19 complete: Neon (#141 Better memory), EasyDMARC (#142 Developer-first), Harvey (#143 Better evaluation), Reworkd (#144 Better memory), Sardine (#145 Better evaluation). Primary mix Better memory 42, Better evaluation 39, AI-native 20, Developer-first 18.
+**`plan_recursive_fanout` next_action = `ingest`**. CANONICAL expanded **24→27**: Agent Guardrails and Policy, Computer Use Infrastructure, Model Gateways (+9 segments, +11 candidates). Markets without analysed: those three. Primary mix Better memory 42, Better evaluation 39, AI-native 20.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,16 +119,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **137/137** scored; wedges 2740; personal_fit 137; infra_ops 660; **137 primary**; **patterns 16**. Latest: **analyse-19** — Neon/EasyDMARC/Harvey/Reworkd/Sardine full E2E. next **ingest**. **88 tests green.**
-- **Next fire:** `ingest` next candidates or CANONICAL expand past 24.
+- **Done (pushed):** CANONICAL **27**; e2e **137/137** scored; wedges 2740; personal_fit 137; infra_ops 660; **137 primary**; segments 123; candidates 277; **patterns 16**. Latest: **expand-27** markets + scout segments/candidates. next **ingest** (prefer new parents). **88 tests green.**
+- **Next fire:** `ingest` preferring Agent Guardrails / Computer Use / Model Gateways candidates, then analyse.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Ingest** next pending candidates (planner next_action=ingest).
-2. Further **CANONICAL expand** past 24 (founder-gap parents).
+1. **Ingest** candidates on the 3 new parents (Guardrails AI, OpenRouter, MultiOn, etc.).
+2. Analyse → score → select to get markets_with_analysed 27/27.
 3. Next cluster after +20 startups (clusterer needs ≥20 new since last).
 
 ## Subagent dispatch contract
