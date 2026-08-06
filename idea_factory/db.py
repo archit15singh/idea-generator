@@ -359,11 +359,23 @@ class DB:
                 id=r["id"], startup_id=r["startup_id"], wedge_type=r["wedge_type"],
                 description=r["description"], evidence=r["evidence"],
                 personal_fit_score=r["personal_fit_score"],
-                selected=bool(r["selected"]),
+                selected=bool(r["selected"]),  # rank 1+ counts as selected
                 created_at=r["created_at"],
             )
             for r in rows
         ]
+
+    def get_primary_wedge_id(self, startup_id: int):
+        """Primary selection is rank 1 (not max personal_fit_score among shortlist)."""
+        r = self._conn.execute(
+            """
+            SELECT id FROM wedges
+            WHERE startup_id = ? AND selected = 1
+            ORDER BY id LIMIT 1
+            """,
+            (startup_id,),
+        ).fetchone()
+        return int(r["id"]) if r else None
 
     # --- scorer node reads/writes ---
 
@@ -436,11 +448,22 @@ class DB:
                     (score, wid),
                 )
 
-    def mark_wedge_selected(self, wedge_id: int, selected: bool = True) -> None:
+    def mark_wedge_selected(
+        self, wedge_id: int, selected: bool = True, *, rank: int = 1,
+    ) -> None:
+        """Mark selection rank on a wedge.
+
+        selected=False → 0 (not selected).
+        selected=True  → rank (1 = primary, 2+ = shortlist). Defaults to 1.
+        Bool reads treat any non-zero as selected.
+        """
+        value = 0
+        if selected:
+            value = rank if rank >= 1 else 1
         with self.tx() as cur:
             cur.execute(
                 "UPDATE wedges SET selected = ? WHERE id = ?",
-                (int(selected), wedge_id),
+                (value, wedge_id),
             )
 
     # --- validator node writes ---

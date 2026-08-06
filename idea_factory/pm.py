@@ -398,8 +398,15 @@ def run_select_top_wedges(
       - primary wedge under a cohort-wide type cap (≤25% of startups share a
         primary type by default) so selection does not collapse to one mode
         (the Better-memory failure)
-      - shortlist of up to `shortlist_k` distinct wedge_types, all marked
-        selected=1 (multi-winner shortlist for pre-build review)
+      - shortlist of up to `shortlist_k` distinct wedge_types
+
+    Storage ranks on wedges.selected:
+      1 = primary (use this for top-bet / validator handoff)
+      2..k = shortlist runners-up
+      0 = not selected
+
+    Measuring "primary" by MAX(personal_fit_score) among selected is WRONG —
+    that re-collapses to Better memory. Always use selected=1.
 
     force=True clears prior selections and re-runs over all fitted startups.
     Pure code — no agent, no builder.
@@ -437,12 +444,10 @@ def run_select_top_wedges(
             })
             continue
 
-        # shortlist: primary first, then other types by rank (max_per_type)
-        blocked_for_rest = set()  # don't block — shortlist_wedges uses max_per_type
         raw_sl = shortlist_wedges(
             wedges, fit, k=shortlist_k, max_per_type=max_per_type,
         )
-        # ensure primary is first even if global cap reordered it vs pure rank
+        # primary first even if global cap reordered vs pure rank
         shortlist: list = []
         seen_ids: set[int] = set()
         if primary.id is not None:
@@ -456,9 +461,9 @@ def run_select_top_wedges(
             if len(shortlist) >= shortlist_k:
                 break
 
-        for w in shortlist:
+        for rank, w in enumerate(shortlist, start=1):
             if w.id is not None:
-                db.mark_wedge_selected(w.id, True)
+                db.mark_wedge_selected(w.id, True, rank=rank)
 
         if db.get_startup(sid) and db.get_startup(sid).stage_marker == "analysed":
             db.set_stage_marker(sid, "scored")
@@ -473,9 +478,10 @@ def run_select_top_wedges(
                     "id": w.id,
                     "wedge_type": w.wedge_type,
                     "personal_fit_score": w.personal_fit_score,
-                    "primary": w.id == primary.id,
+                    "rank": i,
+                    "primary": i == 1,
                 }
-                for w in shortlist
+                for i, w in enumerate(shortlist, start=1)
             ],
             "shortlist_types": [w.wedge_type for w in shortlist],
         })

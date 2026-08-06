@@ -1037,11 +1037,22 @@ def test_mark_wedge_selected_round_trips(db):
     sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
     db.replace_wedges(sid, [
         WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+        WedgeRow(startup_id=sid, wedge_type="Cheaper", description="d2", evidence="c"),
     ])
-    w = db.get_wedges(sid)[0]
-    assert w.selected is False
-    db.mark_wedge_selected(w.id, True)
-    assert db.get_wedges(sid)[0].selected is True
+    ws = db.get_wedges(sid)
+    assert ws[0].selected is False
+    db.mark_wedge_selected(ws[0].id, True, rank=1)
+    db.mark_wedge_selected(ws[1].id, True, rank=2)
+    # bool view: both selected
+    assert all(w.selected for w in db.get_wedges(sid))
+    # rank 1 is primary
+    assert db.get_primary_wedge_id(sid) == ws[0].id
+    raw = db._conn.execute(
+        "SELECT id, selected FROM wedges WHERE startup_id=? ORDER BY id", (sid,)
+    ).fetchall()
+    by_id = {r["id"]: r["selected"] for r in raw}
+    assert by_id[ws[0].id] == 1
+    assert by_id[ws[1].id] == 2
 
 
 def test_upsert_pattern_idempotent_on_canonical_name(db):
