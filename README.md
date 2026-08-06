@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 102 | 97 `scored` + 5 `ingested` (Factory, Mem0, Redpanda, Unit21, Lovable) |
-| `analysed` (cohort) | 97 | 5 await analyse (new-market fan-out) |
-| `wedges` | 1940 | **97 primary** until analyse→score→select on 106–110 |
-| `infrastructure_ops` | 474 | per-startup platform needs |
+| `startups` | 102 | 97 `scored` + 5 `analysed` (Factory, Mem0, Redpanda, Unit21, Lovable) |
+| `analysed` (cohort) | 102 | all analysed; 5 await score_a |
+| `wedges` | 2040 | **97 primary** until score_a→select on 106–110 |
+| `infrastructure_ops` | 494 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
-| `market_segments` | 114 | CANONICAL **24**; 24/24 segments; 20/24 analysed (4 new await) |
-| `candidate_startups` | 266 | pending after this ingest batch |
-| `personal_fit` | 97 | 5 await score_a post-analyse |
+| `market_segments` | 114 | CANONICAL **24**; 24/24 segments; **22/24** analysed |
+| `candidate_startups` | 266 | pending_ingest≈40 after score drains |
+| `personal_fit` | 97 | 5 await score_a |
 | `pattern_library` | 13 | cluster needs ≥20 new since last |
 
-**`plan_recursive_fanout` next_action = `analyse`** on ids `[106–110]`. Ingest covered Factory (AI Coding Agents), Mem0 (Agent Memory), Redpanda (Streaming), Unit21 (Fraud Detection), Lovable (AI Engineering). Primary mix (scored): Better memory 26, Better evaluation 24, Developer-first 15, AI-native 14.
+**`plan_recursive_fanout` next_action = `score_a`** on ids `[106–110]`. markets_without_analysed residual may still list Streaming/Fraud until coverage join settles; Factory/Mem0/Lovable advanced AI Coding Agents + Agent Memory. Primary mix: Better memory 26, Better evaluation 24.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24; segments 114; candidates 266; **102 startups** (97 scored + 5 ingested). Latest ingest: Factory, Mem0, Redpanda, Unit21, Lovable (ids 106–110). **88 tests green.**
-- **Next fire:** `analyse` 106–110 → score_a → select; continue until 24/24 markets_with_analysed.
+- **Done (pushed):** CANONICAL 24; segments 114; **102 startups** all analysed (97 scored + 5 analysed); **2040 wedges**; 494 infra_ops; 97 primary. Latest: **analyse** Factory/Mem0/Redpanda/Unit21/Lovable (106–110). **88 tests green.**
+- **Next fire:** `score_a` + select on 106–110 → continue ingest for any residual markets_without_analysed.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -128,10 +128,10 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## The next highest-ROI moves
 
-1. **Analyse wave** on 106–110 (drain before more ingest).
-2. Score_a + select to complete E2E for new-market cohort.
-3. Repeat ingest→analyse until `with_analysed_startups` = 24/24.
-4. **Clusterer** once ≥20 new since last run.
+1. **score_a + select** on 106–110 to complete E2E (fit+primary).
+2. Ingest more Streaming/Fraud candidates if coverage still shows gaps.
+3. **Clusterer** once ≥20 new since last run.
+4. Optional further CANONICAL expand.
 
 ## Subagent dispatch contract
 
