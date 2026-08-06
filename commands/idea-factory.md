@@ -10,4 +10,4 @@ Load the `idea-factory` skill (`skill/SKILL.md` or `~/.config/opencode/skills/id
 
 Invariants: **analyse drains before more ingest**; scorer never overwrites human-locked fit; clusterer needs 3+ cross-cluster sightings + fixed edge vocab; kill metric checked each pass; **stage 06 / idea-factory-builder is forbidden**.
 
-Live board (Aug 07 2026): 82 startups all scored / 1640 wedges / 82 primary / next often `ingest` then analyse — always re-plan via `plan_recursive_fanout`.
+Live board (Aug 07 2026): 87 startups / 1640 wedges / 82 primary / next often analyse drain after ingest — always re-plan via `plan_recursive_fanout`.
