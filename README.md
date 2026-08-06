@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 107 | all 107 `scored` (E2E complete) |
-| `analysed` (cohort) | 107 | full cohort analysed + scored + primary selected |
+| `startups` | 112 | 107 `scored` E2E + **5 ingested** (Poolside/Stainless/Cognee/Deel/Decodable) |
+| `analysed` (cohort) | 107 | prior cohort scored + primary; analyse backlog = 5 |
 | `wedges` | 2140 | **107 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 514 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈40; next Poolside/Stainless/Cognee/… |
-| `personal_fit` | 107 | all scored |
+| `candidate_startups` | 266 | board pending_ingest≈154; fanout batches remain after analyse drain |
+| `personal_fit` | 107 | all scored on prior cohort |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Cluster complete; new_since=0. Primary mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
+**`plan_recursive_fanout` next_action = `analyse`**. Ingest-13 complete; backlog=5 (cap). Primary mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; 107 startups e2e; 2140 wedges; 514 infra_ops; **107 primary**; **patterns 15**. Latest: **cluster** — infra graph refresh (4 convergent); promote Long-horizon autonomous coding agents + Multi-channel product notification infrastructure. **88 tests green.**
-- **Next fire:** `ingest` (Poolside, Stainless, Cognee, …) or further CANONICAL expand; optional score_b.
+- **Done (pushed):** CANONICAL 24/24; 107 startups e2e; 2140 wedges; 514 infra_ops; **107 primary**; **patterns 15**. Latest: **ingest wave** — Poolside, Stainless, Cognee, Deel, Decodable → stage `ingested` (ids 116–120); startups 112; next **analyse** drain. **88 tests green.**
+- **Next fire:** `analyse` drain on ids 116–120 (Poolside, Stainless, Cognee, Deel, Decodable); then score_a → select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
