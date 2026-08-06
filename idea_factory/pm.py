@@ -90,6 +90,9 @@ def _chunk(items: list, size: int) -> list[list]:
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
+_SCRIPT_STYLE_RE = re.compile(
+    r"(?is)<(script|style|noscript)\b[^>]*>.*?</\1>",
+)
 
 
 def html_to_summary(html: str, max_chars: int = 1200) -> str:
@@ -98,8 +101,13 @@ def html_to_summary(html: str, max_chars: int = 1200) -> str:
     webfetch returns 60KB+ of marketing copy per startup. Without this, a
     5-startup cohort blows the context budget before SID extraction even
     starts. The ingestor reasons over the summary, not the raw page.
+
+    Modern marketing sites ship huge inline <script>/<style> blocks; if we
+    only strip tags those bodies become noise that crowds out real copy
+    within max_chars. Drop script/style/noscript first.
     """
-    no_tags = _TAG_RE.sub(" ", html)
+    cleaned = _SCRIPT_STYLE_RE.sub(" ", html)
+    no_tags = _TAG_RE.sub(" ", cleaned)
     collapsed = _WS_RE.sub(" ", no_tags).strip()
     if len(collapsed) > max_chars:
         collapsed = collapsed[:max_chars] + " ...[truncated]"
