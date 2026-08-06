@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 122 | **all 122 scored**; ids 126–130 await select |
-| `analysed` (cohort) | 122 | full cohort analysed + scored |
-| `wedges` | 2440 | **117 primary** (selected=1); select_pending=5 |
+| `startups` | 122 | **all 122 scored** E2E complete (primary + shortlist) |
+| `analysed` (cohort) | 122 | full cohort analysed + scored + selected |
+| `wedges` | 2440 | **122 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 593 | +24 from Composio/MC/Fly/Sublime/StackAI |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
 | `candidate_startups` | 266 | pending_ingest≈40 after clearing Composio/MC/Fly/Sublime/StackAI |
-| `personal_fit` | 122 | Sublime=65; Composio=60; Langbase=68; Monte Carlo=49; StackAI=40; Fly=38 |
+| `personal_fit` | 122 | Langbase=68; Sublime=65; Composio=60; MC=49; StackAI=40; Fly=38 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `select`**. Scored ids **126–130** (Composio=60, Monte Carlo=49, Fly.io=38, Sublime=65, StackAI=40). Primary mix Better memory 34, Better evaluation 32, AI-native 18 (cap OK ~29%).
+**`plan_recursive_fanout` next_action = `ingest`**. Select complete for 122; primary mix Better memory 36, Better evaluation 34, AI-native 19 (cap OK ~29.5%; collapse>40% not hit).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **117/122** primary; wedges 2440; personal_fit **122**; infra_ops 593; **117 primary**; **patterns 15**. Latest: **score_a-15** — Composio=60, MC=49, Fly=38, Sublime=65, StackAI=40 → `scored`. next **select**. **88 tests green.**
-- **Next fire:** `select` (run_select_top_wedges) for ids 126–130.
+- **Done (pushed):** CANONICAL 24/24; e2e **122/122**; wedges 2440; personal_fit 122; infra_ops 593; **122 primary**; **patterns 15**. Latest: **select-15** — Composio→Better memory; Monte Carlo→Better evaluation; Fly.io→AI-native; Sublime→Better memory; StackAI→Better evaluation. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` next pending batch (diversified) or CANONICAL expand.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **select** primaries/shortlist for ids 126–130.
-2. Optional score_b / infra fit refresh.
-3. Further **CANONICAL expand** (founder gaps past 24).
+1. **Ingest** ≤5; keep analyse backlog clear.
+2. Further **CANONICAL expand** (founder gaps past 24).
+3. Optional **score_b** / infra fit refresh on convergent layers.
 4. Next cluster after +20 startups since last cluster (currently +15).
 
 ## Subagent dispatch contract
