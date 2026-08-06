@@ -294,15 +294,45 @@ def analyst_fanout_ids(
     return _chunk(ids[: parallel * max_waves], parallel)
 
 
+# Cap: never open more ingest while this many sit at stage_marker='ingested'.
+# Prevents the loop from drowning the board in SID rows with zero wedges.
+MAX_INGESTED_AWAITING_ANALYSE = 5
+
+# This factory is PRE-BUILD ONLY. Stage 06 (builder) is never planned or dispatched.
+PREBUILD_TERMINAL_STAGES = frozenset({
+    "analyse", "score_a", "score_b", "select", "cluster", "scout", "ingest", "idle",
+})
+
+
 def scorer_mode_a_fanout_ids(
     db, *, parallel: int = DEFAULT_SCORER_PARALLEL, max_waves: int = DEFAULT_MAX_FANOUT_WAVES,
 ) -> list[list[int]]:
-    """Analysed startups lacking a personal_fit row (or needing Mode A)."""
+    """Analysed startups that still need Mode A scoring.
+
+    Includes: no personal_fit row, OR any evidence wedge missing personal_fit_score
+    (so top_wedge ranking is not an insertion-order lottery).
+    Skips startups whose personal_fit is human-locked (reviewed_at set) AND all
+    wedges already scored — those need an explicit unlock, not a silent rescore.
+    """
     rows = db._conn.execute(
         """
-        SELECT s.id FROM startups s
+        SELECT DISTINCT s.id FROM startups s
         LEFT JOIN personal_fit pf ON pf.startup_id = s.id
-        WHERE s.stage_marker = 'analysed' AND pf.startup_id IS NULL
+        LEFT JOIN wedges w ON w.startup_id = s.id
+          AND w.evidence IS NOT NULL AND TRIM(w.evidence) != ''
+        WHERE s.stage_marker IN ('analysed', 'scored')
+          AND (
+            pf.startup_id IS NULL
+            OR (
+              (pf.reviewed_at IS NULL)
+              AND EXISTS (
+                SELECT 1 FROM wedges w2
+                WHERE w2.startup_id = s.id
+                  AND w2.evidence IS NOT NULL AND TRIM(w2.evidence) != ''
+                  AND w2.personal_fit_score IS NULL
+              )
+            )
+          )
         ORDER BY s.id
         """
     ).fetchall()
@@ -326,6 +356,65 @@ def scorer_mode_b_fanout_ids(
     return _chunk(ids, parallel) if ids else []
 
 
+def select_wedge_fanout_ids(db) -> list[int]:
+    """Scored (or analysed+fitted) startups with evidence wedges but none selected.
+
+    Pre-build terminal step: run decisions.top_wedge + db.mark_wedge_selected.
+    Never implies builder dispatch.
+    """
+    rows = db._conn.execute(
+        """
+        SELECT s.id FROM startups s
+        JOIN personal_fit pf ON pf.startup_id = s.id
+        WHERE s.stage_marker IN ('analysed', 'scored')
+          AND EXISTS (
+            SELECT 1 FROM wedges w
+            WHERE w.startup_id = s.id
+              AND w.evidence IS NOT NULL AND TRIM(w.evidence) != ''
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM wedges w2
+            WHERE w2.startup_id = s.id AND w2.selected = 1
+          )
+        ORDER BY s.id
+        """
+    ).fetchall()
+    return [int(r["id"]) for r in rows]
+
+
+def run_select_top_wedges(db) -> list[dict]:
+    """Deterministic pre-build selection: top evidence wedge per fitted startup.
+
+    Writes wedges.selected=1 for the winner. Pure code — no agent, no builder.
+    """
+    from idea_factory.decisions import top_wedge
+
+    results = []
+    for sid in select_wedge_fanout_ids(db):
+        wedges = db.get_wedges(sid)
+        fit = db.get_personal_fit(sid)
+        if fit is None:
+            continue
+        winner = top_wedge(wedges, fit)
+        if winner is None or winner.id is None:
+            results.append({"startup_id": sid, "selected": None, "reason": "no evidence wedge"})
+            continue
+        # clear prior selections then mark winner
+        for w in wedges:
+            if w.selected and w.id is not None:
+                db.mark_wedge_selected(w.id, False)
+        db.mark_wedge_selected(winner.id, True)
+        if db.get_startup(sid) and db.get_startup(sid).stage_marker == "analysed":
+            db.set_stage_marker(sid, "scored")
+        results.append({
+            "startup_id": sid,
+            "selected": winner.id,
+            "wedge_type": winner.wedge_type,
+            "personal_fit_score": winner.personal_fit_score,
+        })
+    return results
+
+
 def plan_recursive_fanout(
     db,
     *,
@@ -334,20 +423,24 @@ def plan_recursive_fanout(
     analyst_parallel: int = DEFAULT_ANALYST_PARALLEL,
     scorer_parallel: int = DEFAULT_SCORER_PARALLEL,
     depth: int = 2,
+    max_ingested_backlog: int = MAX_INGESTED_AWAITING_ANALYSE,
 ) -> dict:
-    """Single source of truth for the PM's parallel dispatch wave.
+    """Single source of truth for the PM's parallel dispatch wave (PRE-BUILD ONLY).
 
-    Returns a priority-ordered plan. The PM should execute the first non-empty
-    stage's first wave in parallel, then re-plan next fire. Recursive because
-    each stage's output feeds the next stage's fan-out on the subsequent plan.
+    Priority is depth-first through pre-build stages so the board never piles
+    up ingested SIDs with zero wedges (the failure mode of ingest-first loops):
 
-    Stages (first non-empty wins as `next_action`):
-      1. scout   — uncovered markets, chunked for parallel market-scout agents
-      2. ingest  — diversified pending candidates in parallel batches
-      3. analyse — stage_marker='ingested' startups
-      4. score_a — analysed startups without personal_fit
-      5. score_b — convergent infra nodes without infra_personal_fit
-      6. idle    — board is caught up; run convergence digest / fixes
+      1. analyse  — drain stage_marker='ingested' (ideas get generated HERE)
+      2. score_a  — personal_fit + per-wedge scores
+      3. score_b  — convergent infra founder-fit (v2)
+      4. select   — top_wedge mark (deterministic; terminal pre-build artifact)
+      5. cluster  — pattern library when threshold met
+      6. scout    — only uncovered canonical markets
+      7. ingest   — ONLY if ingested-awaiting-analyse < max_ingested_backlog
+      8. idle     — convergence digest + prebuild summary
+
+    NEVER returns builder / stage 06. Validation (05) is human-gated and not
+    auto-planned here — surface it in blockers when top wedges are selected.
     """
     cov = market_coverage(db)
     scout_inputs = scout_fanout_inputs(
@@ -357,31 +450,14 @@ def plan_recursive_fanout(
     analyse_waves = analyst_fanout_ids(db, parallel=analyst_parallel)
     score_a_waves = scorer_mode_a_fanout_ids(db, parallel=scorer_parallel)
     score_b_waves = scorer_mode_b_fanout_ids(db, parallel=scorer_parallel)
+    select_ids = select_wedge_fanout_ids(db)
+    ingested_backlog = len(startups_at_stage(db, "ingested"))
+    clusterer_inp = build_clusterer_input(db)
+    new_since = db.count_startups_since(clusterer_inp.last_run_at)
+    cluster_ready = new_since >= clusterer_inp.min_new_since_last
 
-    if scout_inputs:
-        next_action = "scout"
-        wave = {
-            "stage": "00",
-            "agent": "idea-factory-market-scout",
-            "parallel": len(scout_inputs),
-            "inputs": [
-                {"markets": inp.markets, "depth": inp.depth} for inp in scout_inputs
-            ],
-        }
-    elif ingest_batches:
-        next_action = "ingest"
-        first = ingest_batches[0]
-        wave = {
-            "stage": "01",
-            "agent": "idea-factory-ingestor",
-            "parallel": len(first),
-            "candidates": [
-                {"name": c.name, "website": c.website, "market_segment_id": c.market_segment_id}
-                for c in first
-            ],
-            "remaining_batches": len(ingest_batches) - 1,
-        }
-    elif analyse_waves:
+    # Depth-first pre-build — analyse before any more ingest.
+    if analyse_waves:
         next_action = "analyse"
         wave = {
             "stage": "02",
@@ -389,6 +465,7 @@ def plan_recursive_fanout(
             "parallel": len(analyse_waves[0]),
             "startup_ids": analyse_waves[0],
             "remaining_waves": len(analyse_waves) - 1,
+            "ingested_backlog": ingested_backlog,
         }
     elif score_a_waves:
         next_action = "score_a"
@@ -410,26 +487,80 @@ def plan_recursive_fanout(
             "infra_node_ids": score_b_waves[0],
             "remaining_waves": len(score_b_waves) - 1,
         }
+    elif select_ids:
+        next_action = "select"
+        wave = {
+            "stage": "04b",
+            "agent": None,  # deterministic: pm.run_select_top_wedges
+            "parallel": 0,
+            "startup_ids": select_ids[:scorer_parallel],
+            "hint": "run_select_top_wedges(db) — no builder",
+        }
+    elif cluster_ready:
+        next_action = "cluster"
+        wave = {
+            "stage": "07",
+            "agent": "idea-factory-clusterer",
+            "parallel": 1,
+            "min_new_since_last": clusterer_inp.min_new_since_last,
+            "new_since": new_since,
+        }
+    elif scout_inputs:
+        next_action = "scout"
+        wave = {
+            "stage": "00",
+            "agent": "idea-factory-market-scout",
+            "parallel": len(scout_inputs),
+            "inputs": [
+                {"markets": inp.markets, "depth": inp.depth} for inp in scout_inputs
+            ],
+        }
+    elif ingest_batches and ingested_backlog < max_ingested_backlog:
+        next_action = "ingest"
+        first = ingest_batches[0]
+        wave = {
+            "stage": "01",
+            "agent": "idea-factory-ingestor",
+            "parallel": len(first),
+            "candidates": [
+                {"name": c.name, "website": c.website, "market_segment_id": c.market_segment_id}
+                for c in first
+            ],
+            "remaining_batches": len(ingest_batches) - 1,
+            "ingested_backlog": ingested_backlog,
+            "max_ingested_backlog": max_ingested_backlog,
+        }
     else:
         next_action = "idle"
+        blocked_ingest = bool(ingest_batches) and ingested_backlog >= max_ingested_backlog
         wave = {
             "stage": None,
             "agent": None,
             "parallel": 0,
-            "hint": "run_infra_convergence + high-ROI code fixes + board_status",
+            "hint": (
+                "run_infra_convergence + run_infra_fit_digest + board_status; "
+                "NEVER dispatch builder (06)"
+            ),
+            "ingest_paused_for_analyse_backlog": blocked_ingest,
+            "ingested_backlog": ingested_backlog,
         }
 
     return {
         "next_action": next_action,
         "wave": wave,
         "coverage": cov,
+        "prebuild_only": True,
+        "never_dispatch": ["06", "idea-factory-builder"],
         "queues": {
             "scout_agents": len(scout_inputs),
-            "ingest_batches": len(ingest_batches),
+            "ingest_batches": len(ingest_batches) if ingested_backlog < max_ingested_backlog else 0,
             "pending_ingest": sum(len(b) for b in ingest_batches),
+            "ingested_awaiting_analyse": ingested_backlog,
             "analyse_waves": len(analyse_waves),
             "score_a_waves": len(score_a_waves),
             "score_b_waves": len(score_b_waves),
+            "select_pending": len(select_ids),
+            "cluster_ready": cluster_ready,
         },
     }
 
@@ -672,7 +803,11 @@ def board_status(db) -> dict:
             startups=startups,
             uncovered_markets=len(coverage["uncovered_markets"]),
             pool_size=coverage["pool_size"],
+            ingested_backlog=fanout["queues"].get("ingested_awaiting_analyse", 0),
+            select_pending=fanout["queues"].get("select_pending", 0),
         ),
+        "prebuild_only": True,
+        "never_dispatch": fanout.get("never_dispatch", ["06", "idea-factory-builder"]),
     }
 
 
@@ -691,40 +826,52 @@ def _board_blockers(
     startups: int,
     uncovered_markets: int = 0,
     pool_size: int = 20,
+    ingested_backlog: int = 0,
+    select_pending: int = 0,
 ) -> list[str]:
-    """Deterministic resume hints for a fresh PM session."""
+    """Deterministic resume hints for a fresh PM session (pre-build only)."""
     blockers: list[str] = []
     if startups == 0:
         blockers.append("empty board: run market-scout then ingestor (or git lfs pull sid.db)")
         return blockers
+    if ingested_backlog > 0:
+        blockers.append(
+            f"PRE-BUILD PRIORITY: {ingested_backlog} startups ingested await analyst "
+            "(ideas not generated yet) — plan next_action=analyse; do not ingest more"
+        )
     if uncovered_markets > 0:
         blockers.append(
             f"scout fan-out: {uncovered_markets}/{pool_size} canonical markets still "
             "have zero segments — plan_recursive_fanout → scout"
         )
-    if pending_ingest > 0 and analysed < 20:
+    if pending_ingest > 0 and analysed < 20 and ingested_backlog == 0:
         blockers.append(
-            f"grow cohort: {pending_ingest} candidates not yet ingested "
-            f"({analysed}/20 towards clusterer threshold)"
+            f"candidates remain: {pending_ingest} pending ingest "
+            f"({analysed} analysed) — after analyse queue is clear"
         )
     if personal_fit_locked > 0 and personal_fit == personal_fit_locked:
         blockers.append(
-            f"scorer Mode A blocked: {personal_fit_locked} personal_fit rows human-locked "
-            "(UPDATE reviewed_at=NULL or force=True to re-score)"
+            f"scorer Mode A: {personal_fit_locked} personal_fit rows human-locked "
+            "(unlock reviewed_at=NULL or force=True to re-score)"
         )
     if convergent > 0 and infra_fit < convergent:
         blockers.append(
             f"scorer Mode B incomplete: {infra_fit}/{convergent} convergent layers scored"
         )
+    if select_pending > 0:
+        blockers.append(
+            f"select pending: {select_pending} fitted startups need run_select_top_wedges"
+        )
     if personal_fit > 0 and outreach == 0:
         blockers.append(
-            "validator blocked: no outreach yet (needs user approval + gmail pairing)"
+            "validator optional/human-gated (pre-build); no outreach yet — not a builder cue"
         )
     if new_since < min_clusterer and patterns == 0:
         blockers.append(
             f"clusterer waiting: {new_since}/{min_clusterer} new startups "
-            "(or run with min_new_since_last=0 for on-demand pass)"
+            "(or min_new_since_last=0 for on-demand pass)"
         )
+    blockers.append("builder disabled: skill is pre-build only (never dispatch stage 06)")
     return blockers
 
 

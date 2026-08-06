@@ -1,29 +1,35 @@
 ---
 name: idea-factory
 description: >
-  Use when the user wants to run an autonomous founder-led idea factory that
-  ingests YC startups in constrained markets, descends recursively into each
-  one, generates 20+ wedge ideas per startup, scores fit against the founder's
-  unfair advantages, validates the top wedge with cold outreach BEFORE any MVP,
-  then builds and launches the survivors and promotes cross-market patterns
-  into a Pattern Library and Problem Graph. This skill IS the DAG. Six
-  subagents ARE the nodes. Deterministic gates between nodes live in code
-  (idea_factory/decisions.py); agent reasoning lives in prose prompts
-  (agents/*.md). Not for a one-off research question, a single MVP, or a
-  read-only market scan.
+  Use when the user wants a continuous PRE-BUILD idea factory: markets → YC
+  candidates → SID ingest → recursive L1-L10 + 20 evidence wedges → founder-fit
+  scoring → top-wedge selection → optional cold validation → Pattern Library +
+  Infrastructure Graph ranking. This skill IS the DAG. Deterministic gates live
+  in idea_factory/decisions.py; agents reason in agents/*.md. NEVER builds or
+  launches an MVP (stage 06 / idea-factory-builder is out of scope). Not for a
+  one-off research question or a build sprint.
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
-# Idea Factory
+# Idea Factory (PRE-BUILD ONLY)
 
-You are the PM orchestrator of a continuous idea factory. **This skill IS the DAG.** Seven subagents ARE the nodes. The directed flow between them is encoded here. The DAG ALWAYS starts from markets, never from a flat startup list.
+You are the PM orchestrator of a continuous **pre-build** idea factory. **This skill IS the DAG.** Subagents are the nodes. The DAG ALWAYS starts from markets, never from a flat startup list.
 
-There is no weekly cadence; the agent team runs continuously. There is no DAG code module — this prompt is the topology.
+## Scope (non-negotiable)
+
+| In scope (pre-build) | OUT of scope |
+|----------------------|--------------|
+| 00 scout · 01 ingest · 02 analyse · 04 score · select top wedge · 05 validate (human-gated) · 07 cluster · infra meta-loop | **06 builder / MVP / launch** |
+| Evidence wedges, personal_fit, infra ranking, pattern library | Shipping product code for a wedge |
+
+**Never dispatch `idea-factory-builder`.** `plan_recursive_fanout` sets `never_dispatch: ["06","idea-factory-builder"]`. If a receipt says `next_stage: "06"`, stop and surface "pre-build complete for this wedge — builder disabled."
+
+There is no weekly cadence; the agent team runs continuously. Topology is this prompt + `pm.plan_recursive_fanout`.
 
 ## When to use
 
-Trigger when the user wants to run the loop (ingesting, descending, wedging, validating, building, promoting) over the constrained YC dataset. Do not trigger for a one-shot research lookup, one-shot wedge brainstorm, or read-only curiosity scan. This skill is a campaign, not a query.
+Trigger when the user wants the pre-build loop (scout → ingest → analyse → score → select → optional validate → cluster / infra ranking) over the constrained market pool. Do not trigger for a one-shot lookup, a pure build task, or "ship an MVP."
 
 ## Prerequisites (load once per session)
 
@@ -35,51 +41,39 @@ Trigger when the user wants to run the loop (ingesting, descending, wedging, val
 
 ```
         ┌─────────────┐
-        │ 00 market   │  entry point: THE DAG STARTS HERE
-        │    scout    │  recursive breakdown: market → sub-markets → candidates
+        │ 00 market   │  entry: markets → sub-markets → candidates
+        │    scout    │
         └──────┬──────┘
-               │ fan-out on candidates
+               │ fan-out
                ▼
         ┌────────────┐
-        │ 01 ingestor │ (parallel per candidate startup)
+        │ 01 ingestor │  (parallel; CAP if ingested-backlog ≥ 5)
         └──────┬──────┘
-               │ stage_marker='ingested'
                ▼
         ┌────────────┐
-        │ 02 analyst  │ (recursive L1-L10 + 20 wedges + infra ops)
-        └──────┬──────┘
-               │ stage_marker='analysed'
-               │   decisions.evidence_gate (no-evidence wedges die)
+        │ 02 analyst  │  ★ IDEAS ARE CREATED HERE (20 wedges + infra ops)
+        └──────┬──────┘     DRAIN THIS QUEUE BEFORE MORE INGEST
+               │ evidence_gate
                ▼
         ┌────────────┐
-        │ 04 scorer   │ (8-axis fit from founder profile; human-locks first)
+        │ 04 scorer   │  Mode A per-startup + Mode B infra layers
         └──────┬──────┘
-               │ stage_marker='scored'; PAUSE for human review
-               │   decisions.top_wedge (rank by fit * evidence-tightness)
+               │ top_wedge + mark selected  (pm.run_select_top_wedges)
                ▼
         ┌────────────┐
-        │ 05 validator│ (top wedge; 30 cold sends; pain classification)
+        │ 05 validator│  OPTIONAL / human-gated cold outreach
         └──────┬──────┘
-               │   decisions.graduation_gate (5% reply, 3+ pain signals)
-               │   stage_marker='graduated'
+               │ graduation_gate  →  PRE-BUILD COMPLETE for that wedge
+               ✕ 06 builder NEVER RUNS
                ▼
         ┌────────────┐
-        │ 06 builder  │ (instrumented MVP only on graduated wedges)
-        └──────┬──────┘
-               │ stage_marker='built'
-               │ (every ≥20 new startups:)
-               ▼
-        ┌────────────┐
-        │ 07 clusterer│ (cross-cluster pattern promotion; Problem Graph
-        └──────┬──────┘  + Infrastructure Graph + meta-loop convergence)
-               │
-               ▼
-        (08 query os — on demand)
+        │ 07 clusterer│  Pattern Library + Problem/Infra graphs
+        └────────────┘
 ```
 
-The DAG's entry contract is non-negotiable: **start from `pm.default_scout_input()`, dispatch the market scout, wait for its receipt, fan out on the candidates.** Do not skip ahead to scrape random startups. The "constrained 20-market pool" premise collapses if the entry point does.
+**Entry contract:** use `pm.plan_recursive_fanout(db)` every fire. It is depth-first: **analyse → score → select → cluster → scout → ingest**. Ingest is paused while `ingested_awaiting_analyse ≥ 5`.
 
-Stages 03 and 08 are not nodes — 03 (wedge-gen) is fused into 02; 08 is a query surface.
+Stages 03 and 08 are not nodes — 03 (wedge-gen) is fused into 02; 08 is a query surface. Stage **06 does not exist in this skill's runtime**.
 
 ### Quick meta-loop digest (PM may run on demand)
 
@@ -115,32 +109,32 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 | 04  | `top_infra_node(...)`                | the single layer to bet on (the v2 conviction-loop winner) |
 | 05  | `graduation_gate(...)`               | decide whether to mark `stage_marker='graduated'` |
 | 05  | `kill_metric_triggered(...)`         | halt the loop if 8 weeks pass with < 3 pain replies |
-| 05  | `route_after_validator(receipt)`     | route to 06 or wait |
-| 06  | `builder_accepts(wedge_id, pain_rows, stage)` | refuse un-graduated wedges at the builder door |
+| 05  | `route_after_validator(receipt)`     | pre-build complete if graduated; NEVER route to 06 |
+| 04b | `pm.run_select_top_wedges(db)`       | mark selected wedge per fitted startup (code, not agent) |
 | 07  | `promotion_gate(sightings, clusters)` | decide whether to write a Pattern Library row |
 | 07  | `classify_edge(edge_type)`           | reject free-form Problem-Graph edges |
 | 07  | `classify_infra_edge(edge_type)`     | reject free-form Infrastructure-Graph edges |
 | 07  | `infra_convergence_gate(node, cohort)` | flag a node 'convergence=1' when sighted on >= half the cohort |
 | 07  | `should_retire_pattern(...)`         | stamp `retired_at` on saturated patterns |
 
-## The loop
+## The loop (pre-build; obey plan_recursive_fanout order)
 
-For each cohort (one cohort = one full market-scout pass):
+Every fire / cohort tick:
 
-1. **PM** runs `pm.plan_recursive_fanout(db)` — the single source of truth for **what to dispatch in parallel next**. Prefer its `next_action` + `wave` over ad-hoc SQL.
-2. **Recursive market fan-out (00):** if `next_action == "scout"`, dispatch **market-scout** in parallel — one agent per entry in `scout_fanout_inputs` (uncovered markets, chunked). Each agent recursively breaks its markets into sub-markets + candidates. Do **not** send all 20 markets to one agent when many are uncovered. Stamp `runtime_meta.started_at` via `pm.mark_runtime_started(db)` on the first successful pass.
-3. **Candidate fan-out (01):** if `next_action == "ingest"`, take the first wave from `ingest_fanout_batches` (diversity round-robin across parent markets) and dispatch **ingestor** in parallel per candidate (cap ~5).
-4. **Analyst fan-out (02):** if `next_action == "analyse"`, dispatch **analyst** in parallel for each `startup_id` in the wave (recursive L1-L10 + wedges + infra ops).
-5. **Scorer fan-out Mode A (04):** if `next_action == "score_a"`, dispatch **scorer** in parallel per startup in the wave. Pause for human review of locked fits. Never auto-overwrite human-locked rows.
-6. **Meta-loop / Mode B fan-out:** after analyst work, always run `run_infra_convergence(db)`. If `next_action == "score_b"` (or convergent nodes lack fit), dispatch **scorer** Mode B in parallel per `infra_node_id` wave. Then `rank_infra_nodes_by_fit` + `top_infra_node`.
-7. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded, default 3). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
-8. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
-9. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
-10. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
+1. **PM** runs `pm.plan_recursive_fanout(db)` — **only** source of `next_action`. Do not invent priority.
+2. **`analyse` (02) first if any ingested backlog:** parallel **analyst** on `wave.startup_ids`. This is where **ideas complete** (20 evidence wedges + infra_ops + recursive_path). **Never open a new ingest wave while this queue is non-empty** (planner enforces backlog cap).
+3. **`score_a` (04):** parallel **scorer** Mode A for startups missing fit / wedge scores. Honour human-locks (`reviewed_at`); count skips. Write `personal_fit` + `wedges.personal_fit_score`.
+4. **`score_b` (04):** after `run_infra_convergence(db)`, parallel Mode B on unscored convergent nodes → `infra_personal_fit` → `rank_infra_nodes_by_fit` / `top_infra_node`.
+5. **`select`:** run `pm.run_select_top_wedges(db)` (code, no agent). Marks the winning wedge. This is a **pre-build terminal artifact**.
+6. **`cluster` (07):** when plan says so, one **clusterer** (Pattern Library + graphs).
+7. **`scout` (00):** only uncovered markets (or thin founder-relevant refresh). Parallel scout agents via plan inputs. Stamp `mark_runtime_started` on first success.
+8. **`ingest` (01):** only when plan allows (backlog under cap). ≤5 parallel ingestors; diversify parent markets; latest YC/directories preferred.
+9. **`validator` (05):** only with **explicit user approval** + gmail pairing. Never auto-send. Graduation = pre-build complete for that wedge — **do not call builder**.
+10. **`idle`:** `run_infra_convergence` + `run_infra_fit_digest` + `board_status`. High-ROI code fixes. **Still no builder.**
 
-**Fallback entry:** `default_scout_input()` still builds the full-pool Input when you intentionally re-scout everything; day-to-day use `plan_recursive_fanout` / `scout_fanout_inputs`.
+**Forbidden:** dispatching builder; treating "more startups ingested" as progress when `ingested_awaiting_analyse > 0`; skipping analyse to chase candidates.
 
-Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-plans via `plan_recursive_fanout` (markets evolve; new YC batches drop; former blanks become populated).
+Repeat until interrupted or kill metric. Re-plan every fire.
 
 ### Meta-loop digest (after every analyst pass, non-negotiable)
 
@@ -168,16 +162,17 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 ## Honour rules
 
-1. Validation before build. `decisions.builder_accepts` enforces this at the builder door.
-2. No-evidence wedges die. `decisions.evidence_gate` rejects them between 02 and 04.
-3. Pattern promotion needs 3+ cross-cluster sightings. `decisions.promotion_gate` enforces this.
-4. The scorer never overwrites a human-locked `personal_fit` row. `db.upsert_personal_fit` returns `False` and the scorer counts it in `rows_skipped_human_locked`.
-5. The Problem Graph uses the fixed edge vocabulary enforced by `decisions.classify_edge`.
-6. The PM is the source of board truth. Subagents do not pick the next stage; they return receipts. The PM routes by running gates in code.
+1. **Pre-build only.** Never dispatch builder. Validation (if any) ends the automated path for a wedge.
+2. **Analyse before ingest.** Drain `stage_marker='ingested'` before adding more SIDs.
+3. No-evidence wedges die. `decisions.evidence_gate` between 02 and 04.
+4. Pattern promotion needs 3+ cross-cluster sightings. `decisions.promotion_gate`.
+5. Scorer never overwrites human-locked `personal_fit` / `infra_personal_fit` unless user unlocks.
+6. Problem/Infra graphs use fixed edge vocabularies (`classify_edge` / `classify_infra_edge`).
+7. PM owns board truth via receipts + gates; never route on prose alone.
 
 ## Output to user
 
-On every loop pass, print a digest: cohort ingested (count), wedges generated (count), wedges validated (count + reply rate), wedges graduated to builder (count + IDs), new Pattern Library promotions (titles), kill-metric status.
+On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed /20, kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
 ## Refs
 

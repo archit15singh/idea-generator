@@ -19,6 +19,7 @@ from idea_factory.pm import (  # noqa: F401
     mark_runtime_started,
     market_coverage,
     plan_recursive_fanout,
+    run_select_top_wedges,
     scout_fanout_inputs,
     uncovered_markets,
 )

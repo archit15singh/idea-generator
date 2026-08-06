@@ -1246,10 +1246,12 @@ def test_board_status_after_cohort_lists_actionable_blockers(db):
     assert status["wedges_with_evidence"] == 3
     assert status["convergent_nodes"] >= 1
     assert status["by_stage"].get("scored") == 3
-    # scored but no outreach; clusterer not ready; no infra fit scored
-    assert any("validator blocked" in b for b in status["blockers"])
+    # scored but no outreach; clusterer not ready; no infra fit scored; pre-build
+    assert any("validator optional" in b or "no outreach" in b for b in status["blockers"])
     assert any("clusterer waiting" in b for b in status["blockers"])
     assert any("Mode B incomplete" in b for b in status["blockers"])
+    assert any("builder disabled" in b for b in status["blockers"])
+    assert status.get("prebuild_only") is True
 
 # --- recursive fan-out planning ---
 
@@ -1299,15 +1301,15 @@ def test_diversify_round_robin_prefers_undercovered():
     assert names[2] == "A1"
 
 
-def test_plan_recursive_fanout_priority_scout_then_ingest(db):
+def test_plan_recursive_fanout_priority_analyse_before_ingest(db):
+    """Ingest-first drowned the board; analyse backlog always wins."""
     from idea_factory.pm import plan_recursive_fanout
 
     plan = plan_recursive_fanout(db, scout_markets_per_agent=5)
     assert plan["next_action"] == "scout"
-    assert plan["wave"]["stage"] == "00"
-    assert plan["wave"]["parallel"] == 4  # 20/5
+    assert plan["prebuild_only"] is True
+    assert "06" in plan["never_dispatch"]
 
-    # cover all markets with empty segments so scout empties; add pending candidates
     for i, m in enumerate(CANONICAL_MARKETS):
         seg = db.upsert_market_segment(MarketSegmentRow(
             parent_market=m, segment_name=f"seg-{i}",
@@ -1317,17 +1319,34 @@ def test_plan_recursive_fanout_priority_scout_then_ingest(db):
             name=f"Co{i}", website=f"https://co{i}.example",
             market_segment_id=seg,
         ))
+    sid = db.upsert_startup(StartupRow(startup="Backlog", website="https://backlog.example"))
+    db.set_stage_marker(sid, "ingested")
     plan2 = plan_recursive_fanout(db, ingest_batch_size=5)
-    assert plan2["next_action"] == "ingest"
-    assert plan2["wave"]["stage"] == "01"
-    assert plan2["wave"]["parallel"] == 5
-    assert len(plan2["wave"]["candidates"]) == 5
+    assert plan2["next_action"] == "analyse"
+    assert sid in plan2["wave"]["startup_ids"]
+    assert plan2["queues"]["ingested_awaiting_analyse"] == 1
+
+
+def test_plan_recursive_fanout_ingest_only_when_backlog_clear(db):
+    from idea_factory.pm import plan_recursive_fanout
+
+    for i, m in enumerate(CANONICAL_MARKETS):
+        seg = db.upsert_market_segment(MarketSegmentRow(
+            parent_market=m, segment_name=f"seg-{i}",
+            icp_cluster="developer", rationale="r",
+        ))
+        db.insert_candidate_startup(CandidateStartupRow(
+            name=f"Co{i}", website=f"https://co{i}.example",
+            market_segment_id=seg,
+        ))
+    plan = plan_recursive_fanout(db, ingest_batch_size=5)
+    assert plan["next_action"] == "ingest"
+    assert plan["wave"]["parallel"] == 5
 
 
 def test_plan_recursive_fanout_analyse_and_score_waves(db):
     from idea_factory.pm import plan_recursive_fanout
 
-    # no uncovered markets, no pending: seed analysed vs ingested
     for m in CANONICAL_MARKETS:
         db.upsert_market_segment(MarketSegmentRow(
             parent_market=m, segment_name=f"s-{m}",
@@ -1340,6 +1359,34 @@ def test_plan_recursive_fanout_analyse_and_score_waves(db):
     assert sid_ing in plan["wave"]["startup_ids"]
 
     db.set_stage_marker(sid_ing, "analysed")
+    db.replace_wedges(sid_ing, [
+        WedgeRow(startup_id=sid_ing, wedge_type="Open source", description="d", evidence="c"),
+    ])
     plan2 = plan_recursive_fanout(db)
     assert plan2["next_action"] == "score_a"
     assert sid_ing in plan2["wave"]["startup_ids"]
+
+
+def test_run_select_top_wedges_marks_winner(db):
+    from idea_factory.pm import run_select_top_wedges, plan_recursive_fanout
+
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.set_stage_marker(sid, "analysed")
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Cheaper", description="low",
+                 evidence="e1", personal_fit_score=40),
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="high",
+                 evidence="e2", personal_fit_score=90),
+    ])
+    db.upsert_personal_fit(PersonalFitRow(
+        startup_id=sid, technical_advantage=8, interest=8, existing_knowledge=8,
+        sales_ability=8, long_term_moat=8, build_speed=8, market_size=8, distribution_fit=8,
+    ))
+    out = run_select_top_wedges(db)
+    assert len(out) == 1
+    assert out[0]["wedge_type"] == "Open source"
+    selected = [w for w in db.get_wedges(sid) if w.selected]
+    assert len(selected) == 1
+    assert selected[0].wedge_type == "Open source"
+    plan = plan_recursive_fanout(db)
+    assert sid not in plan["wave"].get("startup_ids", [])
