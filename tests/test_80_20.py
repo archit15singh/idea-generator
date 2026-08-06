@@ -22,6 +22,7 @@ import pytest
 from idea_factory.db import DB
 from idea_factory.decisions import (
     ALLOWED_EDGE_TYPES,
+    assign_primary_with_global_cap,
     builder_accepts,
     classify_edge,
     evidence_gate,
@@ -34,6 +35,7 @@ from idea_factory.decisions import (
     route_after_validator,
     should_retire_pattern,
     should_validate,
+    shortlist_wedges,
     top_wedge,
     rank_wedges_by_fit,
 )
@@ -449,6 +451,68 @@ def test_top_wedge_returns_none_when_all_lack_evidence():
     )
     ws = [WedgeRow(startup_id=1, wedge_type="Cheaper", description="d", evidence=None)]
     assert top_wedge(ws, fit) is None
+
+
+def test_shortlist_wedges_enforces_type_diversity():
+    fit = PersonalFitRow(
+        startup_id=1,
+        technical_advantage=8, interest=8, existing_knowledge=8,
+        sales_ability=8, long_term_moat=8, build_speed=8,
+        market_size=8, distribution_fit=8,
+    )
+    wedges = [
+        WedgeRow(id=1, startup_id=1, wedge_type="Better memory", description="m1",
+                 evidence="e", personal_fit_score=97),
+        WedgeRow(id=2, startup_id=1, wedge_type="Better memory", description="m2",
+                 evidence="e", personal_fit_score=96),
+        WedgeRow(id=3, startup_id=1, wedge_type="Open source", description="o",
+                 evidence="e", personal_fit_score=80),
+        WedgeRow(id=4, startup_id=1, wedge_type="Developer-first", description="d",
+                 evidence="e", personal_fit_score=70),
+    ]
+    sl = shortlist_wedges(wedges, fit, k=3, max_per_type=1)
+    types = [w.wedge_type for w, _ in sl]
+    assert types == ["Better memory", "Open source", "Developer-first"]
+    assert types.count("Better memory") == 1
+
+
+def test_assign_primary_global_cap_prevents_type_collapse():
+    """8 startups all prefer Better memory → at most ceil(8*0.25)=2 primaries."""
+    fit_hi = PersonalFitRow(
+        startup_id=1, technical_advantage=9, interest=9, existing_knowledge=9,
+        sales_ability=9, long_term_moat=9, build_speed=9, market_size=9, distribution_fit=9,
+    )
+    fit_lo = PersonalFitRow(
+        startup_id=1, technical_advantage=5, interest=5, existing_knowledge=5,
+        sales_ability=5, long_term_moat=5, build_speed=5, market_size=5, distribution_fit=5,
+    )
+    candidates = []
+    for i in range(8):
+        fit = fit_hi if i < 2 else fit_lo
+        fit = fit.model_copy(update={"startup_id": i + 1})
+        wedges = [
+            WedgeRow(id=i * 10 + 1, startup_id=i + 1, wedge_type="Better memory",
+                     description="m", evidence="e", personal_fit_score=97),
+            WedgeRow(id=i * 10 + 2, startup_id=i + 1, wedge_type="Open source",
+                     description="o", evidence="e", personal_fit_score=80),
+            WedgeRow(id=i * 10 + 3, startup_id=i + 1, wedge_type="Cheaper",
+                     description="c", evidence="e", personal_fit_score=60),
+        ]
+        candidates.append((i + 1, wedges, fit))
+    primaries = assign_primary_with_global_cap(candidates, cap_fraction=0.25)
+    assert len(primaries) == 8
+    mem = sum(1 for w in primaries.values() if w.wedge_type == "Better memory")
+    # Soft cap ceil(8*0.25)=2; with only 3 types for 8 cos some overflow is
+    # inevitable (balanced ceiling ≈ 3). Collapse (8/8) must not happen.
+    assert mem <= 3
+    assert mem < 8
+    # highest-fit startups keep Better memory
+    assert primaries[1].wedge_type == "Better memory"
+    assert primaries[2].wedge_type == "Better memory"
+    # majority diversify off Better memory
+    other = [primaries[i].wedge_type for i in range(3, 9)]
+    assert other.count("Better memory") <= 1
+    assert set(other) & {"Open source", "Cheaper"}
 
 
 # --- gates: graduation ---
@@ -1377,6 +1441,8 @@ def test_run_select_top_wedges_marks_winner(db):
                  evidence="e1", personal_fit_score=40),
         WedgeRow(startup_id=sid, wedge_type="Open source", description="high",
                  evidence="e2", personal_fit_score=90),
+        WedgeRow(startup_id=sid, wedge_type="Developer-first", description="mid",
+                 evidence="e3", personal_fit_score=70),
     ])
     db.upsert_personal_fit(PersonalFitRow(
         startup_id=sid, technical_advantage=8, interest=8, existing_knowledge=8,
@@ -1386,7 +1452,48 @@ def test_run_select_top_wedges_marks_winner(db):
     assert len(out) == 1
     assert out[0]["wedge_type"] == "Open source"
     selected = [w for w in db.get_wedges(sid) if w.selected]
-    assert len(selected) == 1
-    assert selected[0].wedge_type == "Open source"
+    # multi-winner shortlist: up to 3 distinct types
+    assert len(selected) == 3
+    assert {w.wedge_type for w in selected} == {
+        "Open source", "Developer-first", "Cheaper",
+    }
+    assert out[0]["shortlist_types"][0] == "Open source"
     plan = plan_recursive_fanout(db)
     assert sid not in plan["wave"].get("startup_ids", [])
+
+
+def test_run_select_top_wedges_force_reselect_diversifies_cohort(db):
+    from idea_factory.pm import run_select_top_wedges
+
+    # 8 startups all scored Better memory highest — global cap must diversify
+    for i in range(8):
+        sid = db.upsert_startup(StartupRow(
+            startup=f"Co{i}", website=f"https://co{i}.example",
+        ))
+        db.set_stage_marker(sid, "scored")
+        db.replace_wedges(sid, [
+            WedgeRow(startup_id=sid, wedge_type="Better memory", description="m",
+                     evidence="e", personal_fit_score=97),
+            WedgeRow(startup_id=sid, wedge_type="Open source", description="o",
+                     evidence="e", personal_fit_score=80),
+            WedgeRow(startup_id=sid, wedge_type="API-first", description="a",
+                     evidence="e", personal_fit_score=70),
+        ])
+        # higher total for earlier ids so they keep Better memory
+        t = 9 if i < 2 else 5
+        db.upsert_personal_fit(PersonalFitRow(
+            startup_id=sid,
+            technical_advantage=t, interest=t, existing_knowledge=t,
+            sales_ability=t, long_term_moat=t, build_speed=t,
+            market_size=t, distribution_fit=t,
+        ))
+    out = run_select_top_wedges(db, force=True)
+    assert len(out) == 8
+    primaries = [r["wedge_type"] for r in out]
+    assert primaries.count("Better memory") <= 3
+    assert primaries.count("Better memory") < 8
+    assert len(set(primaries)) >= 2
+    # every startup still has a multi-type shortlist
+    for r in out:
+        assert len(r["shortlist"]) >= 2
+        assert len(set(r["shortlist_types"])) == len(r["shortlist_types"])

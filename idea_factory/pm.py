@@ -356,14 +356,13 @@ def scorer_mode_b_fanout_ids(
     return _chunk(ids, parallel) if ids else []
 
 
-def select_wedge_fanout_ids(db) -> list[int]:
-    """Scored (or analysed+fitted) startups with evidence wedges but none selected.
+def select_wedge_fanout_ids(db, *, force: bool = False) -> list[int]:
+    """Fitted startups that need selection (or all of them when force=True).
 
-    Pre-build terminal step: run decisions.top_wedge + db.mark_wedge_selected.
-    Never implies builder dispatch.
+    Pre-build terminal step: run_select_top_wedges. Never implies builder.
+    force=True re-runs selection over every fitted startup (diversity reselect).
     """
-    rows = db._conn.execute(
-        """
+    sql = """
         SELECT s.id FROM startups s
         JOIN personal_fit pf ON pf.startup_id = s.id
         WHERE s.stage_marker IN ('analysed', 'scored')
@@ -372,45 +371,113 @@ def select_wedge_fanout_ids(db) -> list[int]:
             WHERE w.startup_id = s.id
               AND w.evidence IS NOT NULL AND TRIM(w.evidence) != ''
           )
+    """
+    if not force:
+        sql += """
           AND NOT EXISTS (
             SELECT 1 FROM wedges w2
             WHERE w2.startup_id = s.id AND w2.selected = 1
           )
-        ORDER BY s.id
         """
-    ).fetchall()
+    sql += " ORDER BY s.id"
+    rows = db._conn.execute(sql).fetchall()
     return [int(r["id"]) for r in rows]
 
 
-def run_select_top_wedges(db) -> list[dict]:
-    """Deterministic pre-build selection: top evidence wedge per fitted startup.
+def run_select_top_wedges(
+    db,
+    *,
+    force: bool = False,
+    shortlist_k: int = 3,
+    max_per_type: int = 1,
+    global_primary_cap_fraction: float = 0.25,
+) -> list[dict]:
+    """Deterministic pre-build selection with diversity + multi-winner shortlist.
 
-    Writes wedges.selected=1 for the winner. Pure code — no agent, no builder.
+    Per startup:
+      - primary wedge under a cohort-wide type cap (≤25% of startups share a
+        primary type by default) so selection does not collapse to one mode
+        (the Better-memory failure)
+      - shortlist of up to `shortlist_k` distinct wedge_types, all marked
+        selected=1 (multi-winner shortlist for pre-build review)
+
+    force=True clears prior selections and re-runs over all fitted startups.
+    Pure code — no agent, no builder.
     """
-    from idea_factory.decisions import top_wedge
+    from idea_factory.decisions import (
+        assign_primary_with_global_cap,
+        shortlist_wedges,
+    )
 
-    results = []
-    for sid in select_wedge_fanout_ids(db):
+    sids = select_wedge_fanout_ids(db, force=force)
+    candidates: list[tuple[int, list, object]] = []
+    for sid in sids:
         wedges = db.get_wedges(sid)
         fit = db.get_personal_fit(sid)
-        if fit is None:
+        if fit is None or not wedges:
             continue
-        winner = top_wedge(wedges, fit)
-        if winner is None or winner.id is None:
-            results.append({"startup_id": sid, "selected": None, "reason": "no evidence wedge"})
-            continue
-        # clear prior selections then mark winner
+        candidates.append((sid, wedges, fit))
+
+    primaries = assign_primary_with_global_cap(
+        candidates, cap_fraction=global_primary_cap_fraction,
+    )
+
+    results: list[dict] = []
+    for sid, wedges, fit in candidates:
+        # clear prior selections when force or any prior select
         for w in wedges:
             if w.selected and w.id is not None:
                 db.mark_wedge_selected(w.id, False)
-        db.mark_wedge_selected(winner.id, True)
+
+        primary = primaries.get(sid)
+        if primary is None:
+            results.append({
+                "startup_id": sid, "selected": None, "shortlist": [],
+                "reason": "no evidence wedge",
+            })
+            continue
+
+        # shortlist: primary first, then other types by rank (max_per_type)
+        blocked_for_rest = set()  # don't block — shortlist_wedges uses max_per_type
+        raw_sl = shortlist_wedges(
+            wedges, fit, k=shortlist_k, max_per_type=max_per_type,
+        )
+        # ensure primary is first even if global cap reordered it vs pure rank
+        shortlist: list = []
+        seen_ids: set[int] = set()
+        if primary.id is not None:
+            shortlist.append(primary)
+            seen_ids.add(primary.id)
+        for w, _score in raw_sl:
+            if w.id is None or w.id in seen_ids:
+                continue
+            shortlist.append(w)
+            seen_ids.add(w.id)
+            if len(shortlist) >= shortlist_k:
+                break
+
+        for w in shortlist:
+            if w.id is not None:
+                db.mark_wedge_selected(w.id, True)
+
         if db.get_startup(sid) and db.get_startup(sid).stage_marker == "analysed":
             db.set_stage_marker(sid, "scored")
+
         results.append({
             "startup_id": sid,
-            "selected": winner.id,
-            "wedge_type": winner.wedge_type,
-            "personal_fit_score": winner.personal_fit_score,
+            "selected": primary.id,
+            "wedge_type": primary.wedge_type,
+            "personal_fit_score": primary.personal_fit_score,
+            "shortlist": [
+                {
+                    "id": w.id,
+                    "wedge_type": w.wedge_type,
+                    "personal_fit_score": w.personal_fit_score,
+                    "primary": w.id == primary.id,
+                }
+                for w in shortlist
+            ],
+            "shortlist_types": [w.wedge_type for w in shortlist],
         })
     return results
 
@@ -494,7 +561,7 @@ def plan_recursive_fanout(
             "agent": None,  # deterministic: pm.run_select_top_wedges
             "parallel": 0,
             "startup_ids": select_ids[:scorer_parallel],
-            "hint": "run_select_top_wedges(db) — no builder",
+            "hint": "run_select_top_wedges(db) — shortlist k=3 + global type cap; no builder",
         }
     elif cluster_ready:
         next_action = "cluster"

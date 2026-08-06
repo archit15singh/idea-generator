@@ -107,11 +107,122 @@ def rank_wedges_by_fit(
     return ranked
 
 
-def top_wedge(
-    wedges: list[WedgeRow], fit: PersonalFitRow
-) -> Optional[WedgeRow]:
+# Shortlist defaults: multi-winner + per-type diversity so selection does not
+# collapse to one wedge_type (e.g. every co → "Better memory").
+DEFAULT_SHORTLIST_K = 3
+DEFAULT_MAX_PER_TYPE = 1
+# Across a cohort, no single wedge_type may be primary for more than this
+# fraction of startups (ceil). High-fit startups claim preferred types first.
+DEFAULT_GLOBAL_PRIMARY_CAP_FRACTION = 0.25
+
+
+def shortlist_wedges(
+    wedges: list[WedgeRow],
+    fit: PersonalFitRow,
+    *,
+    k: int = DEFAULT_SHORTLIST_K,
+    max_per_type: int = DEFAULT_MAX_PER_TYPE,
+    blocked_types: Optional[set[str]] = None,
+) -> list[tuple[WedgeRow, float]]:
+    """Top-k evidence wedges with a per-type diversity cap.
+
+    Walks rank_wedges_by_fit order and keeps at most `max_per_type` of each
+    wedge_type. `blocked_types` skips types entirely (used for global primary
+    diversity: if Better memory is already at cohort cap, try the next type).
+    """
+    if k < 1:
+        return []
+    blocked = blocked_types or set()
     ranked = rank_wedges_by_fit(wedges, fit)
-    return ranked[0][0] if ranked else None
+    picked: list[tuple[WedgeRow, float]] = []
+    type_counts: dict[str, int] = {}
+    for w, score in ranked:
+        t = str(w.wedge_type)
+        if t in blocked:
+            continue
+        if type_counts.get(t, 0) >= max_per_type:
+            continue
+        picked.append((w, score))
+        type_counts[t] = type_counts.get(t, 0) + 1
+        if len(picked) >= k:
+            break
+    # If blocking left us empty, fall back without the block (always return something)
+    if not picked and blocked:
+        return shortlist_wedges(
+            wedges, fit, k=k, max_per_type=max_per_type, blocked_types=None,
+        )
+    return picked
+
+
+def top_wedge(
+    wedges: list[WedgeRow],
+    fit: PersonalFitRow,
+    *,
+    blocked_types: Optional[set[str]] = None,
+) -> Optional[WedgeRow]:
+    """Primary wedge for a startup (first of the type-diverse shortlist)."""
+    sl = shortlist_wedges(wedges, fit, k=1, blocked_types=blocked_types)
+    return sl[0][0] if sl else None
+
+
+def assign_primary_with_global_cap(
+    candidates: list[tuple[int, list[WedgeRow], PersonalFitRow]],
+    *,
+    cap_fraction: float = DEFAULT_GLOBAL_PRIMARY_CAP_FRACTION,
+) -> dict[int, WedgeRow]:
+    """Pick one primary wedge per startup with a cohort-wide type cap.
+
+    Startups are processed in descending personal_fit.total so the strongest
+    founder-fits claim scarce types first. A type may be primary for at most
+    ceil(n * cap_fraction) startups (minimum 1). When a type is at cap, that
+    startup takes its next-best different type instead of piling onto the
+    collapsed mode (the Better-memory failure mode).
+    """
+    import math as _math
+
+    if not candidates:
+        return {}
+    n = len(candidates)
+    cap = max(1, int(_math.ceil(n * cap_fraction)))
+    # Strongest fits first; stable ascending sid so lowest ids claim scarce types.
+    ordered = sorted(
+        candidates,
+        key=lambda t: (
+            -(t[2].total if t[2].total is not None else 0),
+            t[0],
+        ),
+    )
+    type_counts: dict[str, int] = {}
+    primaries: dict[int, WedgeRow] = {}
+    for sid, wedges, fit in ordered:
+        ranked = rank_wedges_by_fit(wedges, fit)
+        chosen: Optional[WedgeRow] = None
+        # Prefer highest-ranked type still under the global cap.
+        for w, _score in ranked:
+            t = str(w.wedge_type)
+            if type_counts.get(t, 0) >= cap:
+                continue
+            chosen = w
+            break
+        if chosen is None and ranked:
+            # Every candidate type is already at cap — pick least-used type;
+            # tie-break by *lower* rank score so we do not re-inflate the
+            # collapsed top mode (Better memory) when counts are equal.
+            best_w: Optional[WedgeRow] = None
+            best_key: Optional[tuple[int, float]] = None
+            for w, score in ranked:
+                t = str(w.wedge_type)
+                key = (type_counts.get(t, 0), score)
+                if best_key is None or key < best_key:
+                    best_key = key
+                    best_w = w
+            chosen = best_w
+        if chosen is None:
+            continue
+        primaries[sid] = chosen
+        t = str(chosen.wedge_type)
+        type_counts[t] = type_counts.get(t, 0) + 1
+    return primaries
 
 
 # --- between Validator node and Builder node: graduation gate ---

@@ -48,8 +48,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import plan_rec
 - **Priority:** `analyse → score_a → score_b → select → cluster → scout → ingest → idle`
 - **Never** `builder` / stage 06 (`never_dispatch` on plan)
 - Ingest **paused** while `ingested_awaiting_analyse ≥ 5` (was starving idea gen)
-- Select: `pm.run_select_top_wedges(db)` marks top evidence wedge (no agent)
-- Ideas are **completed** at analyst (wedges) + select (chosen wedge), not at MVP
+- Select: `pm.run_select_top_wedges(db)` — multi-winner shortlist (k=3, max 1 per type) + cohort primary type cap (~25%); `force=True` reselects all
+- Ideas are **completed** at analyst (wedges) + select (shortlist), not at MVP
 
 ## Subagent dispatch contract
 Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds the typed `Input` from `idea_factory.pm` (`default_scout_input`, `build_scorer_input`, `build_infra_node_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`). After dispatch, parse the returned JSON with `receipts.parse`; if `ReceiptError`, re-dispatch naming the gap. Run gates in code between dispatches — never trust prose for routing. The scorer has two modes: Mode A (per-startup → `personal_fit`) and Mode B (infra node → `infra_personal_fit`); stage-04 receipts disambiguate on `infra_nodes_scored`.

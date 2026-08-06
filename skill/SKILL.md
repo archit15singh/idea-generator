@@ -110,7 +110,7 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 | 05  | `graduation_gate(...)`               | decide whether to mark `stage_marker='graduated'` |
 | 05  | `kill_metric_triggered(...)`         | halt the loop if 8 weeks pass with < 3 pain replies |
 | 05  | `route_after_validator(receipt)`     | pre-build complete if graduated; NEVER route to 06 |
-| 04b | `pm.run_select_top_wedges(db)`       | mark selected wedge per fitted startup (code, not agent) |
+| 04b | `pm.run_select_top_wedges(db)` / `force=True` | multi-winner shortlist (k=3, 1 per type) + global primary type cap (~25%) |
 | 07  | `promotion_gate(sightings, clusters)` | decide whether to write a Pattern Library row |
 | 07  | `classify_edge(edge_type)`           | reject free-form Problem-Graph edges |
 | 07  | `classify_infra_edge(edge_type)`     | reject free-form Infrastructure-Graph edges |
