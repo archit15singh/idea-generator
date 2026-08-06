@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS wedges (
   description TEXT,
   evidence TEXT,                                   -- cite competitive/customer field; NULL → rejected
   personal_fit_score INTEGER,                      -- 0–100; set by scorer
-  selected INTEGER DEFAULT 0,
+  selected INTEGER DEFAULT 0,                      -- 0=no; 1=primary; 2+=shortlist rank
   created_at TEXT DEFAULT (datetime('now')),
   UNIQUE(startup_id, wedge_type, description)
 );
