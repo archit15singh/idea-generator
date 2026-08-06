@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 157 | **152 scored** + **5 ingested** (ids 161–165) |
-| `analysed` (cohort) | 152 | ingest-22 backlog awaiting analyse |
-| `wedges` | 3040 | **152 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 714 | post analyse-21 |
+| `startups` | 157 | **157 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 157 | full pool analysed |
+| `wedges` | 3140 | **157 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 727 | post analyse-22 |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈35 |
-| `personal_fit` | 152 | LiteLLM=58; Nightfall=51; Robust=47; Parabola=41; Abridge=28 |
+| `personal_fit` | 157 | Martian=58; Egress=54; Protect AI=47; Sierra=33; Artisan=31 |
 | `pattern_library` | **18** | +gateway routing; +email auth/DLP |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-22: Protect AI (#161), Egress (#162), Sierra (#163), Artisan (#164), Martian (#165). Railway skipped (dupe #21). Primary mix Better memory 46, Better evaluation 44, Developer-first 22, AI-native 21.
+**`plan_recursive_fanout` next_action = `ingest`**. Analyse-22 E2E done: Protect AI (#161 AI-native), Egress (#162 AI-native), Sierra (#163 Better memory), Artisan (#164 Better memory), Martian (#165 Developer-first). Primary mix Better memory 48, Better evaluation 44, AI-native 23, Developer-first 23.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,15 +119,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **148/152** full (4 thin-evidence legacy); wedges 3040; personal_fit 152; **152 primary**; **patterns 18**; startups **157**. Latest: **ingest-22** — Protect AI, Egress, Sierra, Artisan, Martian → ingested (Railway dupe skipped). next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 161–165 then score/select.
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **153/157** full (4 thin-evidence legacy); wedges 3140; personal_fit 157; **157 primary**; **patterns 18**; startups 157. Latest: **analyse-22** — Protect AI/Egress/Sierra/Artisan/Martian full E2E. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 161–165 then score/select.
+1. **Ingest** next batch (≤5) then analyse→score→select.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
 3. Further CANONICAL expand past 27; next cluster after +20 startups.
 
