@@ -70,6 +70,7 @@ EDGE_TYPES = Literal[
 ICP_CLUSTERS = Literal["developer", "infra", "enterprise-IT"]
 
 STAGE_MARKERS = Literal[
+    "scouted",
     "ingested",
     "analysed",
     "scored",
@@ -307,6 +308,58 @@ class ProblemEdgeRow(BaseModel):
 # --- Node inputs (what the PM hands each subagent) ---
 
 
+class MarketScoutInput(BaseModel):
+    """Handed to idea-factory-market-scout. The entry point of the whole DAG.
+
+    The DAG starts from markets, never from a flat startup list. The scout
+    recursively breaks each market into sub-markets and emits candidate YC
+    startups per sub-market. The ingestor (node 01) fans out on the receipts.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    markets: list[str] = Field(min_length=1)
+    depth: int = Field(default=2, ge=1, le=3)
+
+
+class MarketSegmentRow(BaseModel):
+    """A sub-market produced by the scout. Candidate startups hang off this."""
+
+    model_config = ConfigDict(extra="forbid")
+    id: Optional[int] = None
+    parent_market: str
+    segment_name: str
+    icp_cluster: ICP_CLUSTERS
+    rationale: Optional[str] = None
+
+
+class CandidateStartupRow(BaseModel):
+    """A YC startup candidate emitted by the scout for a segment.
+
+    The ingestor will UPSERT this into `startups` keyed on `website`; the
+    `market_segment_id` link is carried through so wedges can later map back
+    to the originating market segment for cross-cluster counting.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    website: str
+    market_segment_id: int
+    yc_batch: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class MarketScoutReceiptStub(BaseModel):
+    """Forward declaration shape. The real MarketScoutReceipt lives in the
+    receipts section; using it here would require BaseReceipt to be defined
+    first. Instead, the scout returns a dict the PM parses with
+    `receipts.parse`. See MarketScoutReceipt below."""
+
+    model_config = ConfigDict(extra="forbid")
+    markets_processed: int = Field(ge=0)
+    segments_created: int = Field(ge=0)
+    candidates_emitted: int = Field(ge=0)
+
+
 class IngestorInput(BaseModel):
     """Handed to idea-factory-ingestor. The PM picks the cohort."""
 
@@ -370,8 +423,8 @@ class ClustererInput(BaseModel):
 # --- Node receipts (what each subagent returns; PM validates + routes) ---
 
 
-STAGE_VALUES = {"01", "02", "04", "05", "06", "07"}
-NEXT_STAGE_VALUES = {"02", "04", "05", "06", "07", "08", None}
+STAGE_VALUES = {"00", "01", "02", "04", "05", "06", "07"}
+NEXT_STAGE_VALUES = {"01", "02", "04", "05", "06", "07", "08", None}
 STAGE_DEFAULTS = {
     "IngestorReceipt": "01",
     "AnalystReceipt": "02",
@@ -471,7 +524,18 @@ class ClustererReceipt(BaseReceipt):
     new_edges: dict[str, int] = Field(default_factory=dict)
 
 
+class MarketScoutReceipt(BaseReceipt):
+    stage: str = "00"
+    next_stage: Optional[str] = "01"
+    markets_processed: int = Field(ge=0)
+    segments_created: int = Field(ge=0)
+    candidates_emitted: int = Field(ge=0)
+    segments: list[MarketSegmentRow] = Field(default_factory=list)
+    candidates: list[CandidateStartupRow] = Field(default_factory=list)
+
+
 RECEIPT_BY_STAGE = {
+    "00": MarketScoutReceipt,
     "01": IngestorReceipt,
     "02": AnalystReceipt,
     "04": ScorerReceipt,

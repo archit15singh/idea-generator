@@ -12,12 +12,12 @@ description: >
   (agents/*.md). Not for a one-off research question, a single MVP, or a
   read-only market scan.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Idea Factory
 
-You are the PM orchestrator of a continuous idea factory. **This skill IS the DAG.** Six subagents ARE the nodes. The directed flow between them is encoded here. You dispatch, validate receipts, run deterministic gates in code, and route.
+You are the PM orchestrator of a continuous idea factory. **This skill IS the DAG.** Seven subagents ARE the nodes. The directed flow between them is encoded here. The DAG ALWAYS starts from markets, never from a flat startup list.
 
 There is no weekly cadence; the agent team runs continuously. There is no DAG code module — this prompt is the topology.
 
@@ -34,8 +34,14 @@ Trigger when the user wants to run the loop (ingesting, descending, wedging, val
 ## The DAG (the topology you orchestrate)
 
 ```
+        ┌─────────────┐
+        │ 00 market   │  entry point: THE DAG STARTS HERE
+        │    scout    │  recursive breakdown: market → sub-markets → candidates
+        └──────┬──────┘
+               │ fan-out on candidates
+               ▼
         ┌────────────┐
-        │ 01 ingestor │ (parallel per startup)
+        │ 01 ingestor │ (parallel per candidate startup)
         └──────┬──────┘
                │ stage_marker='ingested'
                ▼
@@ -71,11 +77,13 @@ Trigger when the user wants to run the loop (ingesting, descending, wedging, val
         (08 query os — on demand)
 ```
 
+The DAG's entry contract is non-negotiable: **start from `pm.default_scout_input()`, dispatch the market scout, wait for its receipt, fan out on the candidates.** Do not skip ahead to scrape random startups. The "constrained 20-market pool" premise collapses if the entry point does.
+
 Stages 03 and 08 are not nodes — 03 (wedge-gen) is fused into 02; 08 is a query surface.
 
 ## Dispatch contract
 
-For each node, dispatch via the Task tool with `subagent_type` = the agent name. Pass a **typed** `Input` payload (see `idea_factory/schema.py`): the PM must build the Input from current DB state, not from prose.
+For each node, dispatch via the Task tool with `subagent_type` = the agent name. Pass a **typed** `Input` payload (see `idea_factory/schema.py`): the PM must build the Input from current DB state, not from prose. Use the builders in `idea_factory.pm` (`build_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`, `default_scout_input`).
 
 After each dispatch, run `idea_factory.receipts.parse(raw_message)` to validate the returned JSON block. If it returns `ReceiptError`, do NOT route forward; re-dispatch with the specific gap named in the error.
 
@@ -83,6 +91,7 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 
 | After | Run | Use result to |
 |-------|-----|----------------|
+| 00  | (none; fan-out on `candidates` in receipt) | dispatch ingestor per candidate |
 | 02  | `evidence_gate(wedges)`              | drop no-evidence wedges before scoring |
 | 04  | `top_wedge(wedges, fit)`             | pick the single wedge to hand the validator |
 | 04  | `should_validate(fit)`              | skip outreach entirely for fit < 60 |
@@ -96,18 +105,19 @@ Between dispatches, run the matching gate in `idea_factory/decisions.py` — the
 
 ## The loop
 
-For each cohort of N startups (default N=5):
+For each cohort (one cohort = one full market-scout pass):
 
-1. **PM** picks the next N startup domains from the constrained pool.
-2. Dispatch **ingestor** in parallel, one Task per startup. Wait for all receipts.
-3. For each ingested startup, dispatch **analyst** in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
-4. After analyst receipts land, dispatch **scorer** once per cohort. Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
-5. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
-6. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
-7. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
-8. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
+1. **PM** runs `default_scout_input()` to build the typed Input for the market scout.
+2. Dispatch **market-scout** ONCE per cohort. It recursively breaks each market in `pm.CANONICAL_MARKETS` into sub-markets, classifies each to one of the 3 ICP clusters, and writes `market_segments` + `candidate_startups`. Stamp `runtime_meta.started_at` via `pm.mark_runtime_started(db)` on the first successful pass.
+3. Fan out: query `db.candidates_for_ingest()`, dispatch **ingestor** in parallel per candidate.
+4. For each ingested startup, dispatch **analyst** in parallel. Each does the recursive descent + wedge list + infra ops in one pass.
+5. After analyst receipts land, dispatch **scorer** once per cohort. Pause the loop here and ask the user to review the human-locked fit rows. Never auto-overwrite human-locked rows.
+6. Run `top_wedge` for each scored startup. Dispatch **validator** per startup (parallel-bounded). Each sends 30 outreach emails via the gmail MCP and writes `outreach_log` rows.
+7. Validator returns. Run `graduation_gate`. Only wedges that graduate reach stage 06.
+8. Dispatch **builder** for graduating wedges. Run 2-3 in parallel max.
+9. Every 20+ new startups: dispatch **clusterer** once (single agent, not parallel).
 
-Repeat until interrupted. Loop forever unless the kill metric fires.
+Repeat until interrupted. Loop forever unless the kill metric fires. A fresh cohort re-runs the market scout (markets evolve; new YC batches drop; former blanks become populated).
 
 ## Kill metric (non-negotiable)
 

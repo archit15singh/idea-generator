@@ -38,10 +38,14 @@ from idea_factory.receipts import parse
 from idea_factory.schema import (
     AnalystReceipt,
     BuilderInput,
+    CandidateStartupRow,
     ClustererInput,
     CompetitiveRow,
     IngestorInput,
     IngestorReceipt,
+    MarketScoutInput,
+    MarketScoutReceipt,
+    MarketSegmentRow,
     OutreachLogRow,
     PersonalFitRow,
     ProblemEdgeRow,
@@ -50,9 +54,40 @@ from idea_factory.schema import (
     ValidatorReceipt,
     WedgeRow,
 )
+from idea_factory.pm import CANONICAL_MARKETS, default_scout_input
 
 
 # --- schema ---
+
+
+def test_canonical_markets_seed_is_nonempty():
+    assert len(CANONICAL_MARKETS) >= 10
+    assert "AI Engineering" in CANONICAL_MARKETS
+
+
+def test_market_scout_input_rejects_empty_markets():
+    with pytest.raises(Exception):
+        MarketScoutInput(markets=[])
+
+
+def test_market_scout_input_depth_bounds():
+    with pytest.raises(Exception):
+        MarketScoutInput(markets=["AI Engineering"], depth=4)
+
+
+def test_market_segment_row_rejects_free_form_cluster():
+    with pytest.raises(Exception):
+        MarketSegmentRow(parent_market="AI Engineering", segment_name="x", icp_cluster="random")
+
+
+def test_market_scout_receipt_parses_with_stage_00():
+    raw = """```json
+{"schema_version":"idea_factory_receipt_v1","result":"done","stage":"00","changed_rows":12,"summary":"ok","markets_processed":3,"segments_created":11,"candidates_emitted":30,"segments":[],"candidates":[]}
+```"""
+    r = parse(raw)
+    assert isinstance(r, MarketScoutReceipt)
+    assert r.stage == "00"
+    assert r.next_stage == "01"
 
 
 def test_wedge_type_rejects_unknown():
@@ -95,6 +130,44 @@ def db(tmp_path):
     d.init()
     yield d
     d.close()
+
+
+def test_db_market_segment_idempotent(db):
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="Agent memory",
+        icp_cluster="infra", rationale="ctx across runs",
+    ))
+    seg_id2 = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="Agent memory",
+        icp_cluster="infra", rationale="ctx across runs",
+    ))
+    assert seg_id == seg_id2
+
+
+def test_db_candidate_startups_fanout(db):
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="AI Infrastructure", segment_name="LLM evaluation",
+        icp_cluster="developer", rationale="eval harness for agents",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Braintrust", website="https://www.braintrust.dev",
+        market_segment_id=seg_id, yc_batch="W23",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="LangSmith", website="https://smith.langchain.com",
+        market_segment_id=seg_id, notes="LangChain's eval/obs",
+    ))
+    cands = db.candidates_for_ingest()
+    assert len(cands) == 2
+    # idempotent on website
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Braintrust", website="https://www.braintrust.dev",
+        market_segment_id=seg_id, yc_batch="W23",
+    ))
+    assert len(db.candidates_for_ingest()) == 2
+    # filtered fan-out
+    only_seg = db.candidates_for_ingest(segment_id=seg_id)
+    assert len(only_seg) == 2
 
 
 def test_db_idempotent_upsert(db):
@@ -367,35 +440,61 @@ def test_parse_rejects_corrupt_json():
 
 
 def test_end_to_end_cohort_flow(db, monkeypatch):
-    """One startup goes from ingested to graduated.
+    """One startup goes from scout fan-out through to graduation.
 
-    This is the 80/20 scenario: it walks a startup through every gate that
-    can be exercised without gmail or LLM dispatch. Anything outside the
-    gates (recursion L1-L10, wedge copywriting) is reasoning, not code, and
-    is not asserted here.
+    This is the 80/20 scenario. It walks the DAG starting from a market,
+    through scout fan-out into candidate startups, through SID ingest,
+    wedge ideation + evidence gate, scoring + human lock, validation,
+    graduation, and finally the clusterer's promotion gate + Problem
+    Graph edge enforcement. Anything outside the gates (recursion L1-L10,
+    wedge copywriting, outreach copy) is reasoning, not code, and is
+    not asserted here.
     """
-    # 01 ingestor: PM UPSERTs a startup + SID sections
-    sid = db.upsert_startup(StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24"))
-    db.upsert_competitive(CompetitiveRow(startup_id=sid, moat="weak; OSS gap", weaknesses="no SOC 2"))
+    from idea_factory.pm import mark_runtime_started, get_runtime_started_at
+
+    # 00 market scout: PM hands an Input; scout returns segments + candidates.
+    # We simulate the scout's work by writing rows directly through the db
+    # methods it would call.
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Infrastructure", segment_name="Agent memory",
+        icp_cluster="infra", rationale="persistent context across runs",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Letta", website="https://letta.com",
+        market_segment_id=seg_id, yc_batch="W24", notes="MemGPT lineage",
+    ))
+    mark_runtime_started(db)
+    assert get_runtime_started_at(db) is not None
+
+    # PM fans out on the candidate list -> ingestor picks the one real candidate
+    cands = db.candidates_for_ingest()
+    assert len(cands) == 1
+    assert cands[0].name == "Letta"
+
+    # 01 ingestor: PM UPSERTs a startup + SID sections per candidate
+    sid = db.upsert_startup(StartupRow(
+        startup="Letta", website="https://letta.com", yc_batch="W24",
+    ))
+    db.upsert_competitive(CompetitiveRow(startup_id=sid, moat="weak OSS gap", weaknesses="no SOC 2"))
     db.set_stage_marker(sid, "ingested")
     assert db.get_startup(sid).stage_marker == "ingested"
 
-    # 02 analyst: emits 20 wedges. We craft 3 representative rows + 17 no-need rows.
+    # 02 analyst: emits 3 representative wedges. Two have evidence, one None.
     wedges = [
-        WedgeRow(startup_id=sid, wedge_type="Open source", description="OSS-first version", evidence="competitive.moat=weak; OSS gap"),
-        WedgeRow(startup_id=sid, wedge_type="Compliance-first", description="SOC 2 first", evidence="competitive.weaknesses=no SOC 2"),
-        WedgeRow(startup_id=sid, wedge_type="Cheaper", description="half the price", evidence=None),  # will be rejected
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="OSS-first variant", evidence="competitive.moat=weak OSS gap"),
+        WedgeRow(startup_id=sid, wedge_type="Self-hosted", description="on-prem", evidence="competitive.weaknesses=no SOC 2"),
+        WedgeRow(startup_id=sid, wedge_type="Cheaper", description="half price", evidence=None),  # will be rejected
     ]
     db.replace_wedges(sid, wedges)
     db.set_stage_marker(sid, "analysed")
 
-    # gate: evidence drops the Cheaper wedge
+    # Gate: evidence drops the Cheaper wedge
     stored = db.get_wedges(sid)
     eg = evidence_gate(stored)
     assert len(eg.accepted) == 2
     assert all(w.evidence for w in eg.accepted)
 
-    # 04 scorer: human erases fit then locks (simulating user review)
+    # 04 scorer: write a high fit, then lock (simulate user review)
     db.upsert_personal_fit(PersonalFitRow(
         startup_id=sid,
         technical_advantage=10, interest=10, existing_knowledge=10,
@@ -407,17 +506,17 @@ def test_end_to_end_cohort_flow(db, monkeypatch):
     fit = db.get_personal_fit(sid)
     assert should_validate(fit) is True
 
-    # gate: top wedge selection
+    # Gate: top wedge selection
     top = top_wedge(db.get_wedges(sid), fit)
     assert top is not None
-    assert top.wedge_type in ("Open source", "Compliance-first")
+    assert top.wedge_type in ("Open source", "Self-hosted")
     db.mark_wedge_selected(top.id, True)
 
     # 05 validator: simulate 40 sends with 4 pain-signal replies
     for i in range(40):
         db.insert_outreach_send(OutreachLogRow(
             wedge_id=top.id, startup_id=sid, message_id=f"msg-{i}",
-            prospect_persona="SRE",
+            prospect_persona="AI infra eng lead",
         ))
     for i in range(4):
         db.mark_outreach_reply(i + 1, pain_signal=True)
@@ -431,20 +530,22 @@ def test_end_to_end_cohort_flow(db, monkeypatch):
     assert g.graduated is True
     db.set_stage_marker(sid, "graduated")
 
-    # gate: builder precondition
+    # Gate: builder precondition
     ok, _ = builder_accepts(top.id, pain_replies, db.get_startup(sid).stage_marker)
     assert ok is True
 
     # 07 clusterer: pretend this wedge's problem appears across 2 of 3 clusters
+    # (matches the segment the scout emitted with icp_cluster='infra'; we
+    # add a 'developer' sighting to make the cross-cluster count work)
     assert promotion_gate(sightings=3, clusters_seen=["developer", "infra"]) is True
     pn_id = db.upsert_problem_node(ProblemNodeRow(canonical_name="AI memory", aliases=["context retention"]))
     edge_added = db.insert_problem_edge(ProblemEdgeRow(
         from_node=top.id, to_node=pn_id, edge_type="solves", source_ref=f"startup:{sid}",
     ))
     assert edge_added is True
-    # free-form edge is rejected by the gate before we'd ever call insert_problem_edge
+    # free-form edge is rejected by the gate before any insert_problem_edge call
     assert classify_edge("related-to") is None
 
-    # kill metric: scenario is young, lots of pain replies, must not trigger
+    # kill metric: scenario is young, plenty of pain replies, must not trigger
     now = datetime.now(timezone.utc)
     assert kill_metric_triggered(now, now, pain_replies) is False

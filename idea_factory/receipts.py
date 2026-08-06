@@ -23,11 +23,13 @@ from idea_factory.schema import (
     BuilderReceipt,
     ClustererReceipt,
     IngestorReceipt,
+    MarketScoutReceipt,
     ScorerReceipt,
     ValidatorReceipt,
 )
 
 RECEIPT_BY_STAGE = {
+    "00": MarketScoutReceipt,
     "01": IngestorReceipt,
     "02": AnalystReceipt,
     "04": ScorerReceipt,

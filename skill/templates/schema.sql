@@ -162,5 +162,35 @@ CREATE TABLE IF NOT EXISTS scrape_log (
   ran_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Market scout outputs. The DAG starts from markets, not startups. The scout
+-- recursively breaks markets into sub-markets (segments) and emits candidate
+-- YC startups per segment. Ingestor fans out on the scout's receipt.
+CREATE TABLE IF NOT EXISTS market_segments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  parent_market TEXT NOT NULL,
+  segment_name TEXT NOT NULL,
+  icp_cluster TEXT NOT NULL,                        -- 'developer' | 'infra' | 'enterprise-IT'
+  rationale TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(parent_market, segment_name)
+);
+
+CREATE TABLE IF NOT EXISTS candidate_startups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  website TEXT UNIQUE NOT NULL,
+  market_segment_id INTEGER REFERENCES market_segments(id) ON DELETE CASCADE,
+  yc_batch TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Kill-metric window + clusterer last-run timestamps (used by pm.py)
+CREATE TABLE IF NOT EXISTS runtime_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Fixed edge vocabulary enforced at app level; mirror here for query ergonomics:
 -- solves, sub-problem-of, suffers-from, enables, incumbent-of, OSS-alternative-to

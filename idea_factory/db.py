@@ -19,12 +19,14 @@ from typing import Iterator, Optional
 from idea_factory.schema import (
     AnalystInput,
     BuilderInput,
+    CandidateStartupRow,
     ClustererInput,
     CompetitiveRow,
     CustomerRow,
     GTMRow,
     IngestorInput,
     InfrastructureOpRow,
+    MarketSegmentRow,
     OutreachLogRow,
     PatternLibraryRow,
     PersonalFitRow,
@@ -93,6 +95,75 @@ class DB:
 
     def close(self) -> None:
         self._conn.close()
+
+    # --- market scout node writes (the DAG entry point) ---
+
+    def upsert_market_segment(self, row: MarketSegmentRow) -> int:
+        """Idempotent on (parent_market, segment_name). Returns segment_id."""
+        with self.tx() as cur:
+            cur.execute(
+                """
+                INSERT INTO market_segments
+                  (parent_market, segment_name, icp_cluster, rationale)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(parent_market, segment_name) DO UPDATE SET
+                  icp_cluster=excluded.icp_cluster, rationale=excluded.rationale
+                """,
+                (row.parent_market, row.segment_name, row.icp_cluster, row.rationale),
+            )
+            return int(cur.execute(
+                "SELECT id FROM market_segments WHERE parent_market = ? AND segment_name = ?",
+                (row.parent_market, row.segment_name),
+            ).fetchone()[0])
+
+    def insert_candidate_startup(self, row: CandidateStartupRow) -> int:
+        """Idempotent on website. Returns candidate_id."""
+        with self.tx() as cur:
+            cur.execute(
+                """
+                INSERT INTO candidate_startups
+                  (name, website, market_segment_id, yc_batch, notes)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(website) DO UPDATE SET
+                  name=excluded.name, market_segment_id=excluded.market_segment_id,
+                  yc_batch=excluded.yc_batch, notes=excluded.notes
+                """,
+                (row.name, row.website, row.market_segment_id, row.yc_batch, row.notes),
+            )
+            return int(cur.execute(
+                "SELECT id FROM candidate_startups WHERE website = ?", (row.website,)
+            ).fetchone()[0])
+
+    def candidates_for_ingest(self, segment_id: Optional[int] = None) -> list[CandidateStartupRow]:
+        """The ingestor fans out on these. If segment_id is None, returns all."""
+        if segment_id is None:
+            r = self._conn.execute(
+                "SELECT * FROM candidate_startups ORDER BY id"
+            ).fetchall()
+        else:
+            r = self._conn.execute(
+                "SELECT * FROM candidate_startups WHERE market_segment_id = ? ORDER BY id",
+                (segment_id,),
+            ).fetchall()
+        return [
+            CandidateStartupRow(
+                name=row["name"], website=row["website"],
+                market_segment_id=row["market_segment_id"],
+                yc_batch=row["yc_batch"], notes=row["notes"],
+            )
+            for row in r
+        ]
+
+    def segments(self) -> list[tuple[int, MarketSegmentRow]]:
+        r = self._conn.execute("SELECT * FROM market_segments ORDER BY id").fetchall()
+        return [
+            (row["id"], MarketSegmentRow(
+                id=row["id"], parent_market=row["parent_market"],
+                segment_name=row["segment_name"], icp_cluster=row["icp_cluster"],
+                rationale=row["rationale"],
+            ))
+            for row in r
+        ]
 
     # --- startups + SID sections (ingestor node write; PM reads) ---
 
