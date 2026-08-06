@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 147 | **142 scored** + **5 ingested** (ids 151–155) |
-| `analysed` (cohort) | 142 | ingest-20 backlog awaiting analyse |
-| `wedges` | 2840 | **142 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 680 | analyse-20 cohort |
+| `startups` | 147 | **147 scored** E2E (full cohort) |
+| `analysed` (cohort) | 147 | analyse-21 drained ids 151–155 |
+| `wedges` | 2940 | **147 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 701 | +21 from Lakera/MultiOn/Tessian/EvenUp/Portkey |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈35 |
-| `personal_fit` | 142 | Langbase=68; Guardrails=57; OpenRouter=51; Postmark=44 |
+| `personal_fit` | 147 | Langbase=68; Lakera=55; Portkey=51; Tessian=47 |
 | `pattern_library` | **16** | +Agent browser/computer-use session infrastructure |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-20: Lakera (#151), MultiOn (#152), Tessian (#153), EvenUp (#154), Portkey (#155). Railway.app skipped (already #21 railway.com). Primary mix Better memory 44, Better evaluation 40, AI-native 20, Developer-first 20.
+**`plan_recursive_fanout` next_action = `cluster`**. Analyse-21 complete: Lakera (#151 Better evaluation), MultiOn (#152 Better memory), Tessian (#153 Developer-first), EvenUp (#154 Developer-first), Portkey (#155 Better evaluation). Clusterer ready (+20 new since last). Primary mix Better memory 45, Better evaluation 42, Developer-first 22, AI-native 20.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **142/142** scored; wedges 2840; personal_fit 142; **142 primary**; startups 147. Latest: **ingest-20** — Lakera, MultiOn, Tessian, EvenUp, Portkey → ingested (Railway skipped dupe). next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 151–155.
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **147/147** scored; wedges 2940; personal_fit 147; **147 primary**; infra_ops 701. Latest: **analyse-21** — Lakera/MultiOn/Tessian/EvenUp/Portkey full E2E. next **cluster** (+20 new). **88 tests green.**
+- **Next fire:** `cluster` (stage 07) then infra convergence / ingest.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 151–155 then score/select.
-2. Further CANONICAL expand past 27 or continue ingest.
-3. Next cluster after +20 startups.
+1. **Cluster** problem graph + pattern library refresh (ready).
+2. Ingest next batch or CANONICAL expand past 27.
+3. Infra convergence after cluster.
 
 ## Subagent dispatch contract
 
