@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post analyse-14):** startups=117 (112 scored + 5 analysed) | wedges=2340 | primary=112 | personal_fit=112 | patterns=15 | segments=114 | CANONICAL=24/24 | e2e=112/117 | convergent=4 | next_action=**score_a** (ids 121–125) | tests=88 green.
+**Live snapshot (post score_a-14):** startups=117 scored | wedges=2340 | primary=112 | personal_fit=117 | patterns=15 | segments=114 | CANONICAL=24/24 | e2e=112/117 (select_pending=5) | convergent=4 | next_action=**select** (ids 121–125) | tests=88 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
