@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 147 | **147 scored** E2E (full cohort) |
-| `analysed` (cohort) | 147 | post cluster-21 |
+| `startups` | 152 | **147 scored** + **5 ingested** (ids 156–160) |
+| `analysed` (cohort) | 147 | ingest-21 backlog awaiting analyse |
 | `wedges` | 2940 | **147 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 701 | infra graph rebuilt |
-| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 123, Tracing 107, Cost 102, Auth 96 / 147) |
-| `infra_personal_fit` | 8 | Mode B; top_infra=**Tracing/observability** (score 0.84) |
+| `infrastructure_ops` | 701 | post cluster-21 |
+| `infrastructure_nodes` | 10 | **4 convergent** |
+| `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
-| `candidate_startups` | 277 | pending_ingest≈35 |
+| `candidate_startups` | 277 | pending_ingest≈30 |
 | `personal_fit` | 147 | Langbase=68; Lakera=55; Portkey=51; Tessian=47 |
-| `pattern_library` | **18** | +Multi-provider LLM gateway; +Email auth/outbound DLP |
+| `pattern_library` | **18** | +gateway routing; +email auth/DLP |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Cluster-21: infra convergence refreshed; patterns 16→18; problem_nodes 18; clusterer clock reset. Primary mix Better memory 45, Better evaluation 42, Developer-first 22, AI-native 20.
+**`plan_recursive_fanout` next_action = `analyse`**. Ingest-21: Robust Intelligence (#156), Nightfall (#157), Abridge (#158), Parabola (#159), LiteLLM (#160). Railway skipped (dupe #21). Primary mix Better memory 45, Better evaluation 42, Developer-first 22.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,16 +119,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **147/147** scored; wedges 2940; personal_fit 147; **147 primary**; infra_ops 701; **patterns 18**. Latest: **cluster-21** — infra graph + 2 new patterns (gateway routing, email auth/DLP); top_infra Tracing/observability. next **ingest**. **88 tests green.**
-- **Next fire:** `ingest` next batch or CANONICAL expand past 27.
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **147/147** scored; wedges 2940; personal_fit 147; **147 primary**; **patterns 18**; startups 152. Latest: **ingest-21** — Robust Intelligence, Nightfall, Abridge, Parabola, LiteLLM → ingested. next **analyse**. **88 tests green.**
+- **Next fire:** `analyse` ids 156–160.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Ingest** next pending candidates (planner next_action=ingest).
-2. Further CANONICAL expand past 27 (founder-gap parents).
+1. **Analyse** ids 156–160 then score/select.
+2. Further CANONICAL expand past 27 or continue ingest.
 3. Next cluster after +20 startups.
 
 ## Subagent dispatch contract
