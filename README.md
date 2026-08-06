@@ -87,10 +87,10 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 127 | **122 scored** E2E + **5 ingested** (ids 131–135) awaiting analyse |
-| `analysed` (cohort) | 122 | scored cohort complete; backlog=5 not yet analysed |
-| `wedges` | 2440 | **122 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 593 | per-startup platform needs |
+| `startups` | 127 | **122 scored** E2E + **5 analysed** (ids 131–135) awaiting score_a |
+| `analysed` (cohort) | 127 | 122 scored + 5 newly analysed |
+| `wedges` | 2540 | **122 primary**; +100 from analyse-16 |
+| `infrastructure_ops` | 615 | +22 from Steel/Elementary/Statsig/Abnormal/Kindo |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
@@ -98,7 +98,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `personal_fit` | 122 | Langbase=68; Sublime=65; Composio=60; MC=49; StackAI=40; Fly=38 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingested ids **131–135** (Steel, Elementary, Statsig, Abnormal, Kindo). Primary mix Better memory 36, Better evaluation 34, AI-native 19. cluster_ready=true (+20 since last) after analyse drain.
+**`plan_recursive_fanout` next_action = `score_a`**. Analysed ids **131–135** (Steel, Elementary, Statsig, Abnormal, Kindo). Primary mix Better memory 36, Better evaluation 34, AI-native 19. cluster_ready=true after score/select.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **122/122** scored; wedges 2440; personal_fit 122; infra_ops 593; **122 primary**; **patterns 15**. Latest: **ingest-16** — Steel (#131), Elementary (#132), Statsig (#133), Abnormal (#134), Kindo (#135) → ingested. next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 131–135 (do not re-ingest; backlog=5). Cluster after drain if still ready.
+- **Done (pushed):** CANONICAL 24/24; e2e **122/122** primary; wedges 2540; personal_fit 122; infra_ops 615; **122 primary**; **patterns 15**. Latest: **analyse-16** — Steel/Elementary/Statsig/Abnormal/Kindo (#131–135) → analysed (+100 wedges, +22 infra_ops). next **score_a**. **88 tests green.**
+- **Next fire:** `score_a` ids 131–135 then select; cluster when ready.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 131–135 (Steel, Elementary, Statsig, Abnormal, Kindo).
-2. Then score_a → select for 131–135.
-3. **Cluster** when ready (new_startups_since_last ≥20).
+1. **score_a** on ids 131–135.
+2. Then **select** primaries/shortlist for 131–135.
+3. **Cluster** (cluster_ready=true).
 4. Further **CANONICAL expand** past 24.
 
 ## Subagent dispatch contract
