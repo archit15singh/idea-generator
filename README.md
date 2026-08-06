@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 92 | all `scored` (Grit, Svix, Cekura, Gusto, Grouparoo finished score_a+select) |
-| `analysed` (cohort) | 92 | full E2E: path + wedges + fit + primary shortlist |
-| `wedges` | 1840 | **92 primary** + rank2/3 shortlists |
+| `startups` | 97 | 92 `scored` + 5 `ingested` (Quack AI, Hookdeck, Rivet, Lattice, Sequin) |
+| `analysed` (cohort) | 92 | scored set full E2E; 5 await analyse |
+| `wedges` | 1840 | **92 primary** until analyse→score_a→select |
 | `infrastructure_ops` | 454 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL covered + analysed |
-| `candidate_startups` | 251 | next ingest: Quack AI, Hookdeck, Rivet, Lattice, Sequin |
-| `personal_fit` | 92 | Mode A complete for full cohort |
-| `pattern_library` | 13 | 5 new since last cluster (need 20 for next) |
+| `candidate_startups` | 251 | analyse backlog=5 (ingest paused) |
+| `personal_fit` | 92 | 5 await analyse→score |
+| `pattern_library` | 13 | 10 new since last cluster |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Primary mix: Better memory 24, Better evaluation 23, Developer-first 15, AI-native 13, Open source 10 (~26% top — healthy).
+**`plan_recursive_fanout` next_action = `analyse`** on ids `[101–105]`. Primary mix (scored): Better memory 24, Better evaluation 23, Developer-first 15, AI-native 13.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 92 startups all scored; 1840 wedges; 454 infra_ops; **92 primary**; 13 patterns. Latest: score_a+select on Grit/Svix/Cekura/Gusto/Grouparoo (ids 96–100). **88 tests green.**
-- **Next fire:** `ingest` (Quack AI, Hookdeck, Rivet, Lattice, Sequin) → analyse drain → expand CANONICAL beyond 20.
+- **Done (pushed):** 20/20 CANONICAL markets; 97 startups (92 scored + 5 ingested); 1840 wedges; 454 infra_ops; 92 primary; 13 patterns. Latest: ingest Quack AI / Hookdeck / Rivet / Lattice / Sequin (ids 101–105; Quack site dead→GitHub; Sequin sequin.io shutdown note vs sequinstream CDC OSS). **88 tests green.**
+- **Next fire:** `analyse` drain on 101–105 → score_a → select → expand CANONICAL beyond 20.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
