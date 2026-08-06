@@ -153,7 +153,7 @@ def build_builder_input(db, startup_id: int, wedge_id: int) -> BuilderInput:
 
 def build_clusterer_input(db, min_new_since_last: int = 20) -> ClustererInput:
     last_run = db._conn.execute(
-        "SELECT MAX(ran_at) AS last FROM runtime_meta WHERE key = 'last_clusterer_run'"
+        "SELECT value AS last FROM runtime_meta WHERE key = 'last_clusterer_run'"
     ).fetchone()
     last_at = None
     if last_run and last_run["last"]:

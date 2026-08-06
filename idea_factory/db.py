@@ -271,7 +271,8 @@ class DB:
         ).fetchone()
         if not r:
             return None
-        return cls(**{k: r[k] for k in r.keys()})
+        allowed = set(cls.model_fields)
+        return cls(**{k: r[k] for k in r.keys() if k in allowed})
 
     def startups_by_stage(self, marker: str) -> list[StartupRow]:
         rows = self._conn.execute(
@@ -502,7 +503,7 @@ class DB:
     def insert_problem_edge(self, row: ProblemEdgeRow) -> bool:
         """Returns False if edge already exists (idempotent)."""
         with self.tx() as cur:
-            cur.execute(
+            res = cur.execute(
                 """
                 INSERT OR IGNORE INTO problem_edges
                   (from_node, to_node, edge_type, source_ref)
@@ -510,7 +511,7 @@ class DB:
                 """,
                 (row.from_node, row.to_node, row.edge_type, row.source_ref),
             )
-            return cur.total_changes > 0
+            return res.rowcount > 0
 
     def upsert_pattern(self, row: PatternLibraryRow) -> None:
         with self.tx() as cur:
@@ -544,6 +545,6 @@ class DB:
         if since is None:
             return int(self._conn.execute("SELECT COUNT(*) FROM startups").fetchone()[0])
         return int(self._conn.execute(
-            "SELECT COUNT(*) FROM startups WHERE updated_at > ?",
+            "SELECT COUNT(*) FROM startups WHERE updated_at > datetime(?)",
             (since.isoformat(timespec="seconds"),),
         ).fetchone()[0])

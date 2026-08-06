@@ -1,0 +1,555 @@
+# GoalBuddy v2 state.yaml
+# Board truth lives here. goal.md is the editable charter; notes/ holds long receipts only.
+
+version: 2
+
+goal:
+  title: "Idea Factory E2E Live Run"
+  slug: "idea-factory-e2e-live"
+  kind: existing_plan
+  tranche: "continuous execution: run the idea-factory DAG for one live cohort from market scout through extraction + idea generation, then as far as scorer/validator/builder/clusterer preconditions allow; finish with a receipt-mapped audit."
+  status: active
+  oracle:
+    signal: "A live cohort reaches stage_marker='analysed' with real SID rows and 20+ evidence-cited wedges per startup, produced by idea-factory agents from live web fetches, with receipts and gate outputs on every task."
+    cadence: "after each Worker package and at final audit"
+    final_proof: "scout receipt with market_segments + candidate_startups; ingestor receipt with real SID rows (startups.*, startup_problem/product/gtm/technical) and stage_marker='ingested'; analyst receipt with recursive_path + 20+ wedges passing evidence_gate; gate outputs; all task receipts present"
+  intake:
+    original_request: "Run the GoalBuddy /goal execution loop: execute the idea-factory skill and run the e2e workflow using the idea factory agents for a live web extraction + idea generation run."
+    interpreted_outcome: "A live web-driven cohort flows through the idea-factory DAG (scout -> ingestor -> analyst -> scorer -> validator -> builder -> clusterer) using the idea-factory subagents, with deterministic gates verified in code and receipts on every task."
+    input_shape: existing_plan
+    audience: "the user (idea-factory operator / founder)"
+    authority: requested
+    proof_type: artifact
+    completion_proof: "live cohort analysed with real SID rows + 20+ evidence-backed wedges; every task carries a receipt; gates (evidence_gate, top_wedge, graduation_gate, builder_accepts, promotion_gate) run in code; later stages blocked or approved with receipts"
+    likely_misfire: "replaying the existing synthetic DB (placeholder wedges + fake outreach) instead of a live web extraction; agents fabricating evidence to pass gates; stopping after planning/Judge selection"
+    blind_spots_considered:
+      - "founder-profile.md is EMPTY -> scorer blocks at stage 04 (human-input gate)"
+      - "validator sends real cold email (30/persona) and builder launches real MVPs -> real-world side effects requiring explicit approval + gmail pairing"
+      - "existing DB holds 5 synthetic startups with placeholder wedges and fake outreach; re-ingest/re-analyse with live web data (idempotent upserts) to get real data"
+      - "web scraping may time out; accept 404s per ingestor best-effort rule"
+      - "cohort size must be bounded so the ingestor does not blow context on 30+ candidates"
+    existing_plan_facts:
+      - "DAG entry non-negotiable: start from pm.default_scout_input(), dispatch market scout, fan out on candidates"
+      - "dispatch with typed inputs from idea_factory.pm; validate receipts with idea_factory.receipts.parse; route with idea_factory.decisions"
+      - "honour rules: validation before build; no-evidence wedges die; scorer never overwrites human-locked personal_fit; clusterer uses fixed edge vocabulary; PM owns board truth"
+      - "do not edit schema.py/db.py/decisions.py/receipts.py/agents/*.md/design notes during the run"
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  exact_human_approval_can_terminal_wait: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: starting
+    url: "http://goalbuddy.localhost:41737/idea-factory-e2e-live/"
+    command: "node /Users/architsingh/.config/opencode/skills/goal-prep/surfaces/local-goal-board/scripts/local-goal-board.mjs --goal docs/goals/idea-factory-e2e-live"
+
+active_task: T013
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Validate the idea-factory e2e live-run plan: assess current sid.db state, define a bounded live cohort, and spec the Worker packages for DAG stages 00-02 (scout, ingestor, analyst) with allowed_files/verify/stop_if."
+    inputs:
+      - "skill/SKILL.md (the DAG topology)"
+      - "idea_factory/pm.py, decisions.py, receipts.py, schema.py"
+      - "current sid.db state (5 synthetic startups, placeholder wedges, empty SID sections)"
+      - "agents/idea-factory-*.md (installed)"
+    constraints:
+      - "Read-only."
+      - "Do not edit implementation files."
+      - "Recommend a bounded cohort (3-5 candidates) for the first live pass."
+      - "Flag the empty founder-profile.md blocker at stage 04 and the real-world-side-effect approvals at stages 05/06."
+    expected_output:
+      - "decision: approved | blocked"
+      - "exact Worker objective for each of T002 (scout), T003 (ingestor), T004 (analyst)"
+      - "allowed_files, verify, stop_if per Worker"
+      - "bounded cohort definition"
+      - "blocked/deferred tasks"
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: "Seeded T002-T004 packages match code contracts: scout starts from pm.default_scout_input() (DAG entry preserved), write scopes exact (sid.db; sid.db+scrapes/; sid.db), verify commands hit real db/decisions APIs, stop_if mirrors agent contracts; each is one full DAG node over the cohort, correct vertical sizing. First live cohort = the 5 existing candidates (Letta, Cursor, Cognition, Continue, Braintrust): ingestor is designed for 5, upserts idempotent on website, 5x20+ wedges meets the oracle; new scout-emitted candidates wait for later cohorts. T005 blocked (empty founder-profile.md AND synthetic-locked fit rows); T006/T007 wait for explicit user approval (real email/MVP); T008 defers (<20 startups)."
+      worker_package:
+        objective: "Run DAG stage 00 (market scout): dispatch idea-factory-market-scout with pm.default_scout_input(), write market_segments + candidate_startups to sid.db, stamp runtime started_at."
+        allowed_files:
+          - sid.db
+        verify:
+          - "python3 -m pytest tests/ -q"
+          - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print('segments', len(db.segments()), 'candidates', len(db.candidates_for_ingest()))\""
+        stop_if:
+          - "Scout returns result blocked (zero candidates emitted)."
+          - "Need to edit idea_factory/*.py or agents/*.md."
+          - "Verification fails twice."
+      evidence:
+        - docs/goals/idea-factory-e2e-live/state.yaml
+        - docs/goals/idea-factory-e2e-live/goal.md
+        - skill/SKILL.md
+        - idea_factory/pm.py
+        - idea_factory/decisions.py
+        - idea_factory/schema.py
+        - idea_factory/receipts.py
+        - idea_factory/db.py
+        - agents/idea-factory-market-scout.md
+        - agents/idea-factory-ingestor.md
+        - agents/idea-factory-analyst.md
+        - agents/idea-factory-scorer.md
+        - "sid.db inspection"
+        - "tests: 41 passed"
+      subgoal_contract: null
+      parallel_safety: null
+      blocked_tasks:
+        - "T005: blocked until user fills founder-profile.md AND unlocks the 5 synthetic human-locked personal_fit rows"
+        - "T006: blocked until explicit user approval + gmail recipient pairing for real cold email"
+        - "T007: blocked until explicit user approval for real MVP launch"
+        - "T008: deferred — only 5 startups, clusterer needs 20 new since last run"
+      missing_evidence: []
+      required_board_updates:
+        - "Record bounded cohort on T003: first live cohort = candidates 1-5 (letta.com, cursor.com, cognition.ai, continue.dev, braintrust.dev); do NOT fan out over all scout-emitted candidates (context bound)."
+        - "T005: expand blocker to two parts — empty founder-profile.md AND synthetic human-locked personal_fit rows."
+        - "T005 verify: replace convoluted command with direct db.get_personal_fit() loop."
+        - "T004 verify: prefer iterating db.startups_by_stage('analysed') over hard-coding startup_id 1."
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Run DAG stage 00 (market scout): dispatch idea-factory-market-scout with pm.default_scout_input(), write market_segments + candidate_startups to sid.db, stamp runtime started_at."
+    allowed_files:
+      - sid.db
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print('segments', len(db.segments()), 'candidates', len(db.candidates_for_ingest()))\""
+    stop_if:
+      - "Scout returns result blocked (zero candidates emitted)."
+      - "Need to edit idea_factory/*.py or agents/*.md."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - sid.db
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+        - cmd: "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print('segments', len(db.segments()), 'candidates', len(db.candidates_for_ingest()))\""
+          status: pass
+      summary: "Market scout dispatched via idea-factory-market-scout; 10 markets processed at depth 2 -> 52 segments (developer 21, infra 8, enterprise-IT 23) + 122 candidates written to sid.db. DAG entry contract preserved. runtime started_at already stamped by synthetic seeding (idempotent). Verification: 41 pytest passed; segments 52, candidates 122."
+      evidence:
+        - "sid.db market_segments: 52 rows"
+        - "sid.db candidate_startups: 122 rows"
+        - "python3 -m pytest tests/ -q: 41 passed"
+      spawned_tasks: []
+      harness: opencode
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Run DAG stage 01 (ingestor): dispatch idea-factory-ingestor per candidate in the bounded first cohort = candidates 1-5 (letta.com, cursor.com, cognition.ai, continue.dev, braintrust.dev). Live-webfetch each startup, extract the SID row (startups + 6 sections + scrape_log), stage_marker='ingested'. Re-ingest existing synthetic startups with live web data. Do NOT fan out over all scout-emitted candidates (context bound)."
+    allowed_files:
+      - sid.db
+      - scrapes/
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print([(s.id, s.startup, s.stage_marker) for s in db.startups_by_stage('ingested')])\""
+    stop_if:
+      - "A domain hard-fails twice (then record it in the receipt and continue)."
+      - "Need to edit idea_factory/*.py or agents/*.md."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - sid.db
+        - scrapes/
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+        - cmd: "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print([(s.id, s.startup, s.stage_marker) for s in db.startups_by_stage('ingested')])\""
+          status: pass
+        - cmd: "sqlite3 sid.db 'SELECT COUNT(*) FROM startup_problem; SELECT COUNT(*) FROM startup_product; SELECT COUNT(*) FROM startup_gtm; SELECT COUNT(*) FROM startup_technical;'"
+          status: pass
+      summary: "Ingestor dispatched via idea-factory-ingestor; 5 startups live-ingested from real web fetches (letta.com, cursor.com, cognition.ai, continue.dev, braintrust.dev). SID sections filled: problem/product/gtm/technical all 5 rows each (were 0). YC /companies pages 404'd for 4/5 -> homepage fallback per best-effort. Continue corrected to S23 + 'acquired by Cursor'. Out-of-scope tables untouched. PRE-EXISTING BLOCKER FOUND: db.get_sid_for_analyst crashes on any row (_get_one passes updated_at into extra=forbid rows) — blocks stage 02."
+      evidence:
+        - "sid.db startups: 5 rows stage_marker='ingested'"
+        - "startup_problem/product/gtm/technical: 5 rows each"
+        - "scrape_log: 35 rows; scrapes/<domain>/raw.json artifacts"
+        - "python3 -m pytest tests/ -q: 41 passed"
+        - "repro: db.get_sid_for_analyst(1) -> ValidationError 'updated_at: Extra inputs are not permitted'"
+      spawned_tasks:
+        - "T004-recovery (pre-existing db.py read bug must be fixed before analyst dispatch)"
+      harness: opencode
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Run DAG stage 02 (analyst): dispatch idea-factory-analyst per ingested startup, recursive L1-L10 descent + 20+ wedge rows with evidence citations + infrastructure ops, run decisions.evidence_gate, stage_marker='analysed'."
+    allowed_files:
+      - sid.db
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; from idea_factory.decisions import evidence_gate; db=DB('sid.db'); analysed=db.startups_by_stage('analysed'); print('analysed', len(analysed)); [print(s.id, len(db.get_wedges(s.id)), len(evidence_gate(db.get_wedges(s.id)).accepted)) for s in analysed]\""
+    stop_if:
+      - "L5 produced zero shifts and every wedge was rejected (result partial)."
+      - "Need to edit idea_factory/*.py or agents/*.md."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - sid.db
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+        - cmd: "python3 -c \"from idea_factory.db import DB; from idea_factory.decisions import evidence_gate; db=DB('sid.db'); [print(s.id, s.startup, len(db.get_wedges(s.id)), len(evidence_gate(db.get_wedges(s.id)).accepted)) for s in db.startups_by_stage('analysed')]\""
+          status: pass
+      summary: "Analyst dispatched via idea-factory-analyst for all 5 startups (Letta, Cursor, Cognition, Continue, Braintrust). Each got full L1-L10 recursive descent with 5 L5 enabling shifts, 20 evidence-cited wedges (100 total, 99 accepted / 1 explicit no-need), 34 infra ops (7 broader). evidence_gate run per startup. All stage_marker='analysed'. Verification: 41 pytest passed."
+      evidence:
+        - "sid.db recursive_path: 5 rows"
+        - "sid.db wedges: 100 rows (99 evidence-gated accepted)"
+        - "sid.db infrastructure_ops: 34 rows"
+        - "python3 -m pytest tests/ -q: 41 passed"
+      harness: opencode
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: medium
+    objective: "Run DAG stage 04 (scorer): dispatch idea-factory-scorer to compute 8-axis personal fit from founder-profile.md for the analysed cohort. BLOCKER (two parts): founder-profile.md is EMPTY AND all 5 personal_fit rows are synthetic human-locked (reviewed_at set, reviewed_by 'archit', uniform total=65); both must be resolved by the user before scoring can run."
+    allowed_files:
+      - sid.db
+      - skill/templates/founder-profile.md
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print([(f.startup_id, f.total, f.reviewed_at is not None) for f in [] ] or db.get_personal_fit(1))\""
+    stop_if:
+      - "founder-profile.md is empty and user has not filled it."
+      - "Human-locked personal_fit rows block overwrite (record skipped counts)."
+      - "Verification fails twice."
+    receipt:
+      result: blocked
+      blocked_reason: "Scorer preconditions unmet: (1) skill/templates/founder-profile.md is an empty template (no stack/distribution/personas) — scorer would produce fiction; (2) all 5 personal_fit rows are human-locked synthetic placeholders (reviewed_by 'archit', reviewed_at set, uniform total=65) so upsert_personal_fit returns False and skips every row. Both require human action, not agent work."
+      waiting_for_user_approval: true
+      required_reply: "Fill skill/templates/founder-profile.md (or approve scoring from the current empty profile) AND unlock the 5 synthetic personal_fit rows so the scorer can write real scores."
+      changed_files: []
+      commands: []
+      summary: "Scorer (DAG stage 04) cannot run: founder profile empty + all fit rows human-locked synthetic. Blocked pending user input. Proceeding with user's new directive: introspection for high-ROI minimal fixes, keep fixing and pushing."
+      harness: opencode
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: high
+    objective: "Run DAG stage 05 (validator): decisions.top_wedge per scored startup, dispatch idea-factory-validator for real cold outreach via gmail MCP (30 sends/persona), classify replies, run decisions.graduation_gate + route_after_validator. BLOCKER: real email sends require explicit user approval + gmail recipient pairing."
+    allowed_files:
+      - sid.db
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); print([r for r in db.outreach_for_wedge(1)])\""
+    stop_if:
+      - "User has not approved real cold-email sends."
+      - "No wedges score >= MIN_FIT_TO_VALIDATE (60)."
+      - "Kill metric fires (decisions.kill_metric_triggered)."
+      - "Verification fails twice."
+    receipt:
+      result: blocked
+      blocked_reason: "Validator (DAG stage 05) sends REAL cold email (30 sends/persona) via the gmail MCP. This is a real-world side effect that requires explicit user approval + gmail recipient pairing. Also depends on T005 (fit scores) which is itself blocked on founder-profile.md. User redirected the run to a fix-and-push loop."
+      waiting_for_user_approval: true
+      required_reply: "Approve real cold-email outreach (gmail MCP, 30 sends/persona for the top wedge per startup) OR skip the validator stage for this tranche."
+      changed_files: []
+      commands: []
+      summary: "Validator blocked: real cold-email sends need explicit approval + gmail pairing, and it depends on scorer output (T005, itself blocked on founder profile). Pending user decision."
+      harness: opencode
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: high
+    objective: "Run DAG stage 06 (builder): for graduated wedges only, run decisions.builder_accepts then dispatch idea-factory-builder to build an instrumented landing-page MVP, launch it, extend outreach. BLOCKER: real MVP launch requires explicit user approval."
+    allowed_files:
+      - sid.db
+      - mvp/
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "test -d mvp && ls mvp"
+    stop_if:
+      - "No graduated wedges (builder_accepts refuses)."
+      - "User has not approved real MVP launch."
+      - "Wedge needs a real backend before signal can be collected (return blocked)."
+      - "Verification fails twice."
+    receipt:
+      result: blocked
+      blocked_reason: "Builder (DAG stage 06) builds and LAUNCHES real instrumented MVPs — a real-world side effect requiring explicit user approval. Also gated on decisions.builder_accepts, which requires stage_marker='graduated' AND 3+ pain replies (no wedge has graduated; validator is blocked). User redirected the run to a fix-and-push loop."
+      waiting_for_user_approval: true
+      required_reply: "Approve real MVP builds/launches for graduated wedges OR skip the builder stage for this tranche."
+      changed_files: []
+      commands: []
+      summary: "Builder blocked: requires graduated wedges (none exist; validator blocked) AND explicit approval for real MVP launches. Pending user decision."
+      harness: opencode
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: medium
+    objective: "Run DAG stage 07 (clusterer): when >=20 new startups since last run, dispatch idea-factory-clusterer to promote cross-cluster patterns (promotion_gate) and update the Problem Graph (classify_edge)."
+    allowed_files:
+      - sid.db
+    verify:
+      - "python3 -m pytest tests/ -q"
+    stop_if:
+      - "Fewer than 20 new startups since last clusterer run (defer)."
+      - "Verification fails twice."
+    receipt:
+      result: blocked
+      blocked_reason: "Clusterer (DAG stage 07) fires only when >=20 NEW startups since the last run. The live cohort added 0 new startups (5 existing re-ingested). 5 < 20, so the promotion gate has no material to work on. Deferred to a later cohort."
+      changed_files: []
+      commands: []
+      summary: "Clusterer deferred: only 5 startups in cohort, needs 20 new since last run for pattern promotion. Not required for this tranche's oracle."
+      harness: opencode
+  - id: T009
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Fix pre-existing db.py read bug blocking analyst dispatch: idea_factory/db.py _get_one passes ALL DB columns (including updated_at) into extra=forbid Pydantic section rows, so db.get_sid_for_analyst crashes on every startup. Fix: filter keys to cls.model_fields before constructing the row. Verify pytest + get_sid_for_analyst(1)."
+    allowed_files:
+      - idea_factory/db.py
+    verify:
+      - "python3 -m pytest tests/ -q"
+      - "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); a=db.get_sid_for_analyst(1); print('analyst input ok', a.startup_id, a.sid.startup)\""
+    stop_if:
+      - "Root cause is elsewhere (not _get_one)."
+      - "Need to edit files outside idea_factory/db.py."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - idea_factory/db.py
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+        - cmd: "python3 -c \"from idea_factory.db import DB; db=DB('sid.db'); a=db.get_sid_for_analyst(1); print('analyst input ok', a.startup_id, a.sid.startup, a.customer is not None)\""
+          status: pass
+      summary: "Fixed _get_one in db.py to filter row keys to cls.model_fields, so updated_at no longer crashes extra=forbid section rows. 41 pytest passed; get_sid_for_analyst(1) returns analyst input ok 1 Letta True. Only idea_factory/db.py changed. Approved by user (scoped recovery worker)."
+      evidence:
+        - "git diff: idea_factory/db.py only (+2 -1)"
+      harness: opencode
+  - id: T010
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: "Introspect the idea-factory codebase for high-ROI minimal fixes that maximize improvement: bugs, contract gaps, test gaps, and quality issues surfaced by the live e2e run (e.g. the db._get_one extra=forbid bug, the marker SQL, receipt validation sharpness). Rank by ROI (impact / effort). Read-only."
+    inputs:
+      - "Live-run receipts (T001-T009) and notes"
+      - "idea_factory/db.py, schema.py, decisions.py, receipts.py, pm.py"
+      - "tests/test_80_20.py (41 tests)"
+      - "agents/*.md, skill/SKILL.md, commands/idea-factory.md"
+    constraints:
+      - "Read-only."
+      - "Do not edit implementation files."
+      - "Prefer minimal fixes with concrete file-path evidence."
+      - "Exclude fixes already applied (db._get_one) and excluded files per charter (agents/*.md, design notes)."
+    expected_output:
+      - "Ranked list of high-ROI fixes (file, line, why, effort)"
+      - "Test gaps"
+      - "Candidate Worker tasks"
+    receipt:
+      result: done
+      summary: "Introspected idea_factory: 3 verified bugs (pm.build_clusterer_input queries nonexistent ran_at column -> OperationalError; db.insert_problem_edge uses cumulative total_changes breaking idempotency; db.count_startups_since T-vs-space datetime compare returns 0), receipts._BARE_RE dead regex, and zero test coverage for get_sid_for_analyst + pm.build_* builders. Excluded already-applied _get_one fix."
+      evidence:
+        - "idea_factory/pm.py:155 (SQL no such column ran_at, verified OperationalError)"
+        - "idea_factory/db.py:514 (insert_problem_edge dup returns True, verified)"
+        - "idea_factory/db.py:544 (count_startups_since returns 0 same-day, verified)"
+        - "idea_factory/receipts.py:43 (_BARE_RE never matches, verified)"
+        - "tests/test_80_20.py:442 (no get_sid_for_analyst / build_* coverage)"
+      ranked_fixes:
+        - file: idea_factory/pm.py
+          line: 155
+          issue: "build_clusterer_input queries MAX(ran_at) from runtime_meta (no such column)"
+          fix: "SELECT value FROM runtime_meta WHERE key='last_clusterer_run'"
+          effort: S
+          impact: H
+          priority: 1
+        - file: tests/test_80_20.py
+          issue: "no coverage for get_sid_for_analyst, pm.build_*, count_startups_since, insert_problem_edge dup"
+          fix: "add regression tests"
+          effort: S
+          impact: H
+          priority: 2
+        - file: idea_factory/db.py
+          line: 514
+          issue: "insert_problem_edge uses cumulative total_changes"
+          fix: "return row.rowcount > 0"
+          effort: S
+          impact: M
+          priority: 3
+        - file: idea_factory/db.py
+          line: 544
+          issue: "count_startups_since lexicographic T-vs-space compare"
+          fix: "WHERE updated_at > datetime(?)"
+          effort: S
+          impact: M
+          priority: 4
+        - file: idea_factory/receipts.py
+          line: 43
+          issue: "_BARE_RE requires schema_version key immediately after {"
+          fix: "relax regex to match schema_version anywhere + add MarketScoutReceipt to parse union"
+          effort: S
+          impact: M
+          priority: 5
+        - file: idea_factory/schema.py
+          line: 428
+          issue: "dead STAGE_DEFAULTS, MarketScoutReceiptStub, unused imports"
+          fix: cleanup
+          effort: S
+          impact: L
+          priority: 6
+      recommended_next_tasks:
+        - "T011 worker: fix pm.py:155 ran_at SQL + add pm.build_* and get_sid_for_analyst regression tests"
+        - "T012 worker: fix db.py insert_problem_edge rowcount + count_startups_since datetime normalization"
+        - "T013 worker: fix receipts.py _BARE_RE + MarketScoutReceipt Union"
+        - "T014 worker: dead code/import cleanup"
+      harness: opencode
+  - id: T011
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Fix pm.build_clusterer_input (idea_factory/pm.py:155): SQL queries MAX(ran_at) from runtime_meta which has no ran_at column -> OperationalError on every call. Fix to SELECT value FROM runtime_meta WHERE key='last_clusterer_run'. Also add regression tests for get_sid_for_analyst round-trip (the _get_one crash path) and each pm.build_* input builder."
+    allowed_files:
+      - idea_factory/pm.py
+      - tests/test_80_20.py
+    verify:
+      - "python3 -m pytest tests/ -q"
+    stop_if:
+      - "Need to edit files outside allowed_files."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - idea_factory/pm.py
+        - tests/test_80_20.py
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+      summary: "Fixed pm.build_clusterer_input SQL to read value from runtime_meta WHERE key='last_clusterer_run' (ran_at column did not exist -> OperationalError on every call). Added 4 regression tests: get_sid_for_analyst 6-section round-trip, clusterer/scorer/validator input builders. 45 passed (was 41)."
+      evidence:
+        - "python3 -m pytest tests/ -q: 45 passed"
+      harness: opencode
+  - id: T012
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Fix two db.py bugs: (1) insert_problem_edge (db.py:514) returns cur.total_changes>0 which is cumulative since connection open, breaking idempotency — use row.rowcount>0; (2) count_startups_since (db.py:544) lexicographically compares SQLite space-format updated_at to isoformat T+offset boundary, returning 0 for same-day updates — use datetime(?) normalization. Add regression tests for both."
+    allowed_files:
+      - idea_factory/db.py
+      - tests/test_80_20.py
+    verify:
+      - "python3 -m pytest tests/ -q"
+    stop_if:
+      - "Need to edit files outside allowed_files."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - idea_factory/db.py
+        - tests/test_80_20.py
+      commands:
+        - cmd: "python3 -m pytest tests/ -q"
+          status: pass
+      summary: "Fixed insert_problem_edge to return executed cursor's rowcount (was total_changes, cumulative since connection open, so duplicate INSERT OR IGNORE no-ops returned True, breaking idempotency/new_edges counting). Fixed count_startups_since to normalize isoformat boundary with SQLite datetime(?) so same-day space-format updated_at rows are counted (was always 0). Added both regression tests. 47 passed."
+      evidence:
+        - "python3 -m pytest tests/ -q: 47 passed"
+      harness: opencode
+  - id: T013
+    type: worker
+    assignee: Worker
+    status: active
+    reasoning_hint: medium
+    objective: "Fix receipts._BARE_RE (idea_factory/receipts.py:43): regex requires 'idea_factory_receipt_v1' immediately after {, but every agent receipt starts with 'schema_version' -> bare JSON + trailing prose always raises ReceiptError. Relax to match schema_version anywhere before closing brace. Also add MarketScoutReceipt to the parse() return Union if missing."
+    allowed_files:
+      - idea_factory/receipts.py
+      - tests/test_80_20.py
+    verify:
+      - "python3 -m pytest tests/ -q"
+    stop_if:
+      - "Need to edit files outside allowed_files."
+      - "Verification fails twice."
+    receipt: null
+
+  - id: T014
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: low
+    objective: "Dead code / unused import cleanup: schema.py STAGE_DEFAULTS + MarketScoutReceiptStub, pm.py seed_for_cluster deprecated stub + unused imports, db.py unused Input type imports, decisions.py unused ICP_CLUSTERS/Counter/ProblemEdgeRow; use set(ICP_CLUSTERS) in promotion_gate. No behavior change; pytest must stay green."
+    allowed_files:
+      - idea_factory/schema.py
+      - idea_factory/pm.py
+      - idea_factory/db.py
+      - idea_factory/decisions.py
+      - tests/test_80_20.py
+    verify:
+      - "python3 -m pytest tests/ -q"
+    stop_if:
+      - "Need to edit files outside allowed_files."
+      - "Verification fails twice."
+    receipt: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Audit whether the e2e live-run tranche is complete: map all task receipts back to the original outcome (live web extraction + idea generation achieved), verify gate outputs, and record full_outcome_complete true only if the oracle is genuinely met."
+    inputs:
+      - "All done task receipts"
+      - "Last verification"
+      - "Current dirty diff"
+      - "sid.db state (stage_markers, wedge counts, evidence_gate result)"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if live extraction + idea generation did not genuinely happen."
+      - "Reject completion if required Worker work is still queued or active."
+      - "Reject stopping only because a slice needs owner input/credentials/approval."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+      - "next task if not complete"
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: unknown
+    task: null
+    commands: []

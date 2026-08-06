@@ -41,6 +41,8 @@ from idea_factory.schema import (
     CandidateStartupRow,
     ClustererInput,
     CompetitiveRow,
+    CustomerRow,
+    GTMRow,
     IngestorInput,
     IngestorReceipt,
     MarketScoutInput,
@@ -50,7 +52,12 @@ from idea_factory.schema import (
     PersonalFitRow,
     ProblemEdgeRow,
     ProblemNodeRow,
+    ProblemRow,
+    ProductRow,
+    ScorerInput,
     StartupRow,
+    TechnicalRow,
+    ValidatorInput,
     ValidatorReceipt,
     WedgeRow,
 )
@@ -177,6 +184,24 @@ def test_db_idempotent_upsert(db):
     assert id1 == id2
 
 
+def test_insert_problem_edge_duplicate_returns_false(db):
+    a = db.upsert_problem_node(ProblemNodeRow(canonical_name="Node A", aliases=["a"]))
+    b = db.upsert_problem_node(ProblemNodeRow(canonical_name="Node B", aliases=["b"]))
+    edge = ProblemEdgeRow(from_node=a, to_node=b, edge_type="solves", source_ref="startup:1")
+    assert db.insert_problem_edge(edge) is True
+    # INSERT OR IGNORE no-op on the same (from_node, to_node, edge_type, source_ref)
+    assert db.insert_problem_edge(edge) is False
+
+
+def test_count_startups_since_counts_same_day_updates(db):
+    db.upsert_startup(StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24"))
+    # upsert_startup stores updated_at in SQLite space format (datetime('now')),
+    # e.g. "2026-08-06 14:33:23"; the boundary is isoformat with T and tz offset.
+    # A lexicographic compare would fail (' ' < 'T'); datetime(?) normalizes it.
+    boundary = datetime.now(timezone.utc) - timedelta(seconds=2)
+    assert db.count_startups_since(boundary) >= 1
+
+
 def test_db_stage_marker_round_trips(db):
     sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
     db.set_stage_marker(sid, "analysed")
@@ -214,6 +239,101 @@ def test_db_replace_wedges_is_delete_then_insert(db):
     ws = db.get_wedges(sid)
     assert len(ws) == 1
     assert ws[0].wedge_type == "Faster"
+
+
+def test_get_sid_for_analyst_round_trips_all_sections(db):
+    sid = db.upsert_startup(StartupRow(
+        startup="Letta", website="https://letta.com", yc_batch="W24",
+    ))
+    db.upsert_customer(CustomerRow(
+        startup_id=sid, icp="AI infra eng", company_size="50-500",
+        buyer_persona="eng lead", economic_buyer="VP eng", user="platform team",
+    ))
+    db.upsert_problem(ProblemRow(
+        startup_id=sid, core_problem="context loss across sessions",
+        existing_alternatives="vector DBs", why_current_fail="no memory layer",
+        cost_of_not_solving="rewrites",
+    ))
+    db.upsert_product(ProductRow(
+        startup_id=sid, core_workflow="agent loop",
+        key_features="persistent memory", ai_capabilities="auto-summarise",
+        integrations="langchain",
+    ))
+    db.upsert_gtm(GTMRow(
+        startup_id=sid, landing_page="https://letta.com",
+        positioning="agent memory", pricing="usage-based",
+        sales_motion="PLG", plg_or_sales="plg",
+        distribution_channels="OSS, docs",
+    ))
+    db.upsert_technical(TechnicalRow(
+        startup_id=sid, likely_architecture="RAG over session logs",
+        llms="gpt-4", memory="managed block store", agents="letta agents",
+        vector_db="pgvector", evaluation="offline suite",
+        observability="tracing",
+    ))
+    db.upsert_competitive(CompetitiveRow(
+        startup_id=sid, direct_competitors="MemGPT",
+        indirect_competitors="vector DBs", oss_alternatives="LangChain memory",
+        moat="OSS lineage", weaknesses="no SOC 2",
+    ))
+    a = db.get_sid_for_analyst(sid)
+    assert a.startup_id == sid
+    assert a.sid.startup == "Letta"
+    assert a.customer is not None and a.customer.icp == "AI infra eng"
+    assert a.problem is not None and a.problem.core_problem == "context loss across sessions"
+    assert a.product is not None and a.product.core_workflow == "agent loop"
+    assert a.gtm is not None and a.gtm.positioning == "agent memory"
+    assert a.technical is not None and a.technical.llms == "gpt-4"
+    assert a.competitive is not None and a.competitive.moat == "OSS lineage"
+
+
+# --- pm: typed input builders ---
+
+
+def test_build_clusterer_input_no_crash(db):
+    from idea_factory.pm import build_clusterer_input, mark_clusterer_run
+
+    before = build_clusterer_input(db)
+    assert isinstance(before, ClustererInput)
+    assert before.last_run_at is None
+    mark_clusterer_run(db)
+    after = build_clusterer_input(db)
+    assert isinstance(after, ClustererInput)
+    assert after.last_run_at is not None
+
+
+def test_build_scorer_input_round_trips(db):
+    from idea_factory.pm import build_scorer_input
+
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+    ])
+    inp = build_scorer_input(db, sid, founder_profile_path="skill/templates/founder-profile.md")
+    assert isinstance(inp, ScorerInput)
+    assert inp.startup_id == sid
+    assert len(inp.wedges) == 1
+    assert inp.founder_profile_path == "skill/templates/founder-profile.md"
+
+
+def test_build_validator_input_round_trips(db):
+    from idea_factory.pm import build_validator_input
+
+    sid = db.upsert_startup(StartupRow(startup="A", website="https://a.example"))
+    db.replace_wedges(sid, [
+        WedgeRow(startup_id=sid, wedge_type="Open source", description="d", evidence="c"),
+    ])
+    wedge = db.get_wedges(sid)[0]
+    db.upsert_personal_fit(PersonalFitRow(
+        startup_id=sid, technical_advantage=5, interest=5, existing_knowledge=5,
+        sales_ability=5, long_term_moat=5, build_speed=5,
+        market_size=5, distribution_fit=5,
+    ))
+    inp = build_validator_input(db, sid, wedge.id)
+    assert isinstance(inp, ValidatorInput)
+    assert inp.startup_id == sid
+    assert inp.wedge.id == wedge.id
+    assert inp.personal_fit is not None
 
 
 # --- gates: evidence ---
