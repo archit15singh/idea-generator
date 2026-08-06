@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 112 | 107 `scored` E2E + **5 ingested** (Poolside/Stainless/Cognee/Deel/Decodable) |
-| `analysed` (cohort) | 107 | prior cohort scored + primary; analyse backlog = 5 |
-| `wedges` | 2140 | **107 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 514 | per-startup platform needs |
+| `startups` | 112 | 107 `scored` + **5 analysed** awaiting score_a (Poolside…Decodable) |
+| `analysed` (cohort) | 112 | full cohort analysed; score_a backlog = 5 |
+| `wedges` | 2240 | **107 primary** (selected=1) + shortlists; +100 from analyse-13 |
+| `infrastructure_ops` | 540 | per-startup platform needs (+26) |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | board pending_ingest≈154; fanout batches remain after analyse drain |
-| `personal_fit` | 107 | all scored on prior cohort |
+| `candidate_startups` | 266 | fanout pending_ingest≈40 after score/select drain |
+| `personal_fit` | 107 | prior cohort scored; 5 await score_a |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-13 complete; backlog=5 (cap). Primary mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
+**`plan_recursive_fanout` next_action = `score_a`**. Analyse-13 complete (ids 116–120); score backlog=5. Primary mix: Better memory 30, Better evaluation 28, AI-native 16, Developer-first 15.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; 107 startups e2e; 2140 wedges; 514 infra_ops; **107 primary**; **patterns 15**. Latest: **ingest wave** — Poolside, Stainless, Cognee, Deel, Decodable → stage `ingested` (ids 116–120); startups 112; next **analyse** drain. **88 tests green.**
-- **Next fire:** `analyse` drain on ids 116–120 (Poolside, Stainless, Cognee, Deel, Decodable); then score_a → select.
+- **Done (pushed):** CANONICAL 24/24; analysed 112; wedges 2240; infra_ops 540; **107 primary**; **patterns 15**. Latest: **analyse wave** — Poolside/Stainless/Cognee/Deel/Decodable → recursive_path + ≥17 evidence wedges each + infra_ops; next **score_a**. **88 tests green.**
+- **Next fire:** `score_a` on ids 116–120; then select primaries for new cohort.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
