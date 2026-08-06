@@ -187,6 +187,17 @@ CREATE TABLE IF NOT EXISTS infrastructure_edges (
 CREATE INDEX IF NOT EXISTS infrastructure_edges_node_idx ON infrastructure_edges(infra_node_id);
 CREATE INDEX IF NOT EXISTS infrastructure_edges_type_idx ON infrastructure_edges(edge_type);
 
+CREATE TABLE IF NOT EXISTS infra_personal_fit (
+  infra_node_id INTEGER PRIMARY KEY REFERENCES infrastructure_nodes(id) ON DELETE CASCADE,
+  technical_advantage INTEGER, interest INTEGER, existing_knowledge INTEGER,
+  sales_ability INTEGER, long_term_moat INTEGER, build_speed INTEGER,
+  market_size INTEGER, distribution_fit INTEGER,
+  total INTEGER,
+  reviewed_at TEXT,                                -- non-NULL = human-locked; agents must not overwrite
+  reviewed_by TEXT,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS scrape_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   source TEXT NOT NULL,
