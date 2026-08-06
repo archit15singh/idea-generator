@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 132 | **127 scored** E2E + **5 ingested** (ids 136–140) awaiting analyse |
-| `analysed` (cohort) | 127 | scored cohort complete; backlog=5 not yet analysed |
-| `wedges` | 2540 | **127 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 615 | +22 from Steel/Elementary/Statsig/Abnormal/Kindo |
-| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 115, Cost 89, Tracing 87, Auth 81 / 127) |
+| `startups` | 132 | **132 scored** E2E (full cohort) |
+| `analysed` (cohort) | 132 | analyse-18 drained ids 136–140 |
+| `wedges` | 2640 | **132 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 638 | +23 from Anomalo/Supabase/Valimail/Langdock/Skyvern |
+| `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
 | `candidate_startups` | 266 | pending_ingest≈40 |
-| `personal_fit` | 127 | Langbase=68; Sublime=65; Abnormal=62; Composio=60; Steel=53 |
+| `personal_fit` | 132 | Langbase=68; Sublime=65; Abnormal=62; Valimail=54; Skyvern=50 |
 | `pattern_library` | **16** | +Agent browser/computer-use session infrastructure |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingested ids **136–140** (Anomalo, Supabase, Valimail, Langdock, Skyvern). Primary mix Better memory 38, Better evaluation 36, AI-native 20.
+**`plan_recursive_fanout` next_action = `ingest`**. Analyse-18 complete for Anomalo/Supabase/Valimail/Langdock/Skyvern. Primary mix Better memory 40, Better evaluation 37, AI-native 20, Developer-first 17.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,18 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **127/127** scored; wedges 2540; personal_fit 127; infra_ops 615; **127 primary**; **patterns 16**. Latest: **ingest-17** — Anomalo (#136), Supabase (#137), Valimail (#138), Langdock (#139), Skyvern (#140) → ingested. next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 136–140 (do not re-ingest; backlog=5).
+- **Done (pushed):** CANONICAL 24/24; e2e **132/132** scored; wedges 2640; personal_fit 132; infra_ops 638; **132 primary**; **patterns 16**. Latest: **analyse-18** — Anomalo (#136 Better evaluation), Supabase (#137 Developer-first), Valimail (#138 Developer-first), Langdock (#139 Better memory), Skyvern (#140 Better memory) → full E2E. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` (backlog clear) or CANONICAL expand past 24.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 136–140 (Anomalo, Supabase, Valimail, Langdock, Skyvern).
-2. Then score_a → select for 136–140.
-3. Further **CANONICAL expand** past 24.
-4. Next cluster after +20 startups.
+1. **Ingest** next pending candidates (planner next_action=ingest).
+2. Further **CANONICAL expand** past 24 (founder-gap parents).
+3. Next cluster after +20 startups (clusterer needs ≥20 new since last).
 
 ## Subagent dispatch contract
 
