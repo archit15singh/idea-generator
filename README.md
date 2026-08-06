@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 82 | 77 `scored` + 5 freshly `analysed` (Depot, Tray.ai, Vapi, Motion, Ockam — await score_a) |
-| `analysed` (cohort) | 82 | all startups past analyst; recursive_path + wedges present |
-| `wedges` | 1640 | 20/startup; 1634 with evidence; **77 primary** (`selected=1`) |
+| `startups` | 82 | all `scored` (Depot, Tray.ai, Vapi, Motion, Ockam finished score_a + select) |
+| `analysed` (cohort) | 82 | recursive_path + wedges + personal_fit + primary shortlist |
+| `wedges` | 1640 | 20/startup; 1634 with evidence; **82 primary** (`selected=1`) |
 | `infrastructure_ops` | 411 | analyst per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top = Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B layer scores (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL markets covered + analysed |
-| `candidate_startups` | 251 | ~169 pending_ingest; planner batches pending_ingest=40 |
-| `personal_fit` | 77 | Mode A; 5 analysed still need score_a this wave |
+| `candidate_startups` | 251 | pending_ingest high; next wave ingest batch of 5 |
+| `personal_fit` | 82 | Mode A complete for full cohort |
 | `pattern_library` | 11 | clusterer last run 2026-08-06; 15 new since (need 20) |
 
-**`plan_recursive_fanout` next_action = `score_a`** on startup_ids `[86, 87, 88, 89, 90]` (Depot, Tray.ai, Vapi, Motion, Ockam). Primary type mix (selected=1): Better memory 24, Better evaluation 20, Developer-first 12, AI-native 9, Open source 7, Smaller ICP 5 — under ~25% type-cap health.
+**`plan_recursive_fanout` next_action = `ingest`** (Sourcegraph, Prismatic, Bland AI, Range, Census). Primary mix: Better memory 24, Better evaluation 21, Developer-first 13, AI-native 11, Open source 8, Smaller ICP 5 (~29% top type — under 40% collapse gate).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets with segments + analysed startups; 82 startups; 1640 wedges; 411 infra_ops; 77 primary shortlists; 11 pattern_library rows; Infrastructure Graph + Mode B scoring. **88 tests green.** Latest analyse wave: Depot / Tray.ai / Vapi / Motion / Ockam (ids 86–90).
-- **Next fire:** `score_a` Mode A on ids 86–90 → then `select` if needed → continue drain (`ingest` batches when analyse backlog empty) → expand CANONICAL beyond 20 when idle.
+- **Done (pushed):** 20/20 CANONICAL markets; 82 startups all scored; 1640 wedges; 411 infra_ops; **82 primary** shortlists; 11 pattern_library rows. Latest: score_a+select on Depot/Tray.ai/Vapi/Motion/Ockam (ids 86–90). **88 tests green.**
+- **Next fire:** `ingest` wave (Sourcegraph, Prismatic, Bland AI, Range, Census) → analyse drain → expand CANONICAL beyond 20 when queues thin.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
