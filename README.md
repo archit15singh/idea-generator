@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 107 | 102 `scored` + 5 `ingested` (Magic, Tempo, Knock, Syntropy, Supermemory) |
-| `analysed` (cohort) | 102 | 5 await analyse |
-| `wedges` | 2040 | **102 primary** until analyse→score→select on 111–115 |
-| `infrastructure_ops` | 494 | per-startup platform needs |
+| `startups` | 107 | 102 `scored` + 5 `analysed` (Magic, Tempo, Knock, Syntropy, Supermemory) |
+| `analysed` (cohort) | 107 | all analysed; 5 await score_a |
+| `wedges` | 2140 | **102 primary** until score_a→select on 111–115 |
+| `infrastructure_ops` | 514 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending after this batch |
-| `personal_fit` | 102 | 5 await score_a post-analyse |
-| `pattern_library` | 13 | cluster needs ≥20 new since last |
+| `candidate_startups` | 266 | pending after score drains |
+| `personal_fit` | 102 | 5 await score_a |
+| `pattern_library` | 13 | **clusterer ready** (20 new since last run) |
 
-**`plan_recursive_fanout` next_action = `analyse`** on ids `[111–115]`. Primary mix (scored): Better memory 28, Better evaluation 26, AI-native 15, Developer-first 15.
+**`plan_recursive_fanout` next_action = `score_a`** on ids `[111–115]`. Primary mix: Better memory 28, Better evaluation 26.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,19 +119,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; **107 startups** (102 scored + 5 ingested). Latest ingest: Magic, Tempo, Knock, Syntropy, Supermemory (ids 111–115). **88 tests green.**
-- **Next fire:** `analyse` 111–115 → score_a → select; clusterer approaching 20 new; optional CANONICAL expand.
+- **Done (pushed):** CANONICAL 24/24; **107 startups** all analysed; **2140 wedges**; 514 infra_ops; 102 primary. Latest: **analyse** Magic/Tempo/Knock/Syntropy/Supermemory (111–115). Clusterer **ready** (20 new). **88 tests green.**
+- **Next fire:** `score_a` + select on 111–115 → **cluster** (ready) → ingest/expand.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
-  - **Clusterer (07)** — ~15–20 new since last run; force when ready.
 
 ## The next highest-ROI moves
 
-1. **Analyse** 111–115 (drain before more ingest).
-2. Score_a + select to restore full e2e.
-3. **Clusterer** once ≥20 new since last run.
-4. Optional further CANONICAL expand.
+1. **score_a + select** on 111–115 (restore e2e 107/107).
+2. **Clusterer** (ready: 20 new since last run).
+3. Ingest next batch or further CANONICAL expand.
+4. Optional score_b / infra fit refresh.
 
 ## Subagent dispatch contract
 
