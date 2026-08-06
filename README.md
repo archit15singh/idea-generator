@@ -91,14 +91,14 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `analysed` (cohort) | 127 | full cohort analysed + scored + selected |
 | `wedges` | 2540 | **127 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 615 | +22 from Steel/Elementary/Statsig/Abnormal/Kindo |
-| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
+| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 115, Cost 89, Tracing 87, Auth 81 / 127) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | pending_ingest≈40 after clearing Steel/Elementary/Statsig/Abnormal/Kindo |
-| `personal_fit` | 127 | Langbase=68; Sublime=65; Abnormal=62; Composio=60; Steel=53; Elementary/Kindo=44 |
-| `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
+| `candidate_startups` | 266 | pending_ingest≈40 |
+| `personal_fit` | 127 | Langbase=68; Sublime=65; Abnormal=62; Composio=60; Steel=53 |
+| `pattern_library` | **16** | +Agent browser/computer-use session infrastructure |
 
-**`plan_recursive_fanout` next_action = `cluster`**. Select complete for 127; primary mix Better memory 38, Better evaluation 36, AI-native 20 (~30% memory; collapse>40% not hit). cluster_ready=true.
+**`plan_recursive_fanout` next_action = `ingest`**. Cluster complete (patterns 15→16; convergent Connectors/Cost/Tracing/Auth on 127-cohort). Primary mix Better memory 38, Better evaluation 36, AI-native 20.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,18 +119,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **127/127**; wedges 2540; personal_fit 127; infra_ops 615; **127 primary**; **patterns 15**. Latest: **select-16** — Steel→Better memory; Elementary→Better evaluation; Statsig→Better evaluation; Abnormal→Better memory; Kindo→AI-native. next **cluster**. **88 tests green.**
-- **Next fire:** `cluster` (cluster_ready=true) then ingest/CANONICAL expand.
+- **Done (pushed):** CANONICAL 24/24; e2e **127/127**; wedges 2540; personal_fit 127; infra_ops 615; **127 primary**; **patterns 16**. Latest: **cluster** — infra graph refresh (Connectors 115/Cost 89/Tracing 87/Auth 81); promote Agent browser/computer-use; refresh 10 patterns; mark_clusterer_run. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` next diversified batch or CANONICAL expand past 24.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Cluster** (Pattern Library + infra graph refresh).
-2. Further **CANONICAL expand** past 24.
-3. **Ingest** next diversified batch.
-4. Optional score_b / infra fit refresh.
+1. **Ingest** ≤5 diversified pending candidates.
+2. Further **CANONICAL expand** past 24 (founder gaps).
+3. Optional **score_b** / infra fit digest refresh.
+4. Next cluster after +20 startups.
 
 ## Subagent dispatch contract
 
