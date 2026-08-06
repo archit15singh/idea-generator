@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 87 | all `scored` (Sourcegraph, Prismatic, Bland AI, Range, Census finished score_a+select) |
-| `analysed` (cohort) | 87 | full E2E: path + wedges + fit + primary shortlist |
-| `wedges` | 1740 | **87 primary** (`selected=1`) + rank2/3 shortlists |
-| `infrastructure_ops` | 433 | analyst per-startup platform needs |
-| `infrastructure_nodes` | 10 | 4 convergent; top = Tracing/observability |
-| `infra_personal_fit` | 8 | Mode B layer scores (none human-locked) |
-| `market_segments` | 102 | 20/20 CANONICAL markets covered + analysed |
-| `candidate_startups` | 251 | pending_ingest high; cluster next then ingest |
-| `personal_fit` | 87 | Mode A complete for full cohort |
-| `pattern_library` | 11 | **clusterer ready** (20 new since last run) |
+| `startups` | 87 | all `scored`; full E2E complete |
+| `analysed` (cohort) | 87 | path + wedges + fit + primary shortlist |
+| `wedges` | 1740 | **87 primary** + rank2/3 shortlists |
+| `infrastructure_ops` | 433 | per-startup platform needs |
+| `infrastructure_nodes` | 10 | **4 convergent** (Connectors 81, Cost 67, Auth 66, Tracing 59 /87); top=Tracing/observability |
+| `infra_personal_fit` | 8 | Mode B (none human-locked) |
+| `market_segments` | 102 | 20/20 CANONICAL covered + analysed |
+| `candidate_startups` | 251 | next ingest: Grit, Svix, Cekura, Gusto, Grouparoo |
+| `personal_fit` | 87 | Mode A complete |
+| `pattern_library` | 13 | cluster refresh: +2 patterns (secure private connectivity; codebase context for coding agents) |
 
-**`plan_recursive_fanout` next_action = `cluster`**. Primary mix: Better memory 24, Better evaluation 22, Developer-first 14, AI-native 13, Open source 8 (~28% top — under 40% collapse).
+**`plan_recursive_fanout` next_action = `ingest`**. Primary mix: Better memory 24, Better evaluation 22, Developer-first 14, AI-native 13 (~28% top).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 87 startups all scored; 1740 wedges; 433 infra_ops; **87 primary**. Latest: score_a+select on Sourcegraph/Prismatic/Bland/Range/Census (ids 91–95). **88 tests green.**
-- **Next fire:** `cluster` (20 new since last) → ingest continue → expand CANONICAL beyond 20.
+- **Done (pushed):** 20/20 CANONICAL markets; 87 startups all scored; 1740 wedges; 433 infra_ops; 87 primary; **13 patterns** after cluster. Latest: stage-07 cluster (infra converge + pattern refresh +2). **88 tests green.**
+- **Next fire:** `ingest` (Grit, Svix, Cekura, Gusto, Grouparoo) → analyse drain → expand CANONICAL beyond 20.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
