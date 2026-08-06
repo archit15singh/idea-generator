@@ -87,10 +87,10 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 122 | **117 scored** E2E + **5 ingested** (ids 126–130) awaiting analyse |
-| `analysed` (cohort) | 117 | full scored cohort; backlog=5 not yet analysed |
-| `wedges` | 2340 | **117 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 569 | per-startup platform needs |
+| `startups` | 122 | **117 scored** E2E + **5 analysed** (ids 126–130) awaiting score_a |
+| `analysed` (cohort) | 122 | 117 scored + 5 newly analysed |
+| `wedges` | 2440 | **117 primary** (selected=1) + shortlists; +100 from analyse-15 |
+| `infrastructure_ops` | 593 | +24 from Composio/MC/Fly/Sublime/StackAI |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
@@ -98,7 +98,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `personal_fit` | 117 | Langbase=68 home-turf; Fern/DeltaStream=58; Augment=55; Render=38 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingested ids **126–130** (Composio, Monte Carlo, Fly.io, Sublime Security, StackAI). Primary mix Better memory 34, Better evaluation 32, AI-native 18 (cap OK ~29%).
+**`plan_recursive_fanout` next_action = `score_a`**. Analysed ids **126–130** (Composio, Monte Carlo, Fly.io, Sublime Security, StackAI) — L1–L10 + 20 wedges each (≥18 evidence). Primary mix Better memory 34, Better evaluation 32, AI-native 18 (cap OK ~29%).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,16 +119,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **117/117** scored; wedges 2340; personal_fit 117; infra_ops 569; **117 primary**; **patterns 15**. Latest: **ingest-15** — Composio (#126), Monte Carlo (#127), Fly.io (#128), Sublime Security (#129), StackAI (#130) → `stage_marker=ingested`. next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 126–130 (Composio, Monte Carlo, Fly.io, Sublime Security, StackAI). Do not re-ingest while backlog=5.
+- **Done (pushed):** CANONICAL 24/24; e2e **117/117** scored; wedges 2440; personal_fit 117; infra_ops 593; **117 primary**; **patterns 15**. Latest: **analyse-15** — Composio/MC/Fly/Sublime/StackAI (#126–130) → `stage_marker=analysed` (+100 wedges, +24 infra_ops). next **score_a**. **88 tests green.**
+- **Next fire:** `score_a` ids 126–130 then select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** the 5 ingested SIDs (drain backlog before more ingest).
-2. Then score_a → select for 126–130.
+1. **score_a** on ids 126–130 (personal_fit + per-wedge scores).
+2. Then **select** primaries/shortlist for 126–130.
 3. Further **CANONICAL expand** (founder gaps past 24).
 4. Next cluster after +20 startups since last cluster (currently +15).
 
