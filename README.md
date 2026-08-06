@@ -87,9 +87,9 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 127 | **all 127 scored**; ids 131–135 await select |
-| `analysed` (cohort) | 127 | full cohort analysed + scored |
-| `wedges` | 2540 | **122 primary**; select_pending=5 |
+| `startups` | 127 | **all 127 scored** E2E complete (primary + shortlist) |
+| `analysed` (cohort) | 127 | full cohort analysed + scored + selected |
+| `wedges` | 2540 | **127 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 615 | +22 from Steel/Elementary/Statsig/Abnormal/Kindo |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
@@ -98,7 +98,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `personal_fit` | 127 | Langbase=68; Sublime=65; Abnormal=62; Composio=60; Steel=53; Elementary/Kindo=44 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `select`**. Scored ids **131–135** (Steel=53, Elementary=44, Statsig=38, Abnormal=62, Kindo=44). Primary mix Better memory 36, Better evaluation 34, AI-native 19. cluster_ready=true.
+**`plan_recursive_fanout` next_action = `cluster`**. Select complete for 127; primary mix Better memory 38, Better evaluation 36, AI-native 20 (~30% memory; collapse>40% not hit). cluster_ready=true.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,18 +119,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **122/127** primary; wedges 2540; personal_fit **127**; infra_ops 615; **122 primary**; **patterns 15**. Latest: **score_a-16** — Steel=53, Elementary=44, Statsig=38, Abnormal=62, Kindo=44 → scored. next **select**. **88 tests green.**
-- **Next fire:** `select` for ids 131–135; then cluster (ready).
+- **Done (pushed):** CANONICAL 24/24; e2e **127/127**; wedges 2540; personal_fit 127; infra_ops 615; **127 primary**; **patterns 15**. Latest: **select-16** — Steel→Better memory; Elementary→Better evaluation; Statsig→Better evaluation; Abnormal→Better memory; Kindo→AI-native. next **cluster**. **88 tests green.**
+- **Next fire:** `cluster` (cluster_ready=true) then ingest/CANONICAL expand.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **select** primaries/shortlist for ids 131–135.
-2. **Cluster** (cluster_ready=true).
-3. Further **CANONICAL expand** past 24.
-4. Ingest next batch after select/cluster.
+1. **Cluster** (Pattern Library + infra graph refresh).
+2. Further **CANONICAL expand** past 24.
+3. **Ingest** next diversified batch.
+4. Optional score_b / infra fit refresh.
 
 ## Subagent dispatch contract
 
