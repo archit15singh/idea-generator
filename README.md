@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 117 | all **117 scored**; select pending on 5 new (Augment…Render) |
-| `analysed` (cohort) | 117 | full cohort analysed + scored |
-| `wedges` | 2340 | **112 primary** (selected=1); +5 await `run_select_top_wedges` |
+| `startups` | 117 | all **117 scored** E2E complete (primary + shortlist) |
+| `analysed` (cohort) | 117 | full cohort analysed + scored + selected |
+| `wedges` | 2340 | **117 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 569 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | fanout pending after select drain |
+| `candidate_startups` | 266 | pending_ingest≈40; next Composio/Monte Carlo/Fly.io/… |
 | `personal_fit` | 117 | Langbase=68 home-turf; Fern/DeltaStream=58; Augment=55; Render=38 |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `select`**. Score-A complete (ids 121–125; fit 117); select_pending=5. Primary mix Better memory 32, Better evaluation 30, AI-native 17.
+**`plan_recursive_fanout` next_action = `ingest`**. Select complete for 117; primary mix Better memory 34, Better evaluation 32, AI-native 18 (cap OK ~29%).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; analysed+scored **117**; wedges 2340; personal_fit 117; infra_ops 569; **112 primary**; **patterns 15**. Latest: **score_a** — Augment 55 / Fern 58 / Langbase 68 / DeltaStream 58 / Render 38; next **select**. **88 tests green.**
-- **Next fire:** `run_select_top_wedges` for ids 121–125.
+- **Done (pushed):** CANONICAL 24/24; e2e **117/117**; wedges 2340; personal_fit 117; infra_ops 569; **117 primary**; **patterns 15**. Latest: **select** — Augment→Better evaluation; Fern→Better memory; Langbase→AI-native; DeltaStream→Better memory; Render→Better evaluation. next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` (Composio, Monte Carlo, Fly.io, Sublime Security, StackAI) or CANONICAL expand.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
