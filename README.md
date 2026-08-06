@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 92 | 87 `scored` + 5 `ingested` (Grit, Svix, Cekura, Gusto, Grouparoo) |
-| `analysed` (cohort) | 87 | scored set full E2E; 5 await analyse |
-| `wedges` | 1740 | **87 primary** until analyse→score_a→select |
-| `infrastructure_ops` | 433 | per-startup platform needs |
+| `startups` | 92 | 87 `scored` + 5 freshly `analysed` (Grit, Svix, Cekura, Gusto, Grouparoo — await score_a) |
+| `analysed` (cohort) | 92 | path + 20 wedges each; 5 lack personal_fit/primary |
+| `wedges` | 1840 | +100 this wave; **87 primary** until score_a+select |
+| `infrastructure_ops` | 454 | +21 this wave |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL covered + analysed |
-| `candidate_startups` | 251 | analyse backlog=5 (ingest paused) |
-| `personal_fit` | 87 | 5 await analyse→score |
-| `pattern_library` | 13 | last cluster done; 5 new since |
+| `candidate_startups` | 251 | analyse backlog clear; score_a next |
+| `personal_fit` | 87 | Mode A needed for ids 96–100 |
+| `pattern_library` | 13 | 5 new since last cluster |
 
-**`plan_recursive_fanout` next_action = `analyse`** on ids `[96–100]`. Primary mix (scored): Better memory 24, Better evaluation 22, Developer-first 14, AI-native 13.
+**`plan_recursive_fanout` next_action = `score_a`** on ids `[96–100]`. Primary mix (scored set): Better memory 24, Better evaluation 22, Developer-first 14, AI-native 13.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 92 startups (87 scored + 5 ingested); 1740 wedges; 433 infra_ops; 87 primary; 13 patterns. Latest: ingest Grit / Svix / Cekura / Gusto / Grouparoo (ids 96–100; Grouparoo→Airbyte acquired; Gusto CF-limited scrape). **88 tests green.**
-- **Next fire:** `analyse` drain on 96–100 → score_a → select → expand CANONICAL beyond 20.
+- **Done (pushed):** 20/20 CANONICAL markets; 92 startups; 1840 wedges; 454 infra_ops; 87 primary; 13 patterns. Latest: analyse Grit / Svix / Cekura / Gusto / Grouparoo (ids 96–100). **88 tests green.**
+- **Next fire:** `score_a` on 96–100 → select → expand CANONICAL beyond 20 when queues thin.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
