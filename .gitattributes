@@ -1,0 +1,2 @@
+sid.db filter=lfs diff=lfs merge=lfs -text
+scrapes/** filter=lfs diff=lfs merge=lfs -text

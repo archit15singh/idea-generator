@@ -5,7 +5,6 @@ __pycache__/
 build/
 dist/
 .venv/
-sid.db
-scrapes/
 .mvp/
 .pytest_cache/_analyst_run_*.py
+.pytest_cache/

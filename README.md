@@ -1,13 +1,32 @@
 # idea-generator
 
-A founder-led idea factory, packaged as an OpenCode skill. The skill IS the DAG. Six subagents ARE the nodes. Deterministic gates between nodes live in code; agent reasoning lives in prose. The PM orchestrates dispatch, validates typed receipts, runs gates, and routes.
+A founder-led idea factory, packaged as an OpenCode skill. **The skill IS the DAG.** Subagents ARE the nodes. Deterministic gates live in code (`idea_factory/decisions.py`); agent reasoning lives in prose prompts (`agents/*.md`). The PM orchestrates dispatch, validates typed receipts (`idea_factory/receipts.py`), runs gates in code, and routes.
+
+> **This README is the session handoff.** If you are a fresh session on a fresh laptop: follow [Cold start on a new machine](#cold-start-on-a-new-machine) first, then read [Current board state (Aug 06 2026)](#current-board-state-aug-06-2026), then pick up from [Where the loop stands](#where-the-loop-stands).
+
+---
+
+## What it does (the v2 conviction loop)
+
+Two parallel outputs:
+
+1. **Per-startup wedges (the original v1 loop):** ingest a YC startup → recursive L1-L10 descent (L5 is the wedge generator) → 20+ evidence-cited wedges → 8-axis founder-fit scoring → top-wedge selection → 30 cold emails → graduation (≥5% reply + ≥3 pain-signal replies) → instrumented MVP. Cross-cluster patterns promote into a Pattern Library + Problem Graph.
+
+2. **The meta-loop / Infrastructure Graph (v2 — the higher-leverage output):** every analyst pass also emits `infrastructure_ops` rows (which internal platforms each startup needs/builds). `pm.run_infra_convergence()` canonicalizes them into `infrastructure_nodes` (one per `internal_platform` slot) + `infrastructure_edges`, then flips `convergence=1` on any node sighted on **≥half the analysed cohort**. The scorer then projects the founder profile onto each convergent **layer** (Mode B, `infra_personal_fit`) instead of per-startup wedges, and `decisions.rank_infra_nodes_by_fit` returns the single layer to bet on (fit × conviction × cross-cluster).
+
+The thesis: *don't ask "what startup should I build?" — ask "which infrastructure component appears across ≥20 startups?"* The convergence digest is the highest-leverage output and runs continuously, NOT gated behind the 20-startup clusterer threshold.
+
+## The DAG (the PM owns this topology)
 
 ```
-01 ingestor > 02 analyst > 04 scorer > 05 validator > 06 builder
-                                                  > 07 clusterer (every 20 startups)
+00 market-scout -> 01 ingestor -> 02 analyst -> 04 scorer -> 05 validator -> 06 builder
+                                        \--> (meta-loop) pm.run_infra_convergence -> scorer Mode B -> rank_infra_nodes_by_fit
+                                      07 clusterer (every 20 startups OR on demand)
 ```
 
-## Install
+**Entry contract is non-negotiable:** start from `pm.default_scout_input()`, dispatch the market scout, wait for its receipt, fan out on `candidates`. Never start from a flat startup list.
+
+## Install (on THIS machine, already done — skip on a fresh clone)
 
 ```sh
 git clone https://github.com/archit15singh/idea-generator
@@ -16,61 +35,161 @@ python3 -m pip install --break-system-packages -e ".[test]"   # pydantic + pytes
 cp -r skill      ~/.config/opencode/skills/idea-factory
 cp    agents/*   ~/.config/opencode/agents/
 cp    commands/idea-factory.md ~/.config/opencode/commands/
-
-sqlite3 sid.db < skill/templates/schema.sql                  # idempotent
-$EDITOR skill/templates/founder-profile.md                   # the scorer blocks on empty
 ```
 
-Then in this session: `/idea-factory 5` to run a 5-startup cohort, or `/idea-factory <stage_marker>` to resume.
+Then `/idea-factory 5` runs a 5-startup cohort, or `/idea-factory <stage_marker>` resumes.
 
-## What it does
+## Cold start on a new machine
 
-Ingests YC companies in a constrained 20-market pool (3 ICP clusters, not 20 independent dimensions). For each startup: recursive L1-L10 descent (L5 is the wedge generator), 20+ wedge ideas with evidence citations, 8-axis fit scoring from your founder profile, top-wedge selection, 30 cold sends via gmail MCP, graduation only if reply rate ≥5% AND ≥3 pain-signal replies, instrumented MVP only on graduates, cross-cluster pattern promotion into a Pattern Library and Problem Graph with a fixed edge vocabulary.
+**The DB + scrapes are tracked with Git LFS** so you can pull board truth on a fresh laptop. `sid.db` (board truth), `scrapes/` (raw fetches) are LFS-tracked via `.gitattributes`.
 
-## What's prose, what's code
+```sh
+# 1. install git lfs (one-time)
+brew install git-lfs && git lfs install
 
-Prose (reasoning, agents): SID extraction, recursive L1-L10, wedge ideation, fit judgment, outreach copy, pain classification, MVP construction, problem canonicalization.
+# 2. clone + checkout (LFS pointers resolve on checkout)
+git clone https://github.com/archit15singh/idea-generator
+cd idea-generator
+git lfs pull    # force-download the LFS objects (sid.db, scrapes/) if the clone skipped them
 
-Code (deterministic, gates): Pydantic types for every DAG edge, SQLite layer, `graduation_gate`, `evidence_gate`, `top_wedge`, `promotion_gate`, `kill_metric_triggered`, `classify_edge`, `builder_accepts`, receipt parsing. Agents cannot override these. They return `blocked` and a human edits.
+# 3. python env + skill install
+python3 -m pip install --break-system-packages -e ".[test]"
+cp -r skill      ~/.config/opencode/skills/idea-factory
+cp    agents/*   ~/.config/opencode/agents/
+cp    commands/idea-factory.md ~/.config/opencode/commands/
+
+# 4. verify
+python3 -m pytest tests/ -q          # 73 passed
+ls -la sid.db                        # should be ~500KB (real file, not an LFS pointer)
+sqlite3 sid.db "SELECT COUNT(*) FROM startups;"   # 8
+```
+
+> **Gotcha:** after `git clone`, verify `sid.db` is a real SQLite file and NOT a 130-byte LFS pointer. `git lfs pull` fixes it. `file sid.db` should say "SQLite 3.x database".
+
+## Verify (always)
+
+```sh
+python3 -m pytest tests/ -q        # 73 tests; load-bearing contract tests
+python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
+```
+
+## Meta-loop digest (run any time, the v2 output)
+
+```sh
+# convergence digest (which layers are sighted on >=half the cohort)
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_convergence; import json; print(json.dumps(run_infra_convergence(DB('sid.db')), indent=2, default=str))"
+
+# founder-fit scorecard (ranked layers + the single layer to bet on)
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_fit_digest; import json; print(json.dumps(run_infra_fit_digest(DB('sid.db'), 'skill/templates/founder-profile.md'), indent=2, default=str))"
+```
+
+## Current board state (Aug 06 2026)
+
+| Table | Count | Notes |
+|-------|-------|-------|
+| `startups` | 8 (all `analysed`) | Letta, Cursor, Cognition, Continue, Braintrust (batch 1); Doppler, Dust, Glean (batch 2) |
+| `wedges` | 160 | 20 per startup; 155 pass `evidence_gate` |
+| `infrastructure_ops` | 50 | the analyst's per-startup platform-needs |
+| `infrastructure_nodes` | 10 | canonical; 8 have `convergence=1` |
+| `infrastructure_edges` | 50 | needs/builds edges |
+| `infra_personal_fit` | 8 | **founder-fit on convergent layers — ALL SCORED (none human-locked)** |
+| `market_segments` | 52 | scout output; 122 candidate startups |
+| `personal_fit` | 5 | per-startup rows still human-locked synthetic (reviewed_by 'archit', total=65) |
+| `pattern_library` | 0 | clusterer hasn't fired (needs 20 new startups) |
+
+### The v2 ranked layers (live `run_infra_fit_digest` output)
+
+| Layer | Sightings | Clusters | Founder-fit total | Rank score |
+|-------|-----------|----------|-------------------|-----------|
+| **Memory** | 7/8 | 3 | **72** | **0.9125 ← THE LAYER TO BET ON** |
+| Tracing/observability | 6/8 | 3 | 68 | ~0.85 |
+| Evaluation | 4/8 | 2 | 64 | ~0.79 |
+| Retrieval/RAG | 5/8 | 2 | 60 | ~0.75 |
+| Authentication | 5/8 | 3 | 55 | ~0.70 |
+| Connectors | 7/8 | 3 | 50 | ~0.68 (shape outlier: market 8 but interest 5) |
+| Prompt management | 4/8 | 1 | 46 | ~0.60 |
+| Cost optimization | 7/8 | 3 | 42 | ~0.56 (shape outlier: market 8 but interest 3) |
+
+**The conviction-loop winner is the Memory layer.** It's the only layer where every axis clears 8 on real shipped evidence (Memori = Rust+SQLite persistent memory, 43µs reads; PyCon India 2025 "Memory in AI Systems" talk; MemGPT fork). This matches the founder's documented unfair advantages in `skill/templates/founder-profile.md`.
+
+**Shape outliers to review** (from the scorer's audit): Cost optimization + Connectors carry market-size 8 on 7/8 sightings but founder interest 3-5 — cohort-wide need, zero founder conviction; skip despite the sightings. Retrieval/RAG is a sharp-shape node (technical 9, knowledge 9 — pgvector home turf) but low moat — build it only fused with Memory, never standalone.
+
+## Where the loop stands
+
+- **Done (pushed):** scout (52 segments/122 candidates), 2 live ingest+analyst cohorts (8 startups analysed, 160 wedges, 50 infra ops), the full Infrastructure Graph + convergence, the v2 infra-node scoring (Mode B scorer). All 8 convergent layers scored. **73 tests green.**
+- **BLOCKED on human action (do NOT auto-resume):**
+  - **Validator (05)** — real cold emails via gmail MCP (30/persona for the top wedge per startup). Requires explicit user approval + gmail recipient pairing. Also depends on T005 (per-startup scoring, which is itself blocked by synthetic human-locked `personal_fit` rows).
+  - **Builder (06)** — real MVP launch. Requires explicit user approval + a graduated wedge (none yet).
+  - **Scorer Mode A (per-startup 04)** — the 5 existing `personal_fit` rows are synthetic human-locked (`reviewed_by='archit'`, uniform total=65). Unlock them (`UPDATE personal_fit SET reviewed_at=NULL`) or let the scorer overwrite with `force=True` to get real per-startup scores.
+  - **Clusterer (07)** — needs ≥20 new startups since last run; we have 8. Run it on-demand with `min_new_since_last=0` if you want a Pattern Library pass now (the infra graph + convergence already works without it).
+
+## The next highest-ROI moves
+
+1. **Grow the cohort to ~20** — ingest+analyse 12 more candidates from the 122 in `candidate_startups`. This lets the clusterer fire (Pattern Library + Problem Graph) and hardens the Memory-layer conviction.
+2. **Unlock per-startup scoring** (T005) then validate the **Memory layer** wedge with cold outreach — the top_wedge per startup that best fits a memory-layer product.
+3. **Fill the founder-profile gap** — the profile is filled; nothing blocks on it now.
+4. **Build an 08 query-os agent** — natural-language surface over the Infrastructure Graph ("should I build X layer? smallest cohort that flipped it convergent?").
+
+## Subagent dispatch contract
+
+Dispatch via the Task tool with `subagent_type` = the agent name. The PM builds the typed `Input` from `idea_factory.pm` builders: `default_scout_input`, `build_scorer_input`, `build_infra_node_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`. After dispatch, run `idea_factory.receipts.parse(raw)`; if `ReceiptError`, re-dispatch naming the gap. Run gates in `decisions.py` between dispatches — never trust prose for routing.
+
+The **scorer has two modes**: Mode A (`ScorerInput`: startup + wedges → `personal_fit`) and Mode B (`InfraNodeScorerInput`: infra node + backing startups → `infra_personal_fit`). The parser disambiguates stage-04 receipts by the `infra_nodes_scored` field.
+
+## Kill metric (non-negotiable)
+
+After 8 weeks of runtime, one wedge must have 3+ prospect replies indicating real pain. If `decisions.kill_metric_triggered(...)` returns `True`, STOP. Do not iterate outreach copy. Re-tune `founder-profile.md`, re-descend (02), re-wedge, then resume.
+
+## Honour rules
+
+1. Validation before build. `decisions.builder_accepts` enforces it at the builder door.
+2. No-evidence wedges die. `decisions.evidence_gate` rejects them between 02 and 04.
+3. Pattern promotion needs 3+ sightings across 2+ of the 3 ICP clusters (`promotion_gate`).
+4. The scorer never overwrites a human-locked `personal_fit` OR `infra_personal_fit` row.
+5. The Problem Graph uses the fixed edge vocabulary (`classify_edge`); the Infrastructure Graph uses `classify_infra_edge` (`needs`/`builds`/`uses`/`has-gap`).
+6. The PM is the source of board truth. Subagents return receipts; gates route.
 
 ## Layout
 
 ```
 idea_factory/           Python package: typed contracts + determinism
-  schema.py             Pydantic types for every node Input + Receipt
-  db.py                 typed SQLite layer (idempotent upserts)
-  decisions.py          deterministic gates living between nodes
-  receipts.py           parse + validate agent JSON receipts
+  schema.py             Pydantic types for every node Input + Receipt (incl. InfraNodeFitRow, InfraScorerReceipt)
+  db.py                 typed SQLite layer (idempotent upserts; infra-graph + infra-fit methods)
+  decisions.py          deterministic gates (evidence, graduation, convergence, rank_infra_nodes_by_fit, ...)
+  receipts.py           parse + validate agent JSON receipts (balanced-brace raw_decode scan)
+  pm.py                 PM-side builders + the meta-loop (run_infra_convergence, run_infra_fit_digest, CANONICAL_MARKETS)
 
 skill/
-  SKILL.md              the orchestrator (this IS the DAG topology)
+  SKILL.md              the orchestrator (this IS the DAG topology; v2 meta-loop step baked in)
   references/workflows/  9 stage workflow prompts
   references/design/    13 design notes (the why)
-  templates/schema.sql  idempotent SQLite schema
-  templates/founder-profile.md  human input the scorer reads
+  templates/schema.sql  idempotent SQLite schema (incl. infrastructure_nodes/edges, infra_personal_fit)
+  templates/founder-profile.md  filled founder profile (the scorer reads this)
 
-agents/idea-factory-*.md  6 subagent definitions (prose reasoning)
+agents/idea-factory-*.md  7 subagent definitions (scout, ingestor, analyst, scorer, validator, builder, clusterer)
 commands/idea-factory.md  /idea-factory slash command
 
-tests/test_80_20.py  34 crucial tests: schemas, gates, receipts, end-to-end
+sid.db                  board truth — Git LFS tracked, never `rm`
+scrapes/                raw webfetch artifacts — Git LFS tracked
+tests/test_80_20.py     73 load-bearing tests (schemas, gates, receipts, e2e, infra-graph, infra-fit)
+AGENTS.md               project gotchas + commands (keep updated)
 ```
 
-## Verify
+## Layout note for the OpenCode skill synagogue
+
+`~/.config/opencode/skills/idea-factory/` is a **copy**, not a symlink. After editing `skill/SKILL.md`, `agents/*.md`, or `skill/templates/*`, mirror to the installed copies:
 
 ```sh
-python3 -m pytest tests/            # 34 passed
-python3 -c "from idea_factory.db import DB; DB('/tmp/sid.db').init()"
+cp -r skill      ~/.config/opencode/skills/idea-factory
+cp    agents/*   ~/.config/opencode/agents/
 ```
 
-## Kill metric
+## Pushing data on a new laptop (git LFS)
 
-After 8 weeks of runtime, one wedge must have 3+ prospect replies indicating real pain. If `decisions.kill_metric_triggered(...)` returns `True`, the loop halts. Do not iterate on outreach copy. Re-tune `founder-profile.md`, re-descend, re-wedge, then resume.
+```sh
+git add sid.db scrapes/ .gitattributes .gitignore
+git commit -m "Update board truth (sid.db + scrapes) via LFS"
+git push
+```
 
-## Honour rules
-
-1. Validation before build. `decisions.builder_accepts` enforces it at the door.
-2. No-evidence wedges die. `decisions.evidence_gate` rejects them between 02 and 04.
-3. Pattern promotion needs 3+ sightings across 2+ of the 3 ICP clusters.
-4. The scorer never overwrites a human-locked `personal_fit` row.
-5. The Problem Graph uses the fixed edge vocabulary enforced by `decisions.classify_edge`.
-6. The PM is the source of board truth. Subagents return receipts; gates route.
+If LFS isn't installed on the new machine: `brew install git-lfs && git lfs install` BEFORE `git clone` (or run `git lfs pull` after).

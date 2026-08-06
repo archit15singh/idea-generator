@@ -2,11 +2,11 @@
 
 ## Verify
 ```sh
-python3 -m pytest tests/ -q        # 58 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 73 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
-- DB at `sid.db` (gitignored). Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. NEVER `rm sid.db`; it's board truth.
-- Receipt validation: `idea_factory.receipts.parse(raw)` returns a typed receipt or `ReceiptError`. It uses a balanced-brace `json.raw_decode` scan keyed off the `schema_version` marker — agents can quote walls of prose around the block.
+- DB at `sid.db` — **Git LFS tracked** (see `.gitattributes`), NEVER `rm sid.db`; it's board truth. Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. After `git clone` on a fresh laptop, run `git lfs pull` to materialise `sid.db` + `scrapes/` (clone gives you LFS pointers otherwise); verify `file sid.db` says SQLite, not a 130-byte pointer.
+- Receipt validation: `idea_factory.receipts.parse(raw)` returns a typed receipt or `ReceiptError`. It uses a balanced-brace `json.raw_decode` scan keyed off the `schema_version` marker — agents can quote walls of prose around the block. Stage-04 receipts disambiguate per-startup vs infra-node by the `infra_nodes_scored` field.
 - Install skill to OpenCode after edits:
   ```sh
   cp -r skill ~/.config/opencode/skills/idea-factory
@@ -30,8 +30,14 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 ```
 Returns one row per `INTERNAL_PLATFORMS` slot; `convergence=True` rows are the candidate infrastructure plays. Echoed in the clusterer receipt's `summary`.
 
+After the digest, score the convergent layers against the founder profile (scorer Mode B) and rank them:
+```sh
+python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_fit_digest; import json; print(json.dumps(run_infra_fit_digest(DB('sid.db'), 'skill/templates/founder-profile.md'), indent=2, default=str))"
+```
+`top_infra_node` is the single layer to bet on (fit × conviction × cross-cluster). Live state (Aug 2026): **Memory layer wins** (7/8 sightings, 3 clusters, fit 72/80, rank 0.9125).
+
 ## Subagent dispatch contract
-Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds the typed `Input` from `idea_factory.pm` (`default_scout_input`, `build_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`). After dispatch, parse the returned JSON with `receipts.parse`; if `ReceiptError`, re-dispatch naming the gap. Run gates in code between dispatches — never trust prose for routing.
+Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds the typed `Input` from `idea_factory.pm` (`default_scout_input`, `build_scorer_input`, `build_infra_node_scorer_input`, `build_validator_input`, `build_builder_input`, `build_clusterer_input`). After dispatch, parse the returned JSON with `receipts.parse`; if `ReceiptError`, re-dispatch naming the gap. Run gates in code between dispatches — never trust prose for routing. The scorer has two modes: Mode A (per-startup → `personal_fit`) and Mode B (infra node → `infra_personal_fit`); stage-04 receipts disambiguate on `infra_nodes_scored`.
 
 ## Live-run gotchas (learned Aug 06)
 - **YC /companies/<slug> pages routinely 404.** Ingestor's best-effort rule: log the 404 in `scrape_log`, fall back to the company's own homepage. Don't halt on a 404.
