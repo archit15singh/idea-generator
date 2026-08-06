@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 97 | 92 `scored` + 5 `analysed` (Quack AI, Hookdeck, Rivet, Lattice, Sequin) |
-| `analysed` (cohort) | 97 | all 97 analysed; 5 await score_a |
-| `wedges` | 1940 | **92 primary** until score_a→select on 101–105 |
+| `startups` | 97 | all 97 `scored` (E2E complete incl. Quack AI, Hookdeck, Rivet, Lattice, Sequin) |
+| `analysed` (cohort) | 97 | full cohort analysed + scored + primary selected |
+| `wedges` | 1940 | **97 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 474 | per-startup platform needs |
 | `infrastructure_nodes` | 10 | 4 convergent; top=Tracing/observability |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 102 | 20/20 CANONICAL covered + analysed |
-| `candidate_startups` | 251 | pending_ingest≈40; 8 ingest batches when score drains |
-| `personal_fit` | 92 | 5 await score_a |
+| `candidate_startups` | 251 | pending_ingest≈40; 8 ingest batches next |
+| `personal_fit` | 97 | all scored; Lattice fit low (HRIS gap) |
 | `pattern_library` | 13 | cluster needs ≥20 new since last |
 
-**`plan_recursive_fanout` next_action = `score_a`** on ids `[101–105]`. Primary mix (scored): Better memory 24, Better evaluation 23, Developer-first 15, AI-native 13.
+**`plan_recursive_fanout` next_action = `ingest`** (Lovable, Knock, Syntropy, Deel, Decodable). Primary mix: Better memory 26, Better evaluation 24, Developer-first 15, AI-native 14, Open source 11.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** 20/20 CANONICAL markets; 97 startups (92 scored + 5 analysed); 1940 wedges; 474 infra_ops; 92 primary; 13 patterns. Latest: **analyse** Quack AI / Hookdeck / Rivet / Lattice / Sequin (ids 101–105) — L1–L10 + 20 wedges each + infra_ops. **88 tests green.**
-- **Next fire:** `score_a` on 101–105 → select → expand CANONICAL beyond 20 / drain ingest.
+- **Done (pushed):** 20/20 CANONICAL markets; 97 startups all scored; 1940 wedges; 474 infra_ops; **97 primary**; 13 patterns. Latest: **score_a + select** Quack AI (Better memory) / Hookdeck (Better evaluation) / Rivet (Better memory) / Lattice (AI-native, low fit) / Sequin (Open source). e2e **97/97**. **88 tests green.**
+- **Next fire:** `ingest` batch (Lovable, Knock, Syntropy, Deel, Decodable) → analyse → score → select; expand CANONICAL past 20.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -128,10 +128,10 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## The next highest-ROI moves
 
-1. **score_a wave** on the 5 freshly analysed startups, then select shortlist ranks.
-2. **Drain pending_ingest** (planner shows 8 ingest batches / ~40 pending) without letting `ingested_awaiting_analyse` hit ≥5.
-3. **Expand market pool** past 20 founder-relevant parents when queues drain (memory, agents, AI infra, email/BEC, observability, vector/RAG, devtools, identity, data infra gaps).
-4. **Clusterer** once ≥20 new startups since last run (or force on-demand).
+1. **Ingest wave** (≤5) from pending candidates; keep `ingested_awaiting_analyse` < 5.
+2. **Expand market pool** past 20 founder-relevant parents (memory, agents, AI infra, email/BEC, observability, vector/RAG, devtools, identity, data infra).
+3. **Clusterer** once ≥20 new startups since last run (or force on-demand).
+4. Optional **score_b** / infra fit refresh after more infra_ops land.
 
 ## Subagent dispatch contract
 
