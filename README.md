@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 117 | 112 scored E2E + **5 ingested** (Augment/Fern/Langbase/DeltaStream/Render) |
-| `analysed` (cohort) | 112 | prior cohort complete; analyse backlog = 5 |
-| `wedges` | 2240 | **112 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 540 | per-startup platform needs |
+| `startups` | 117 | 112 scored + **5 analysed** awaiting score_a (Augment…Render) |
+| `analysed` (cohort) | 117 | full cohort analysed; score_a backlog = 5 |
+| `wedges` | 2340 | **112 primary** (selected=1); +100 from analyse-14 |
+| `infrastructure_ops` | 569 | per-startup platform needs (+29) |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors 97, Cost 75, Auth 69, Tracing 68 / 107) |
 | `infra_personal_fit` | 8 | Mode B (none human-locked) |
 | `market_segments` | 114 | CANONICAL **24/24** analysed |
-| `candidate_startups` | 266 | fanout pending after analyse drain; 5 just ingested |
-| `personal_fit` | 112 | prior cohort; 5 await analyse→score |
+| `candidate_startups` | 266 | fanout pending after score/select drain |
+| `personal_fit` | 112 | prior cohort; 5 await score_a |
 | `pattern_library` | **15** | +Long-horizon coding agents; +Multi-channel notifications |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-14 complete (ids 121–125); backlog=5 (cap). Primary mix Better memory 32, Better evaluation 30, AI-native 17.
+**`plan_recursive_fanout` next_action = `score_a`**. Analyse-14 complete (ids 121–125); score backlog=5. Primary mix Better memory 32, Better evaluation 30, AI-native 17.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL 24/24; e2e **112/117**; wedges 2240; personal_fit 112; **112 primary**; **patterns 15**. Latest: **ingest-14** — Augment Code, Fern, Langbase, DeltaStream, Render (ids 121–125) → `ingested`. next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` drain on ids 121–125; then score_a → select.
+- **Done (pushed):** CANONICAL 24/24; analysed **117**; wedges 2340; infra_ops 569; personal_fit 112; **112 primary**; **patterns 15**. Latest: **analyse-14** — Augment/Fern/Langbase/DeltaStream/Render → recursive_path + ≥18 evidence wedges + infra_ops. next **score_a**. **88 tests green.**
+- **Next fire:** `score_a` on ids 121–125; then select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
