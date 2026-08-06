@@ -2,7 +2,7 @@
 
 ## Verify
 ```sh
-python3 -m pytest tests/ -q        # 73 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 88 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
 - DB at `sid.db` — **Git LFS tracked** (see `.gitattributes`), NEVER `rm sid.db`; it's board truth. Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. After `git clone` on a fresh laptop, run `git lfs pull` to materialise `sid.db` + `scrapes/` (clone gives you LFS pointers otherwise); verify `file sid.db` says SQLite, not a 130-byte pointer.
@@ -34,12 +34,14 @@ After the digest, score the convergent layers against the founder profile (score
 ```sh
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_fit_digest; import json; print(json.dumps(run_infra_fit_digest(DB('sid.db'), 'skill/templates/founder-profile.md'), indent=2, default=str))"
 ```
-`top_infra_node` is the single layer to bet on (fit × conviction × cross-cluster). Live state (Aug 2026): **Memory layer wins** (7/8 sightings, 3 clusters, fit 72/80, rank 0.9125).
+`top_infra_node` is the single layer to bet on (fit × conviction × cross-cluster). Live board (Aug 07 2026): **Tracing/observability** is `top_infra_node`; 4 convergent nodes; cohort=82 analysed.
 
 One-shot resume digest (counts + deterministic blockers for a fresh session):
 ```sh
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
+
+**Live snapshot (post analyse 86–90):** startups=82 | analysed=82 (77 scored + 5 analysed) | wedges=1640 (1634 evidence) | primary selected=1 → 77 | personal_fit=77 | infra_ops=411 | segments=102 | candidates=251 | CANONICAL=20/20 covered | next_action=**score_a** ids 86–90 | tests=88 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

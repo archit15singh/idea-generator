@@ -83,19 +83,22 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infra_fit_digest; import json; print(json.dumps(run_infra_fit_digest(DB('sid.db'), 'skill/templates/founder-profile.md'), indent=2, default=str))"
 ```
 
-## Current board state (Aug 06 2026)
+## Current board state (Aug 07 2026 — live `board_status`)
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 8 (all `analysed`) | Letta, Cursor, Cognition, Continue, Braintrust (batch 1); Doppler, Dust, Glean (batch 2) |
-| `wedges` | 160 | 20 per startup; 155 pass `evidence_gate` |
-| `infrastructure_ops` | 50 | the analyst's per-startup platform-needs |
-| `infrastructure_nodes` | 10 | canonical; 8 have `convergence=1` |
-| `infrastructure_edges` | 50 | needs/builds edges |
-| `infra_personal_fit` | 8 | **founder-fit on convergent layers — ALL SCORED (none human-locked)** |
-| `market_segments` | 52 | scout output; 122 candidate startups |
-| `personal_fit` | 5 | per-startup rows still human-locked synthetic (reviewed_by 'archit', total=65) |
-| `pattern_library` | 0 | clusterer hasn't fired (needs 20 new startups) |
+| `startups` | 82 | 77 `scored` + 5 freshly `analysed` (Depot, Tray.ai, Vapi, Motion, Ockam — await score_a) |
+| `analysed` (cohort) | 82 | all startups past analyst; recursive_path + wedges present |
+| `wedges` | 1640 | 20/startup; 1634 with evidence; **77 primary** (`selected=1`) |
+| `infrastructure_ops` | 411 | analyst per-startup platform needs |
+| `infrastructure_nodes` | 10 | 4 convergent; top = Tracing/observability |
+| `infra_personal_fit` | 8 | Mode B layer scores (none human-locked) |
+| `market_segments` | 102 | 20/20 CANONICAL markets covered + analysed |
+| `candidate_startups` | 251 | ~169 pending_ingest; planner batches pending_ingest=40 |
+| `personal_fit` | 77 | Mode A; 5 analysed still need score_a this wave |
+| `pattern_library` | 11 | clusterer last run 2026-08-06; 15 new since (need 20) |
+
+**`plan_recursive_fanout` next_action = `score_a`** on startup_ids `[86, 87, 88, 89, 90]` (Depot, Tray.ai, Vapi, Motion, Ockam). Primary type mix (selected=1): Better memory 24, Better evaluation 20, Developer-first 12, AI-native 9, Open source 7, Smaller ICP 5 — under ~25% type-cap health.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -116,19 +119,19 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** scout (52 segments/122 candidates), 2 live ingest+analyst cohorts (8 startups analysed, 160 wedges, 50 infra ops), the full Infrastructure Graph + convergence, the v2 infra-node scoring (Mode B scorer). All 8 convergent layers scored. **73 tests green.**
+- **Done (pushed):** 20/20 CANONICAL markets with segments + analysed startups; 82 startups; 1640 wedges; 411 infra_ops; 77 primary shortlists; 11 pattern_library rows; Infrastructure Graph + Mode B scoring. **88 tests green.** Latest analyse wave: Depot / Tray.ai / Vapi / Motion / Ockam (ids 86–90).
+- **Next fire:** `score_a` Mode A on ids 86–90 → then `select` if needed → continue drain (`ingest` batches when analyse backlog empty) → expand CANONICAL beyond 20 when idle.
 - **BLOCKED on human action (do NOT auto-resume):**
-  - **Validator (05)** — real cold emails via gmail MCP (30/persona for the top wedge per startup). Requires explicit user approval + gmail recipient pairing. Also depends on T005 (per-startup scoring, which is itself blocked by synthetic human-locked `personal_fit` rows).
-  - **Builder (06)** — real MVP launch. Requires explicit user approval + a graduated wedge (none yet).
-  - **Scorer Mode A (per-startup 04)** — the 5 existing `personal_fit` rows are synthetic human-locked (`reviewed_by='archit'`, uniform total=65). Unlock them (`UPDATE personal_fit SET reviewed_at=NULL`) or let the scorer overwrite with `force=True` to get real per-startup scores.
-  - **Clusterer (07)** — needs ≥20 new startups since last run; we have 8. Run it on-demand with `min_new_since_last=0` if you want a Pattern Library pass now (the infra graph + convergence already works without it).
+  - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
+  - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
+  - **Clusterer (07)** — 15 new since last run; needs 20 (or on-demand `min_new_since_last=0`).
 
 ## The next highest-ROI moves
 
-1. **Grow the cohort to ~20** — ingest+analyse 12 more candidates from the 122 in `candidate_startups`. This lets the clusterer fire (Pattern Library + Problem Graph) and hardens the Memory-layer conviction.
-2. **Unlock per-startup scoring** (T005) then validate the **Memory layer** wedge with cold outreach — the top_wedge per startup that best fits a memory-layer product.
-3. **Fill the founder-profile gap** — the profile is filled; nothing blocks on it now.
-4. **Build an 08 query-os agent** — natural-language surface over the Infrastructure Graph ("should I build X layer? smallest cohort that flipped it convergent?").
+1. **score_a wave** on the 5 freshly analysed startups, then select shortlist ranks.
+2. **Drain pending_ingest** (169 candidates; planner shows 8 ingest batches) without letting `ingested_awaiting_analyse` hit ≥5.
+3. **Expand market pool** past 20 founder-relevant parents when queues drain (memory, agents, AI infra, email/BEC, observability, vector/RAG, devtools, identity, data infra gaps).
+4. **Clusterer** once ≥20 new startups since last run (or force on-demand).
 
 ## Subagent dispatch contract
 
