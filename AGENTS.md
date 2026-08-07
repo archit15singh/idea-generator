@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-57 + expand):** startups=**331** scored | wedges=**6620** | primary=**331** | personal_fit=**331** | patterns=**49** | CANONICAL=**32/32** | e2e=331/331 | next=**ingest** | wave #336–340 Codeium/Intercom Fin/FastGPT/Predibase/Stoplight — AI-native / Vertical-specific / Open source / Cheaper / API-first | pending **129** | tests=**90** green.
+**Live snapshot (post ingest+analyse-58 + expand):** startups=**336** scored | wedges=**6720** | primary=**336** | personal_fit=**336** | patterns=**49** | CANONICAL=**32/32** | e2e=336/336 | next=**ingest** | wave #341–345 JetBrains AI/Cognigy/AnythingLLM/Cerebras/Redocly — Developer-first / Vertical-specific / Offline/local-first / Faster / API-first | pending **130** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

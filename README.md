@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 331 | **all scored** (analyse-57 Codeium→Stoplight) |
-| `analysed` (cohort) | 331 | CANONICAL **32/32** |
-| `wedges` | 6620 | **331 primary** + shortlists |
+| `startups` | 336 | **all scored** (analyse-58 JetBrains→Redocly) |
+| `analysed` (cohort) | 336 | CANONICAL **32/32** |
+| `wedges` | 6720 | **336 primary** + shortlists |
 | `infrastructure_ops` | ~1450 | post analyse-52 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 456 | pending **129** |
-| `personal_fit` | 331 | all e2e |
+| `candidate_startups` | 462 | pending **130** |
+| `personal_fit` | 336 | all e2e |
 | `pattern_library` | **49** | +SDLC coding agents, CX multi-channel, agentic workflow OS, private enterprise models, API→MCP |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **331/331**; wedges **6620**; personal_fit **331**; patterns **49**. Latest: **ingest+analyse-57** Codeium/Intercom Fin/FastGPT/Predibase/Stoplight. next **ingest**. **90 tests green.**
+- **Done (pushed):** CANONICAL **32/32**; e2e **336/336**; wedges **6720**; patterns **49**. Latest: **ingest+analyse-58** JetBrains AI/Cognigy/AnythingLLM/Cerebras/Redocly. next **ingest**. **90 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
