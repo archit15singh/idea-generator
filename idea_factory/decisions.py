@@ -11,6 +11,7 @@ If an agent wants to override one of these gates, it can't. It returns a
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional, get_args
@@ -22,6 +23,48 @@ from idea_factory.schema import (
     ValidatorReceipt,
     WedgeRow,
 )
+
+# Analyst stub patterns: "MVP: cheaper path." / "MVP angle: smaller icp."
+# Substantive rows may still *contain* "MVP" mid-sentence; only leading template
+# prefixes and empty stubs are penalized by the select gate.
+_TEMPLATE_PREFIX_RE = re.compile(
+    r"^(?:MVP\s*angle\s*:\s*|MVP\s*:\s*)",
+    re.IGNORECASE,
+)
+_STUB_ONLY_RE = re.compile(
+    r"^(?:MVP\s*angle\s*:\s*|MVP\s*:\s*)?"
+    r"[\w\s/\-]{0,48}\.?$",
+    re.IGNORECASE,
+)
+
+
+def is_template_wedge_description(description: Optional[str]) -> bool:
+    """True for empty/MVP-stub wedge copy that must not win primary selection.
+
+    Substantive descriptions that merely start with ``MVP:`` but have a real
+    body (≥40 chars after the prefix) are NOT templates — strip the prefix
+    when rewriting, but do not hard-reject them here.
+    """
+    d = (description or "").strip()
+    if not d:
+        return True
+    body = _TEMPLATE_PREFIX_RE.sub("", d).strip()
+    if not body:
+        return True
+    # short after strip, or pure angle stub like "MVP angle: smaller icp."
+    if len(body) < 40:
+        return True
+    if _TEMPLATE_PREFIX_RE.match(d) and _STUB_ONLY_RE.match(d) and len(d) < 55:
+        return True
+    return False
+
+
+def strip_mvp_template_prefix(description: Optional[str]) -> str:
+    """Drop a leading ``MVP:`` / ``MVP angle:`` label; keep the body."""
+    d = (description or "").strip()
+    if not d:
+        return ""
+    return _TEMPLATE_PREFIX_RE.sub("", d).strip()
 
 # The set of acceptable ICP clusters, derived from the controlled vocabulary
 # instead of re-typing the literals here. If `ICP_CLUSTERS` adds a fourth
@@ -63,7 +106,7 @@ def rank_wedges_by_fit(
 ) -> list[tuple[WedgeRow, float]]:
     """Pure function. Returns wedges sorted by fit * evidence-tightness weight.
 
-    weight = wedge_fit_norm * 0.6 + evidence_tightness * 0.4
+    weight = (wedge_fit_norm * 0.6 + evidence_tightness * 0.4) * template_factor
 
     wedge_fit_norm prefers the scorer's per-wedge `personal_fit_score` (0-100)
     when present; otherwise falls back to the startup-level fit.total/80.
@@ -73,6 +116,9 @@ def rank_wedges_by_fit(
 
     evidence_tightness=1.0 for wedges with a citation, 0.0 otherwise (rows
     without evidence are dropped before scoring).
+
+    template_factor=0.25 when ``is_template_wedge_description`` (empty / MVP
+    stub). Select gate prefers non-template + non-thin evidence for selected≥1.
 
     The validator receives the top wedge per startup from this ranking. No prose.
     """
@@ -93,11 +139,18 @@ def rank_wedges_by_fit(
         else:
             wedge_fit_norm = startup_fit_norm
         ev_tight = 1.0 if w.evidence else 0.0
+        # thin evidence citations also lose rank (but still pass evidence_gate)
+        ev_l = (w.evidence or "").strip().lower()
+        if ev_l in ("thin", "null", "none") or ev_l.startswith("thin"):
+            ev_tight = 0.15
         score = (wedge_fit_norm * 0.6) + (ev_tight * 0.4)
+        if is_template_wedge_description(w.description):
+            score *= 0.25
         ranked.append((w, round(score, 4)))
-    # Stable secondary key: higher personal_fit_score, then lower id (if any)
+    # Prefer non-template, then score, then higher personal_fit_score, then id
     ranked.sort(
         key=lambda t: (
+            0 if is_template_wedge_description(t[0].description) else 1,
             t[1],
             t[0].personal_fit_score if t[0].personal_fit_score is not None else -1,
             -(t[0].id or 0),

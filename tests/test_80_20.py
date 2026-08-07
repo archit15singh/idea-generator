@@ -536,15 +536,18 @@ def test_rank_wedges_prefers_per_wedge_personal_fit_score():
     )
     wedges = [
         WedgeRow(
-            id=1, startup_id=1, wedge_type="Cheaper", description="low align",
+            id=1, startup_id=1, wedge_type="Cheaper",
+            description="Low-price path for high-volume agent fleets that hit spend caps.",
             evidence="c.pricing", personal_fit_score=40,
         ),
         WedgeRow(
-            id=2, startup_id=1, wedge_type="Open source", description="home turf",
+            id=2, startup_id=1, wedge_type="Open source",
+            description="Open-source core so teams can fork and self-host the memory runtime.",
             evidence="c.moat=OSS", personal_fit_score=92,
         ),
         WedgeRow(
-            id=3, startup_id=1, wedge_type="Self-hosted", description="mid",
+            id=3, startup_id=1, wedge_type="Self-hosted",
+            description="Self-hosted deploy for enterprises that cannot use vendor cloud sandboxes.",
             evidence="c.weaknesses", personal_fit_score=70,
         ),
     ]
@@ -555,6 +558,43 @@ def test_rank_wedges_prefers_per_wedge_personal_fit_score():
     assert top_wedge(wedges, fit).wedge_type == "Open source"
 
 
+def test_rank_wedges_penalizes_mvp_template_descriptions():
+    """Select gate: MVP stubs lose to real non-template copy even at lower fit."""
+    from idea_factory.decisions import is_template_wedge_description, strip_mvp_template_prefix
+
+    assert is_template_wedge_description("MVP angle: smaller icp.")
+    assert is_template_wedge_description("MVP: cheaper path.")
+    assert is_template_wedge_description("")
+    assert not is_template_wedge_description(
+        "MVP: CLI + API for content pipelines engineers own in CI — not marketer-only UI."
+    )
+    assert strip_mvp_template_prefix("MVP: real body about the product wedge here now.") == (
+        "real body about the product wedge here now."
+    )
+
+    fit = PersonalFitRow(
+        startup_id=1,
+        technical_advantage=8, interest=8, existing_knowledge=8,
+        sales_ability=8, long_term_moat=8, build_speed=8,
+        market_size=8, distribution_fit=8,
+    )
+    wedges = [
+        WedgeRow(
+            id=1, startup_id=1, wedge_type="Better memory",
+            description="MVP angle: better memory.",
+            evidence="c.moat", personal_fit_score=99,
+        ),
+        WedgeRow(
+            id=2, startup_id=1, wedge_type="Developer-first",
+            description="SDK-first agent loop for platform eng embedding coding agents in IDPs.",
+            evidence="c.icp", personal_fit_score=70,
+        ),
+    ]
+    ranked = rank_wedges_by_fit(wedges, fit)
+    assert ranked[0][0].wedge_type == "Developer-first"
+    assert ranked[0][1] > ranked[1][1]
+
+
 def test_rank_wedges_falls_back_to_startup_fit_when_wedge_unscored():
     fit = PersonalFitRow(
         startup_id=1,
@@ -563,8 +603,16 @@ def test_rank_wedges_falls_back_to_startup_fit_when_wedge_unscored():
         market_size=10, distribution_fit=10,  # total=80
     )
     wedges = [
-        WedgeRow(id=1, startup_id=1, wedge_type="Open source", description="d", evidence="c"),
-        WedgeRow(id=2, startup_id=1, wedge_type="Faster", description="d", evidence="c"),
+        WedgeRow(
+            id=1, startup_id=1, wedge_type="Open source",
+            description="Open-source runtime teams can fork and self-host without a vendor cloud.",
+            evidence="c",
+        ),
+        WedgeRow(
+            id=2, startup_id=1, wedge_type="Faster",
+            description="Faster hot-path latency for the daily workflow the ICP already measures.",
+            evidence="c",
+        ),
     ]
     ranked = rank_wedges_by_fit(wedges, fit)
     assert len(ranked) == 2
