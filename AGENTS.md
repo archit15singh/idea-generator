@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-82 + cluster):** startups=**456** scored | wedges=**9120** | primary=**456** | personal_fit=**456** | patterns=**164** | CANONICAL=**34/34** | e2e=456/456 | next=**ingest** | wave #462–466 Nhost/PagerDuty/CredoAI/MilvusZilliz/Relay — SMB-first / Faster / Compliance-first / Open source / Better integrations | +5 patterns | pending **15** | tests=**93** green.
+**Live snapshot (post ingest+analyse-83 + cluster):** startups=**461** scored | wedges=**9220** | primary=**461** | personal_fit=**461** | patterns=**169** | CANONICAL=**34/34** | e2e=461/461 | next=**ingest** | wave #467–471 Hasura/LangWatch/HolisticAI/Turbopuffer/Dagster — API-first / Better evaluation / Vertical-specific / Cheaper / Self-hosted | +5 patterns | pending **10** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
