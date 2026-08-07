@@ -87,8 +87,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 182 | **182 scored** (all stage_marker=scored) |
-| `analysed` (cohort) | 182 | full pool analysed |
+| `startups` | 187 | **182 scored** + **5 ingested** (await analyse) |
+| `analysed` (cohort) | 182 | +5 SID backlog (ingest-28 new parents) |
 | `wedges` | 3640 | **182 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30** (added Context Engineering, Secrets and Credential Infrastructure, AI Customer Support); segments **132**; candidates **287**; e2e **182/182** prior; **27/30** markets analysed (3 new parents await ingest→E2E). Latest: **expand-30 + scout**. next **ingest** (prefer DSPy/Aembit/Ada). **88 tests green.**
+- **Done (pushed):** CANONICAL **30**; segments **132**; startups **187** (182 scored + 5 ingested); e2e **182/182** prior. Latest: **ingest-28** — DSPy/Aembit/Gorgias/Forter/PromptLayer SID (Railway dupe + Ada 403 skipped). Covers new parents Context Engineering, Secrets, AI Customer Support. next **analyse** 191–195. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.

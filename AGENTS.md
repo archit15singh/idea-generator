@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post expand-30+scout):** startups=**182** scored | wedges=**3640** | primary=**182** | personal_fit=**182** | patterns=20 | segments=**132** | candidates=**287** | CANONICAL=**30** (27/30 analysed) | e2e=182/182 | uncovered_analysed=Context Engineering, Secrets and Credential Infrastructure, AI Customer Support | next_action=**ingest** | primary Better memory 52 / Better evaluation 48 / AI-native 28 / Developer-first 28 | tests=88 green.
+**Live snapshot (post ingest-28):** startups=**187** (182 scored + 5 ingested) | wedges=**3640** | primary=**182** | personal_fit=**182** | patterns=20 | segments=**132** | candidates=**287** | CANONICAL=**30** (27/30 analysed until E2E) | next_action=**analyse** (191–195) | ingested: DSPy/Aembit/Gorgias/Forter/PromptLayer | tests=88 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
