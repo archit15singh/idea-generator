@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 212 | **all scored** (analyse-33 complete) |
-| `analysed` (cohort) | 212 | CANONICAL **30/30** |
-| `wedges` | 4240 | **212 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~974 | post analyse-33 |
+| `startups` | 217 | **all scored** (analyse-34 complete) |
+| `analysed` (cohort) | 217 | CANONICAL **30/30** |
+| `wedges` | 4340 | **217 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~999 | post analyse-34 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | 286 | pending_ingest≈35–40 (Tone still pending DNS) |
-| `personal_fit` | 212 | all e2e |
+| `candidate_startups` | ~285 | Tone candidate **retired** (DNS dead) |
+| `personal_fit` | 217 | all e2e |
 | `pattern_library` | **24** | cluster stamped after wave-32 |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-33: LangSmith Hub (#216 Better evaluation), Phase (#217 Open source), Permit.io (#218 AI-native), CommandBar (#219 Developer-first; Amplitude acq), Replicate (#220 Developer-first; Tone tone.ai DNS fail substitute). Primary mix Better evaluation 53, Better memory 52, AI-native 46, Developer-first 36, Open source 9.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-34: Port (#221 Developer-first), Aserto (#222 Developer-first), Sana (#223 Better memory; Workday), WhyLabs (#224 Open source; discontinued→whylogs/langkit), Unstructured (#225 Developer-first). Primary mix Better evaluation 53, Better memory 53, AI-native 46, Developer-first 39, Open source 10.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **212/212**; wedges **4240**; personal_fit **212**; **212 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-33** LangSmith/Phase/Permit/CommandBar/Replicate full E2E. next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` next ≤5 pending candidates → analyse→score→select.
+- **Done (pushed):** CANONICAL **30/30**; e2e **217/217**; wedges **4340**; personal_fit **217**; **217 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-34** Port/Aserto/Sana/WhyLabs/Unstructured + **retired Tone candidate** (DNS starvation fix). next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` next ≤5 (Humanitec/ConductorOne/Nanonets/Humanloop/Middleware per plan) → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -128,8 +128,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 ## The next highest-ROI moves
 
 1. **Ingest** next ≤5 candidates (plan wave) → analyse→score→select.
-2. Tone (`tone.ai`) still DNS-dead — drop or remap candidate; trytone.ai is different OSS voice platform.
-3. Further CANONICAL expand past 30; CommandBar is acquisition case study only.
+2. Skip/retire other dead candidates early (Humanloop→Anthropic, similar to WhyLabs/CommandBar patterns).
+3. Further CANONICAL expand past 30.
 
 ## Subagent dispatch contract
 

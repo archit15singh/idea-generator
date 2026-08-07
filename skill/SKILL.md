@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-33):** startups=**212** all scored | wedges=**4240** | primary=**212** | personal_fit=**212** | patterns=**24** | segments=**132** | CANONICAL **30/30** | e2e=212/212 | convergent=5 | next=`ingest` | primary mix Better evaluation 53 / Better memory 52 / AI-native 46 / Developer-first 36 / Open source 9 | wave LangSmith/Phase/Permit/CommandBar/Replicate primaries Better evaluation/Open source/AI-native/Dev-first/Dev-first | Tone tone.ai DNS fail→Replicate sub; CommandBar acquired Amplitude | tests=89.
+**Board snapshot (Aug 07 2026, after ingest+analyse-34):** startups=**217** all scored | wedges=**4340** | primary=**217** | personal_fit=**217** | patterns=**24** | segments=**132** | CANONICAL **30/30** | e2e=217/217 | convergent=5 | next=`ingest` | primary mix Better evaluation 53 / Better memory 53 / AI-native 46 / Developer-first 39 / Open source 10 | wave Port/Aserto/Sana/WhyLabs/Unstructured | fix: retired dead Tone candidate (DNS starvation) | WhyLabs discontinued→OSS; Sana=Workday | tests=89.
 
 ## Refs
 
