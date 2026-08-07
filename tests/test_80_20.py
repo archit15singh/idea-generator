@@ -243,6 +243,28 @@ def test_candidates_for_ingest_host_aliases(db):
     assert "FreshSec" in names
 
 
+def test_candidates_for_ingest_name_slug_prefix(db):
+    """Name-slug prefix: LangSmith skipped when LangSmith Hub already ingested."""
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Observability", segment_name="name-dedup",
+        icp_cluster="developer", rationale="name slug test",
+    ))
+    db.upsert_startup(StartupRow(
+        startup="LangSmith Hub", website="https://smith.langchain.com",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="LangSmith", website="https://www.langchain.com/langsmith",
+        market_segment_id=seg_id,
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="FreshObs", website="https://freshobs.example",
+        market_segment_id=seg_id,
+    ))
+    names = {c.name for c in db.candidates_for_ingest()}
+    assert "LangSmith" not in names
+    assert "FreshObs" in names
+
+
 def test_db_idempotent_upsert(db):
     s = StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24")
     id1 = db.upsert_startup(s)

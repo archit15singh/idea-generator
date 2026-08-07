@@ -2,7 +2,7 @@
 
 ## Verify
 ```sh
-python3 -m pytest tests/ -q        # 91 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 92 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
 - DB at `sid.db` — **Git LFS tracked** (see `.gitattributes`), NEVER `rm sid.db`; it's board truth. Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. After `git clone` on a fresh laptop, run `git lfs pull` to materialise `sid.db` + `scrapes/` (clone gives you LFS pointers otherwise); verify `file sid.db` says SQLite, not a 130-byte pointer.
@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-73 + cluster):** startups=**411** scored | wedges=**8220** | primary=**411** | personal_fit=**411** | patterns=**119** | CANONICAL=**32/32** | e2e=411/411 | next=**ingest** | wave #416–420 Mosaic/Lever/StackBlitz/BrowserCo/CoCounsel — More accurate / SMB-first / Offline/local-first / Mobile-first / Vertical-specific | +5 patterns | pending **61** | tests=**91** green.
+**Live snapshot (post ingest+analyse-74 + cluster):** startups=**416** scored | wedges=**8320** | primary=**416** | personal_fit=**416** | patterns=**124** | CANONICAL=**32/32** | e2e=416/416 | next=**ingest** | wave #422–426 Blacksmith/Raycast/Ambience/Oso/Scale — Faster / Better UX / Compliance-first / Self-hosted / Enterprise-first | +5 patterns | pending **53** | tests=**92** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
@@ -60,6 +60,7 @@ Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds
 - **YC /companies/<slug> pages routinely 404.** Ingestor's best-effort rule: log the 404 in `scrape_log`, fall back to the company's own homepage. Don't halt on a 404.
 - **Cloudflare / bot-challenge pricing pages (403 + "Just a moment...").** e.g. codesandbox.io/pricing. Log status=403, treat as thin, continue with homepage + GitHub/docs. Never invent pricing numbers from a challenge page.
 - **Host aliases for same company.** `idea_factory.db.HOST_ALIASES` maps marketing hosts → canonical (e.g. `abnormalsecurity.com` → `abnormal.ai`). `candidates_for_ingest` excludes alias hosts when the canonical site is already a startup — prevents re-queueing Abnormal Security-class dupes.
+- **Name-slug prefix dedupe.** `candidates_for_ingest` also skips candidates whose name slug is a prefix/extension of an ingested startup (≥6 chars), e.g. `LangSmith` vs `LangSmith Hub`. Prevents marketing-page re-ingest of the same product.
 - **Context budget.** `webfetch` returns 60KB+ per startup page. The ingestor MUST compress with `pm.html_to_summary(html, max_chars=1200)` before reasoning, else a 5-startup cohort blows the prompt budget before SID extraction even starts.
 - **SQLite datetime compare.** Schema stores `updated_at` in SQLite's space-format `datetime('now')` (e.g. `2026-08-06 14:33:23`). Boundary comparisons from Python must use `WHERE updated_at > datetime(?)` so SQLite normalises the `?`-bound isoformat T-format string; a bare lexicographic compare returns 0 for same-day updates.
 - **Idempotent edges.** `INSERT OR IGNORE` returns `rowcount > 0` from the executed cursor (the just-executed statement), NOT `cur.total_changes` (cumulative since connection open). Use `res.rowcount`, not `cur.total_changes > 0` — otherwise duplicate inserts are reported as `True`.

@@ -157,7 +157,13 @@ class DB:
 
         Also resolves HOST_ALIASES (e.g. abnormalsecurity.com → abnormal.ai) so
         alternate marketing domains do not re-enter the ingest queue.
+
+        Name-slug prefix dedupe: "LangSmith" is skipped when "LangSmith Hub" is
+        already ingested (and "Abnormal Security" vs "Abnormal"). Shorter slug
+        must be ≥6 chars to avoid false positives ("Open" vs "OpenAI").
         """
+        import re
+
         sql = """
             SELECT c.* FROM candidate_startups c
             LEFT JOIN startups s ON s.website = c.website
@@ -186,9 +192,26 @@ class DB:
             h = _host(url)
             return HOST_ALIASES.get(h, h)
 
+        def _name_slug(name: str) -> str:
+            return re.sub(r"[^a-z0-9]", "", (name or "").lower())
+
+        def _name_covered(cand_name: str, ingested_slugs: set[str]) -> bool:
+            cs = _name_slug(cand_name)
+            if len(cs) < 6:
+                return False
+            for is_ in ingested_slugs:
+                if len(is_) < 6:
+                    continue
+                if cs == is_ or cs.startswith(is_) or is_.startswith(cs):
+                    return True
+            return False
+
+        startup_rows = self._conn.execute(
+            "SELECT website, startup FROM startups"
+        ).fetchall()
         ingested_hosts = {
             _canonical_host(row["website"])
-            for row in self._conn.execute("SELECT website FROM startups").fetchall()
+            for row in startup_rows
             if row["website"]
         }
         # also accept reverse: if alias target is ingested, alias host is covered
@@ -197,12 +220,19 @@ class DB:
                 ingested_hosts.add(alias)
             if alias in ingested_hosts:
                 ingested_hosts.add(target)
+        ingested_name_slugs = {
+            _name_slug(row["startup"])
+            for row in startup_rows
+            if row["startup"]
+        }
 
         out: list[CandidateStartupRow] = []
         for row in r:
             if _canonical_host(row["website"]) in ingested_hosts:
                 continue
             if _host(row["website"]) in ingested_hosts:
+                continue
+            if _name_covered(row["name"], ingested_name_slugs):
                 continue
             out.append(
                 CandidateStartupRow(
