@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 242 | **all scored** (analyse-39 complete) |
-| `analysed` (cohort) | 242 | CANONICAL **30/30** |
-| `wedges` | 4840 | **242 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1124 | post analyse-39 |
+| `startups` | 247 | **all scored** (analyse-40 + cluster) |
+| `analysed` (cohort) | 247 | CANONICAL **30/30** |
+| `wedges` | 4940 | **247 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1149 | post analyse-40 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | ~270 | next Entro/Baseten/Blink/Weaviate/Inngest |
-| `personal_fit` | 242 | all e2e |
-| `pattern_library` | **26** | cluster 15/20 since last |
+| `candidate_startups` | ~265 | next Galileo/Panther/Qdrant/Hatchet/Fiddler |
+| `personal_fit` | 247 | all e2e |
+| `pattern_library` | **28** | +durable agents, NHI security; cluster stamped |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-39: Oasis (#246 AI-native), ClearML (#247 Open source), Torq (#248 AI-native), HockeyStack (#249 **Vertical-specific**), Pinecone (#250 Developer-first). Primary mix AI-native 58, Better evaluation 56, Better memory 53, Developer-first 44, Open source 13.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **242/242**; wedges **4840**; personal_fit **242**; **242 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-39** Oasis/ClearML/Torq/HockeyStack/Pinecone. next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` Entro/Baseten/Blink/Weaviate/Inngest (plan) → analyse→score→select; cluster after +5.
+- **Done (pushed):** CANONICAL **30/30**; e2e **247/247**; wedges **4940**; personal_fit **247**; **247 primary**; patterns **28**; convergent **5**. Latest: **ingest+analyse-40** Entro/Baseten/Blink/Weaviate/Inngest + **cluster** (+durable agents, NHI security). next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` Galileo/Panther/Qdrant/Hatchet/Fiddler (plan) → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -129,7 +129,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 1. **Ingest** next ≤5 candidates → analyse→score→select.
 2. Expand CANONICAL markets past 30 if candidate pool thins.
-3. Cluster after +5 more (currently 15/20).
+3. Optional Mode B re-score after cohort growth.
 
 ## Subagent dispatch contract
 

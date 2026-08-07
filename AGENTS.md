@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-39):** startups=**242** all scored | wedges=**4840** | primary=**242** | personal_fit=**242** | patterns=**26** | segments=**132** | CANONICAL=**30/30** | e2e=242/242 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 58 / Better evaluation 56 / Better memory 53 / Developer-first 44 / Open source 13 | wave #246–250 Oasis/ClearML/Torq/HockeyStack/Pinecone | HockeyStack=Vertical-specific | cluster 15/20 | tests=89 green.
+**Live snapshot (post ingest+analyse-40 + cluster):** startups=**247** all scored | wedges=**4940** | primary=**247** | personal_fit=**247** | patterns=**28** | segments=**132** | CANONICAL=**30/30** | e2e=247/247 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 59 / Better evaluation 56 / Better memory 54 / Developer-first 46 / Open source 13 | wave #251–255 Entro/Baseten/Blink/Weaviate/Inngest + cluster (+durable agents, NHI security) | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
