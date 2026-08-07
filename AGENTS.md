@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-76 + cluster):** startups=**426** scored | wedges=**8520** | primary=**426** | personal_fit=**426** | patterns=**134** | CANONICAL=**32/32** | e2e=426/426 | next=**ingest** | wave #432–436 Dagger/Fig/Ema/Parea/Higress — Open source / Better integrations / SMB-first / Self-hosted / Offline/local-first | +5 patterns | pending **42** | tests=**92** green.
+**Live snapshot (post ingest+analyse-77 + cluster):** startups=**431** scored | wedges=**8620** | primary=**431** | personal_fit=**431** | patterns=**139** | CANONICAL=**32/32** | e2e=431/431 | next=**ingest** | wave #437–441 Pulumi/Appsmith/Writer/Neptune/Keywords — Self-hosted / Open source / Compliance-first / More accurate / Cheaper | +5 patterns | pending **37** | tests=**92** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
@@ -60,6 +60,7 @@ Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds
 - **YC /companies/<slug> pages routinely 404.** Ingestor's best-effort rule: log the 404 in `scrape_log`, fall back to the company's own homepage. Don't halt on a 404.
 - **Cloudflare / bot-challenge pricing pages (403 + "Just a moment...").** e.g. codesandbox.io/pricing. Log status=403, treat as thin, continue with homepage + GitHub/docs. Never invent pricing numbers from a challenge page.
 - **Acquired / sunset domains (503/empty).** e.g. fig.io → Amazon Q Developer. Log the fail, fill SID from successor product page + note acquisition in `raw`. Don't invent a living product on a dead domain.
+- **Product shutdown announcements.** e.g. Neptune docs: OpenAI acquisition → services end **2026-03-05**. Still ingest (migration-gap wedge is high-signal); set `stage=sunset`, cite Transition Hub/export, score moat low. Homepage 403 is OK if docs+GitHub exist.
 - **Host aliases for same company.** `idea_factory.db.HOST_ALIASES` maps marketing hosts → canonical (e.g. `abnormalsecurity.com` → `abnormal.ai`, `console.groq.com` → `groq.com`). `candidates_for_ingest` excludes alias hosts when the canonical site is already a startup.
 - **Name-slug prefix dedupe.** `candidates_for_ingest` also skips candidates whose name slug is a prefix/extension of an ingested startup (≥6 chars), e.g. `LangSmith` vs `LangSmith Hub`. Prevents marketing-page re-ingest of the same product.
 - **Context budget.** `webfetch` returns 60KB+ per startup page. The ingestor MUST compress with `pm.html_to_summary(html, max_chars=1200)` before reasoning, else a 5-startup cohort blows the prompt budget before SID extraction even starts.
