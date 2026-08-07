@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 237 | **all scored** (analyse-38 complete) |
-| `analysed` (cohort) | 237 | CANONICAL **30/30** |
-| `wedges` | 4740 | **237 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1099 | post analyse-38 |
+| `startups` | 242 | **all scored** (analyse-39 complete) |
+| `analysed` (cohort) | 242 | CANONICAL **30/30** |
+| `wedges` | 4840 | **242 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1124 | post analyse-39 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | ~275 | next Oasis/ClearML/Torq/HockeyStack/Pinecone |
-| `personal_fit` | 237 | all e2e |
-| `pattern_library` | **26** | cluster 10/20 since last |
+| `candidate_startups` | ~270 | next Entro/Baseten/Blink/Weaviate/Inngest |
+| `personal_fit` | 242 | all e2e |
+| `pattern_library` | **26** | cluster 15/20 since last |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-38: DevCycle (#241 Developer-first; Dynatrace acq), Astrix (#242 AI-native), W&B (#243 Better evaluation), Incident.io (#244 AI-native), Tines (#245 AI-native). Primary mix AI-native 56, Better evaluation 56, Better memory 53, Developer-first 43, Open source 12.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-39: Oasis (#246 AI-native), ClearML (#247 Open source), Torq (#248 AI-native), HockeyStack (#249 **Vertical-specific**), Pinecone (#250 Developer-first). Primary mix AI-native 58, Better evaluation 56, Better memory 53, Developer-first 44, Open source 13.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **237/237**; wedges **4740**; personal_fit **237**; **237 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-38** DevCycle/Astrix/W&B/Incident.io/Tines. next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` Oasis/ClearML/Torq/HockeyStack/Pinecone (plan) → analyse→score→select.
+- **Done (pushed):** CANONICAL **30/30**; e2e **242/242**; wedges **4840**; personal_fit **242**; **242 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-39** Oasis/ClearML/Torq/HockeyStack/Pinecone. next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` Entro/Baseten/Blink/Weaviate/Inngest (plan) → analyse→score→select; cluster after +5.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -129,7 +129,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 1. **Ingest** next ≤5 candidates → analyse→score→select.
 2. Expand CANONICAL markets past 30 if candidate pool thins.
-3. Cluster after +10 more (currently 10/20).
+3. Cluster after +5 more (currently 15/20).
 
 ## Subagent dispatch contract
 
