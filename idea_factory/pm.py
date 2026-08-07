@@ -438,8 +438,43 @@ def run_select_top_wedges(
             continue
         candidates.append((sid, wedges, fit))
 
+    # Cap is cohort-wide, not batch-wide. Incremental select (force=False)
+    # must seed existing primary type tallies + full fitted cohort size or
+    # every wave re-opens ceil(batch*0.25) slots and collapses to Better memory.
+    existing_primary_counts: dict[str, int] = {}
+    cohort_size = len(candidates)
+    if not force and candidates:
+        batch_ids = {sid for sid, _, _ in candidates}
+        rows = db._conn.execute(
+            """
+            SELECT COUNT(DISTINCT s.id) AS n FROM startups s
+            JOIN personal_fit pf ON pf.startup_id = s.id
+            WHERE s.stage_marker IN ('analysed', 'scored', 'validated', 'graduated')
+              AND EXISTS (
+                SELECT 1 FROM wedges w
+                WHERE w.startup_id = s.id
+                  AND w.evidence IS NOT NULL AND TRIM(w.evidence) != ''
+              )
+            """
+        ).fetchone()
+        cohort_size = max(int(rows["n"] or 0), len(candidates))
+        for r in db._conn.execute(
+            """
+            SELECT w.wedge_type AS t, COUNT(*) AS c
+            FROM wedges w
+            WHERE w.selected = 1
+              AND w.startup_id NOT IN ({})
+            GROUP BY w.wedge_type
+            """.format(",".join("?" * len(batch_ids)) if batch_ids else "NULL"),
+            tuple(batch_ids) if batch_ids else (),
+        ).fetchall():
+            existing_primary_counts[str(r["t"])] = int(r["c"])
+
     primaries = assign_primary_with_global_cap(
-        candidates, cap_fraction=global_primary_cap_fraction,
+        candidates,
+        cap_fraction=global_primary_cap_fraction,
+        cohort_size=cohort_size,
+        existing_primary_counts=existing_primary_counts or None,
     )
 
     results: list[dict] = []

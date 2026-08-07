@@ -515,6 +515,42 @@ def test_assign_primary_global_cap_prevents_type_collapse():
     assert set(other) & {"Open source", "Cheaper"}
 
 
+def test_assign_primary_seeds_existing_counts_for_incremental_waves():
+    """Incremental batch must respect full-cohort cap, not ceil(batch*0.25).
+
+    Regression: force=False select of 5 new SIDs used n=5 → cap=2, so two
+    more Better memory primaries landed every wave and the board collapsed.
+    """
+    fit = PersonalFitRow(
+        startup_id=1, technical_advantage=8, interest=8, existing_knowledge=8,
+        sales_ability=5, long_term_moat=7, build_speed=8, market_size=8, distribution_fit=6,
+    )
+    # Batch of 3 new startups, all prefer Better memory; cohort already has 50
+    # Better memory primaries of 200 → cap ceil(200*0.25)=50 → zero new BM.
+    candidates = []
+    for i, sid in enumerate((201, 202, 203)):
+        f = fit.model_copy(update={"startup_id": sid})
+        wedges = [
+            WedgeRow(id=i * 10 + 1, startup_id=sid, wedge_type="Better memory",
+                     description="m", evidence="e", personal_fit_score=95),
+            WedgeRow(id=i * 10 + 2, startup_id=sid, wedge_type="Developer-first",
+                     description="d", evidence="e", personal_fit_score=90),
+            WedgeRow(id=i * 10 + 3, startup_id=sid, wedge_type="AI-native",
+                     description="a", evidence="e", personal_fit_score=85),
+        ]
+        candidates.append((sid, wedges, f))
+    primaries = assign_primary_with_global_cap(
+        candidates,
+        cap_fraction=0.25,
+        cohort_size=200,
+        existing_primary_counts={"Better memory": 50},
+    )
+    assert len(primaries) == 3
+    mem = sum(1 for w in primaries.values() if w.wedge_type == "Better memory")
+    assert mem == 0, "batch must not open new Better memory slots when cohort cap full"
+    assert all(w.wedge_type in {"Developer-first", "AI-native"} for w in primaries.values())
+
+
 # --- gates: graduation ---
 
 

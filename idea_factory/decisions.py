@@ -169,6 +169,8 @@ def assign_primary_with_global_cap(
     candidates: list[tuple[int, list[WedgeRow], PersonalFitRow]],
     *,
     cap_fraction: float = DEFAULT_GLOBAL_PRIMARY_CAP_FRACTION,
+    cohort_size: Optional[int] = None,
+    existing_primary_counts: Optional[dict[str, int]] = None,
 ) -> dict[int, WedgeRow]:
     """Pick one primary wedge per startup with a cohort-wide type cap.
 
@@ -177,12 +179,18 @@ def assign_primary_with_global_cap(
     ceil(n * cap_fraction) startups (minimum 1). When a type is at cap, that
     startup takes its next-best different type instead of piling onto the
     collapsed mode (the Better-memory failure mode).
+
+    Incremental select (new SIDs only) MUST pass:
+      - `cohort_size`: full fitted cohort (not just the batch) so the 25%
+        ceiling does not reset to ceil(batch * 0.25)
+      - `existing_primary_counts`: selected=1 type tallies for startups
+        outside this batch, so the cap is respected across waves
     """
     import math as _math
 
     if not candidates:
         return {}
-    n = len(candidates)
+    n = max(cohort_size or 0, len(candidates))
     cap = max(1, int(_math.ceil(n * cap_fraction)))
     # Strongest fits first; stable ascending sid so lowest ids claim scarce types.
     ordered = sorted(
@@ -192,7 +200,7 @@ def assign_primary_with_global_cap(
             t[0],
         ),
     )
-    type_counts: dict[str, int] = {}
+    type_counts: dict[str, int] = dict(existing_primary_counts or {})
     primaries: dict[int, WedgeRow] = {}
     for sid, wedges, fit in ordered:
         ranked = rank_wedges_by_fit(wedges, fit)
