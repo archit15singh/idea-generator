@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-85 + expand-36):** startups=**471** scored | wedges=**9420** | primary=**471** | personal_fit=**471** | patterns=**179** | CANONICAL=**34/36** analysed (pool 36) | e2e=471/471 | next=**ingest** | wave #477–481 PerplexityAPI/Mage/Restate/DBOS/Orkes — API-first / AI-native / Self-hosted / Open source / Enterprise-first | +5 patterns | expand Durable Agent Execution + AI Code Review | pending **5** | tests=**93** green.
+**Live snapshot (post ingest+analyse-86):** startups=**476** scored | wedges=**9520** | primary=**476** | personal_fit=**476** | patterns=**184** | CANONICAL=**36/36** | e2e=476/476 | next=**ingest** | wave #482–486 CodeRabbit/LangGraph/Greptile/Qodo/Sourcery — Faster / Developer-first / More accurate / Enterprise-first / Cheaper | +5 patterns | pending **4** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

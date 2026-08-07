@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 471 | **all scored** (analyse-85 Perplexity→Orkes + expand-36) |
-| `analysed` (cohort) | 471 | CANONICAL **34/36** (2 new markets) |
-| `wedges` | 9420 | **471 primary** + shortlists |
+| `startups` | 476 | **all scored** (analyse-86 CodeRabbit→Sourcery; markets 36/36) |
+| `analysed` (cohort) | 476 | CANONICAL **36/36** |
+| `wedges` | 9520 | **476 primary** + shortlists |
 | `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 480+ | pending **5** (CodeRabbit wave) |
-| `personal_fit` | 471 | all e2e |
-| `pattern_library` | **179** | +Perplexity API, Mage, Restate, DBOS, Orkes; expand Durable Exec + AI Code Review |
+| `candidate_startups` | 490+ | pending **4** |
+| `personal_fit` | 476 | all e2e |
+| `pattern_library` | **184** | +CodeRabbit, LangGraph, Greptile, Qodo, Sourcery; AI code review covered |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **34/36** analysed (pool expanded); e2e **471/471**; wedges **9420**; patterns **179**. Latest: **ingest+analyse-85** PerplexityAPI/Mage/Restate/DBOS/Orkes + **cluster** (+5) + **expand-36** (Durable Agent Execution, AI Code Review Infrastructure) + candidates. Diversity API-first / AI-native / Self-hosted / Open source / Enterprise-first. next **ingest**. **93 tests green.**
+- **Done (pushed):** CANONICAL **36/36**; e2e **476/476**; wedges **9520**; patterns **184**. Latest: **ingest+analyse-86** CodeRabbit/LangGraph/Greptile/Qodo/Sourcery + **cluster** (+5). Diversity Faster / Developer-first / More accurate / Enterprise-first / Cheaper. Durable+CodeReview markets now analysed. next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
