@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 480 | **all scored** (analyse-87 Codacy→SonarQubeAI) |
-| `analysed` (cohort) | 480 | CANONICAL **36/36** |
-| `wedges` | 9600 | **480 primary** + shortlists |
+| `startups` | 485 | **all scored** (analyse-88 OpenHands→RedisMem) |
+| `analysed` (cohort) | 485 | CANONICAL **36/36** |
+| `wedges` | 9700 | **485 primary** + shortlists |
 | `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 495+ | pending **5** |
-| `personal_fit` | 480 | all e2e |
-| `pattern_library` | **188** | +Codacy, Letta Cloud, Upstash Workflow, SonarQube AI |
+| `candidate_startups` | 500+ | pending **6** |
+| `personal_fit` | 485 | all e2e |
+| `pattern_library` | **193** | +OpenHands, MemGPT Cloud, Claude Computer Use, LangMem, Redis AI mem |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **36/36**; e2e **480/480**; wedges **9600**; patterns **188**. Latest: **ingest+analyse-87** Codacy/LettaCloud/UpstashWorkflow/SonarQubeAI + **cluster** (+4). Diversity Compliance-first / Better memory / SMB-first / Self-hosted. Letta Cloud fit=62 (memory home turf). next **ingest**. **93 tests green.**
+- **Done (pushed):** CANONICAL **36/36**; e2e **485/485**; wedges **9700**; patterns **193**. Latest: **ingest+analyse-88** OpenHands/MemGPTCloud/ClaudeComputerUse/LangMem/RedisAgentMemory + **cluster** (+5). Diversity Open source / Offline-local-first / API-first / Developer-first / Faster. MemGPT+OpenHands fit 62/56. next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
