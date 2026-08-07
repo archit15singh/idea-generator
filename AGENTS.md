@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-51 + expand + www-dedup):** startups=**302** all scored | wedges=**6040** | primary=**302** | personal_fit=**302** | patterns=**36** | segments=**132** | CANONICAL=**30/30** | e2e=302/302 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | wave #306–310 v0/Cloudflare Workers AI/Postman/Ramp/Rabbit — primaries Better UX / Faster / Better integrations / Vertical-specific / Mobile-first | pending **59** | tests=**90** green.
+**Live snapshot (post ingest+analyse-52 + cluster + expand):** startups=**307** all scored | wedges=**6140** | primary=**307** | personal_fit=**307** | patterns=**44** | segments=**132** | CANONICAL=**30/30** | e2e=307/307 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | wave #311–315 Bolt/Vercel AI SDK/Fal/Mastra/Mercury — primaries SMB-first / Open source / Faster / Open source / Vertical-specific | pending **86** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
