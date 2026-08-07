@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 381 | **all scored** (analyse-67 Sprinklr→Fivetran + cluster) |
-| `analysed` (cohort) | 381 | CANONICAL **32/32** |
-| `wedges` | 7620 | **381 primary** + shortlists |
+| `startups` | 386 | **all scored** (analyse-68 Dialogflow→Firecrawl + cluster) |
+| `analysed` (cohort) | 386 | CANONICAL **32/32** |
+| `wedges` | 7720 | **386 primary** + shortlists |
 | `infrastructure_ops` | ~1450 | post analyse-52 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
 | `candidate_startups` | 469 | pending **127** |
-| `personal_fit` | 381 | all e2e |
+| `personal_fit` | 386 | all e2e |
 | `pattern_library` | **54** | +GCP coding assist, CALM agents, ambient AI libs, Ray clouds, API+AI+MCP gateways |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **381/381**; wedges **7620**; patterns **89**. Latest: **ingest+analyse-67** Sprinklr/Retell/Ragas/Omni/Fivetran + **cluster** (+5). next **ingest**. **90 tests green.**
+- **Done (pushed):** CANONICAL **32/32**; e2e **386/386**; wedges **7720**; patterns **94**. Latest: **ingest+analyse-68** Dialogflow/Synthflow/DeepEval/Sigma/Firecrawl + **cluster** (+5). next **ingest**. **90 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
