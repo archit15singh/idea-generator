@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post analyse-31):** startups=**202** all scored | wedges=**4040** | primary=**202** | personal_fit=**202** | patterns=**23** | segments=**132** | CANONICAL=**30/30** | e2e=202/202 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary Better evaluation 51 / Better memory 51 / AI-native 44 / Developer-first 33 | wave #206–210 Turso/Descope/Otter/Chroma/Hebbia E2E | select cap seeds existing primaries | tests=89 green.
+**Live snapshot (post ingest+analyse-32 + cluster):** startups=**207** all scored | wedges=**4140** | primary=**207** | personal_fit=**207** | patterns=**24** | segments=**132** | CANONICAL=**30/30** | e2e=207/207 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary Better evaluation 52 / Better memory 52 / AI-native 45 / Developer-first 34 | wave #211–215 Ada/Anthropic Console/PlanetScale/Scalekit/Fireflies E2E + cluster (agent delegated OAuth pattern) | Ada CF 403 secondary | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

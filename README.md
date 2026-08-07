@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 202 | **all scored** (analyse-31 complete) |
-| `analysed` (cohort) | 202 | CANONICAL **30/30** |
-| `wedges` | 4040 | **202 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~923 | post analyse-31 |
+| `startups` | 207 | **all scored** (analyse-32 + cluster complete) |
+| `analysed` (cohort) | 207 | CANONICAL **30/30** |
+| `wedges` | 4140 | **207 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 949 | post analyse-32 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | 286 | pending_ingest≈40–84 |
-| `personal_fit` | 202 | all e2e |
-| `pattern_library` | **23** | next cluster after +20 new since last |
+| `candidate_startups` | 286 | pending_ingest≈40 |
+| `personal_fit` | 207 | all e2e |
+| `pattern_library` | **24** | +Agent delegated OAuth; cluster stamped |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Analyse-31: Turso (#206 Better memory), Descope (#207 AI-native), Otter (#208 Developer-first), Chroma (#209 Better memory), Hebbia (#210 More accurate). Primary mix Better evaluation 51, Better memory 51, AI-native 44, Developer-first 33 (cohort cap seeded across waves).
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-32: Ada (#211 Better evaluation; CF 403→secondary), Anthropic Console (#212 Better memory), PlanetScale (#213 Developer-first), Scalekit (#214 AI-native), Fireflies (#215 API-first). Primary mix Better evaluation 52, Better memory 52, AI-native 45, Developer-first 34.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **202/202**; wedges **4040**; personal_fit **202**; **202 primary**; patterns **23**; convergent **5**. Latest: **analyse-31** — Turso/Descope/Otter/Chroma/Hebbia full E2E + select cap fix. next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` next batch (Ada/Anthropic Console/PlanetScale/Scalekit/Fireflies per plan) then analyse.
+- **Done (pushed):** CANONICAL **30/30**; e2e **207/207**; wedges **4140**; personal_fit **207**; **207 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-32** Ada/Anthropic Console/PlanetScale/Scalekit/Fireflies full E2E + **cluster** (Agent delegated OAuth pattern). next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` next ≤5 pending candidates → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -129,7 +129,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 1. **Ingest** next ≤5 candidates (plan wave) → analyse→score→select.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
-3. Further CANONICAL expand past 30; next cluster after +20 startups.
+3. Further CANONICAL expand past 30; Ada homepage still CF-blocked (secondary SID).
 
 ## Subagent dispatch contract
 
