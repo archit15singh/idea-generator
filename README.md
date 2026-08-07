@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 192 | **187 scored** + **5 ingested** (await analyse) |
-| `analysed` (cohort) | 187 | +5 SID backlog (ingest-29) |
-| `wedges` | 3740 | **187 primary** (selected=1) + shortlists |
+| `startups` | 192 | **192 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 192 | full pool analysed; CANONICAL **30/30** |
+| `wedges` | 3840 | **192 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
 | `candidate_startups` | 287 | pending_ingest≈105 |
-| `personal_fit` | 187 | DSPy=58; PromptLayer=54; Forter=52; Aembit=48; Gorgias=36 |
+| `personal_fit` | 192 | Traceloop=57; Mem=53; PropelAuth=52; Vault=45; Vanta=37 |
 | `pattern_library` | **20** | +multi-channel CX agents; +coding-agent harness routing |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Analyse-25 E2E done: Mimecast (#176 AI-native), Gumloop (#177 Developer-first), Zeni (#178 Cheaper), Cerbos (#179 Open source), Confluent (#180 Developer-first). Primary mix Better memory 48, Better evaluation 46, Developer-first 27, AI-native 25.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; startups **192** (187 scored + 5 ingested); e2e **187/187** prior; patterns **23**; convergent **5**. Latest: **ingest-29** — PropelAuth/Mem/Vault/Traceloop/Vanta SID (Ada 403, Anthropic Console, Railway dupe skipped). next **analyse** 196–200. **88 tests green.**
+- **Done (pushed):** CANONICAL **30/30**; e2e **192/192**; wedges **3840**; personal_fit **192**; **192 primary**; patterns **23**; convergent **5**. Latest: **analyse-29** — PropelAuth/Mem/Vault/Traceloop/Vanta full E2E (Developer-first / Better memory / Developer-first / Better evaluation / Better evaluation). next **ingest**. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
