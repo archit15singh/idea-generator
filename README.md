@@ -194,3 +194,20 @@ git push
 ```
 
 If LFS isn't installed on the new machine: `brew install git-lfs && git lfs install` BEFORE `git clone` (or run `git lfs pull` after).
+
+## Idea Board website
+
+Public research UI for the board (startups, primaries, patterns, markets, infra layers).
+
+```sh
+# regenerate JSON from sid.db
+python3 scripts/export_board.py
+
+# serve (required — fetch will not work via file://)
+cd site && python3 -m http.server 8765
+# open http://127.0.0.1:8765/
+```
+
+Source: `site/index.html`, `site/app.js`, `site/styles.css`, data at `site/data/board.json`.
+Polish checklist: `site/POLISH_STATUS.md`.
+
