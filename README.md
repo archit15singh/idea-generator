@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 292 | **all scored** (analyse-49 Groq→Heidi) |
-| `analysed` (cohort) | 292 | CANONICAL **30/30** |
-| `wedges` | 5840 | **292 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1375 | post analyse-49 |
+| `startups` | 297 | **all scored** (analyse-50 Superblocks→Mixedbread + expand) |
+| `analysed` (cohort) | 297 | CANONICAL **30/30** |
+| `wedges` | 5940 | **297 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1400 | post analyse-50 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | 304 | pending **12** |
-| `personal_fit` | 292 | all e2e |
+| `candidate_startups` | 344 | pending **47** |
+| `personal_fit` | 297 | all e2e |
 | `pattern_library` | **36** | +open-model clouds, AI gateways, multi-agent runtime, dev email APIs |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
