@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-66 + cluster):** startups=**376** scored | wedges=**7520** | primary=**376** | personal_fit=**376** | patterns=**84** | CANONICAL **32/32** | e2e=376/376 | next=`ingest` | wave Kore.ai/LM Studio/Deepchecks/Preset/dbt + cluster (+5) | pending **97** | tests=**90**.
+**Board snapshot (Aug 07 2026, after ingest+analyse-67 + cluster):** startups=**381** scored | wedges=**7620** | primary=**381** | personal_fit=**381** | patterns=**89** | CANONICAL **32/32** | e2e=381/381 | next=`ingest` | wave Sprinklr/Retell/Ragas/Omni/Fivetran + cluster (+5) | pending **92** | tests=**90**.
 
 ## Refs
 
