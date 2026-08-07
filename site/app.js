@@ -321,6 +321,25 @@
     setDeepLink(null);
   }
 
+  function clearFilters() {
+    state.q = "";
+    state.market = "";
+    state.wedgeType = "";
+    state.minFit = 0;
+    state.dgOnly = true;
+    state.ossOnly = false;
+    state.ycOnly = false;
+    $("q").value = "";
+    $("market").value = "";
+    $("wedgeType").value = "";
+    $("minFit").value = "0";
+    $("minFitOut").textContent = "0";
+    $("dgOnly").checked = true;
+    $("ossOnly").checked = false;
+    $("ycOnly").checked = false;
+    render();
+  }
+
   function wire() {
     // Debounce search: board is multi-MB; full list re-render per keystroke janks hard.
     let qTimer = 0;
@@ -354,6 +373,7 @@
       state.ycOnly = e.target.checked;
       render();
     });
+    $("clearFilters").addEventListener("click", clearFilters);
     document.querySelectorAll(".seg-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         state.view = btn.dataset.view;

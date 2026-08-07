@@ -130,6 +130,15 @@ h1 { margin: 0.15rem 0 0; font-size: 1.35rem; font-weight: 600; letter-spacing: 
   margin: 0.65rem 0 0; font-size: 13.5px; color: var(--paper-dim); cursor: pointer;
 }
 .check input { margin-top: 0.2rem; accent-color: var(--accent); }
+.clear-btn {
+  display: block; width: 100%; margin-top: 0.9rem;
+  padding: 0.5rem 0.7rem; border-radius: var(--r);
+  border: 1px solid var(--line-strong); background: transparent;
+  color: var(--paper-dim); cursor: pointer; font-size: 13px;
+}
+.clear-btn:hover, .clear-btn:focus-visible {
+  border-color: rgba(232, 165, 75, 0.45); color: var(--paper); outline: none;
+}
 .rail-hint {
   margin: 1.25rem 0 0; font-size: 12px; line-height: 1.5; color: var(--paper-mute);
 }

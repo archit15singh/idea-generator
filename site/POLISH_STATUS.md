@@ -5,8 +5,8 @@ Track for the 120s polish loop. Set `satisfied=true` only when **all** checklist
 ```
 satisfied=false
 fires_no_fix=0
-last_fire=2026-08-07T07:17:00Z
-last_fix=Loading progress for multi-MB board.json (stream + bar + MB readout)
+last_fire=2026-08-07T07:19:00Z
+last_fix=Clear filters button resets search/market/type/fit/toggles; empty-state copy updated
 ```
 
 ## Checklist (all must be true)

@@ -57,6 +57,8 @@
         <label class="check"><input type="checkbox" id="dgOnly" checked /> Decision-grade primaries only</label>
         <label class="check"><input type="checkbox" id="ossOnly" /> Open source</label>
         <label class="check"><input type="checkbox" id="ycOnly" /> Has YC batch</label>
+
+        <button type="button" id="clearFilters" class="clear-btn">Clear filters</button>
       </div>
 
       <p class="rail-hint">Click a row for full SID research. <kbd>/</kbd> focus search · <kbd>Esc</kbd> close.</p>
@@ -68,7 +70,7 @@
         <p id="resultsCount" class="count"></p>
       </div>
       <div id="list" class="list" role="list"></div>
-      <p id="empty" class="empty hidden">No matches. Loosen filters or clear search.</p>
+      <p id="empty" class="empty hidden">No matches. Loosen filters or use <strong>Clear filters</strong>.</p>
     </main>
   </div>
 
