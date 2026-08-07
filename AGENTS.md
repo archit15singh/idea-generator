@@ -2,7 +2,7 @@
 
 ## Verify
 ```sh
-python3 -m pytest tests/ -q        # 88 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 89 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
 - DB at `sid.db` — **Git LFS tracked** (see `.gitattributes`), NEVER `rm sid.db`; it's board truth. Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. After `git clone` on a fresh laptop, run `git lfs pull` to materialise `sid.db` + `scrapes/` (clone gives you LFS pointers otherwise); verify `file sid.db` says SQLite, not a 130-byte pointer.
@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-40 + cluster):** startups=**247** all scored | wedges=**4940** | primary=**247** | personal_fit=**247** | patterns=**28** | segments=**132** | CANONICAL=**30/30** | e2e=247/247 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 59 / Better evaluation 56 / Better memory 54 / Developer-first 46 / Open source 13 | wave #251–255 Entro/Baseten/Blink/Weaviate/Inngest + cluster (+durable agents, NHI security) | tests=89 green.
+**Live snapshot (post ingest+analyse-41):** startups=**252** all scored | wedges=**5040** | primary=**252** | personal_fit=**252** | patterns=**28** | segments=**132** | CANONICAL=**30/30** | e2e=252/252 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 60 / Better evaluation 57 / Better memory 54 / Developer-first 47 / Open source 14 / Compliance-first 2 | wave #256–260 Galileo/Panther/Qdrant/Hatchet/Fiddler | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

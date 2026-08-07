@@ -59,9 +59,9 @@ cp    agents/*   ~/.config/opencode/agents/
 cp    commands/idea-factory.md ~/.config/opencode/commands/
 
 # 4. verify
-python3 -m pytest tests/ -q          # 73 passed
+python3 -m pytest tests/ -q          # 89 passed
 ls -la sid.db                        # should be ~500KB (real file, not an LFS pointer)
-sqlite3 sid.db "SELECT COUNT(*) FROM startups;"   # 8
+sqlite3 sid.db "SELECT COUNT(*) FROM startups;"   # 252
 ```
 
 > **Gotcha:** after `git clone`, verify `sid.db` is a real SQLite file and NOT a 130-byte LFS pointer. `git lfs pull` fixes it. `file sid.db` should say "SQLite 3.x database".
@@ -69,7 +69,7 @@ sqlite3 sid.db "SELECT COUNT(*) FROM startups;"   # 8
 ## Verify (always)
 
 ```sh
-python3 -m pytest tests/ -q        # 73 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 89 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
 
@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 247 | **all scored** (analyse-40 + cluster) |
-| `analysed` (cohort) | 247 | CANONICAL **30/30** |
-| `wedges` | 4940 | **247 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1149 | post analyse-40 |
+| `startups` | 252 | **all scored** (analyse-41 Galileo→Fiddler) |
+| `analysed` (cohort) | 252 | CANONICAL **30/30** |
+| `wedges` | 5040 | **252 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1175 | post analyse-41 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | ~265 | next Galileo/Panther/Qdrant/Hatchet/Fiddler |
-| `personal_fit` | 247 | all e2e |
+| `candidate_startups` | 285 | next Tecton/Feast/Labelbox/Exa/Parallel (pending 33) |
+| `personal_fit` | 252 | all e2e |
 | `pattern_library` | **28** | +durable agents, NHI security; cluster stamped |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
