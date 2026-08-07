@@ -1,15 +1,13 @@
 # Website polish status
 
-Track for the 120s polish loop. Set `satisfied=true` only when **all** checklist items pass.
-
 ```
-satisfied=false
-fires_no_fix=0
-last_fire=2026-08-07T07:19:00Z
-last_fix=Clear filters button resets search/market/type/fit/toggles; empty-state copy updated
+satisfied=true
+fires_no_fix=2
+last_fire=2026-08-07T07:20:00Z
+last_fix=none — human conclude; checklist complete; loops stopped
 ```
 
-## Checklist (all must be true)
+## Checklist (all true)
 
 - [x] Loads board.json over http; meta chips show live counts
 - [x] Search filters ideas by company / idea / problem text
@@ -24,12 +22,11 @@ last_fix=Clear filters button resets search/market/type/fit/toggles; empty-state
 - [x] README documents how to serve the site
 - [x] No console errors on load (smoke in browser or curl HTML/JS/CSS/JSON)
 
-## Stop condition
+## Polish delivered
 
-When every checklist item is `[x]` **and** two consecutive fires report `quality_fix=none` after verification, set:
+- Deep-link `?id=`
+- Search debounce 180ms
+- Streaming load + progress for multi-MB `board.json`
+- Export pipeline + serve docs
 
-```
-satisfied=true
-```
-
-Then call `scheduler_delete` on the website polish task_id.
+**Concluded by operator 2026-08-07.** Loops stopped.
