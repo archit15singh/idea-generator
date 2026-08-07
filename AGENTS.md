@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-52 + cluster + expand):** startups=**307** all scored | wedges=**6140** | primary=**307** | personal_fit=**307** | patterns=**44** | segments=**132** | CANONICAL=**30/30** | e2e=307/307 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | wave #311–315 Bolt/Vercel AI SDK/Fal/Mastra/Mercury — primaries SMB-first / Open source / Faster / Open source / Vertical-specific | pending **86** | tests=**90** green.
+**Live snapshot (post ingest+analyse-53 + expand-32 markets):** startups=**312** all scored | wedges=**6240** | primary=**312** | personal_fit=**312** | patterns=**44** | segments=**134+** | CANONICAL=**32/32** segs (30 analysed; 2 new thin) | e2e=312/312 | convergent=5 | next_action=**ingest** | wave #316–320 Aider/Haystack/ElevenLabs/Semantic Kernel/Coda — primaries Offline/local-first / Open source / API-first / Enterprise-first / Better UX | pending **107** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

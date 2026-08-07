@@ -75,6 +75,9 @@ CANONICAL_MARKETS = [
     "Context Engineering",
     "Secrets and Credential Infrastructure",
     "AI Customer Support",
+    # expand-32 — founder thesis: golden-trace agent observability + hard constraints
+    "Agent Observability",
+    "Policy Engines for Agents",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.
