@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-70 + cluster):** startups=**396** scored | wedges=**7920** | primary=**396** | personal_fit=**396** | patterns=**104** | CANONICAL=**32/32** | e2e=396/396 | next=**ingest** | wave #401–405 PlayAI/MLflow/Remote/Tonic/Daytona — Better UX / Open source / Compliance-first / Self-hosted / Faster | +5 patterns | pending **77** | tests=**90** green.
+**Live snapshot (post ingest+analyse-71 + cluster):** startups=**401** scored | wedges=**8020** | primary=**401** | personal_fit=**401** | patterns=**109** | CANONICAL=**32/32** | e2e=401/401 | next=**ingest** | wave #406–410 Mistral/Logfire/Ashby/Hex/Gitpod — API-first / Self-hosted / SMB-first / Better integrations / Faster | +5 patterns | pending **72** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
@@ -64,6 +64,7 @@ Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds
 - **Receipt bare-JSON.** Old `_BARE_RE` regex required `{"idea_factory_receipt_v1"` immediately after `{`, but real receipts are `{"schema_version":"idea_factory_receipt_v1"...}`. Don't bring the regex back; the `raw_decode` scan is correct.
 - **`Pydantic extra="forbid"` + raw DB rows.** When you `cls(**dict(r))` from `SELECT *`, filter the row keys to `cls.model_fields` first — `updated_at` and other DB-only columns blow up `extra="forbid"` rows.
 - **Subagent python scratch files.** Agents sometimes persist run scripts as `idea_factory/_*_run_*.py`. These must be `/tmp`-only, never committed. `.gitignore` has `_analyst_run_*.py` and `_*_run_*.py` glob patterns now.
+- **Clusterer stamp key.** Always call `pm.mark_clusterer_run(db)` after a stage-07 pass. The runtime_meta key is `last_clusterer_run` (not `clusterer_last_run_at` / other aliases) — wrong keys leave `board_status.clusterer.new_startups_since_last` stale.
 - **Validator/builder are GATED on real-world side effects** (30 cold emails via gmail MCP; real MVP launches). They block on explicit user approval + (for the validator) gmail recipient pairing. Don't auto-resume — surface the exact blocker to the user.
 - **Scorer blocks on empty `founder-profile.md`.** And on a human-locked `personal_fit` row (any `reviewed_at != NULL`). `db.upsert_personal_fit` returns `False` in that case and the scorer counts `rows_skipped_human_locked`.
 
