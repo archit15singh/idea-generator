@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 431 | **all scored** (analyse-77 Pulumi→Keywords + cluster) |
-| `analysed` (cohort) | 431 | CANONICAL **32/32** |
-| `wedges` | 8620 | **431 primary** + shortlists |
-| `infrastructure_ops` | ~2445+ | post analyse-77 |
+| `startups` | 436 | **all scored** (analyse-78 Spacelift→CFAIGW + cluster) |
+| `analysed` (cohort) | 436 | CANONICAL **32/32** |
+| `wedges` | 8720 | **436 primary** + shortlists |
+| `infrastructure_ops` | ~2495+ | post analyse-78 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 469 | pending **37** |
-| `personal_fit` | 431 | all e2e |
-| `pattern_library` | **139** | +multi-lang IaC, OSS low-code, brand agentic AI, Neptune sunset gap, Respan gateway |
+| `candidate_startups` | 469 | pending **32** |
+| `personal_fit` | 436 | all e2e |
+| `pattern_library` | **144** | +IaC orchestration, AI OSS app builders, EU sovereign LLMs, declarative DL, edge AI gateways |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **431/431**; wedges **8620**; patterns **139**. Latest: **ingest+analyse-77** Pulumi/Appsmith/Writer/Neptune/Keywords + **cluster** (+5). next **ingest**. **92 tests green.** Note: Neptune sunsetting 2026-03-05 (OpenAI); Keywords surface rebranding as Respan.
+- **Done (pushed):** CANONICAL **32/32**; e2e **436/436**; wedges **8720**; patterns **144**. Latest: **ingest+analyse-78** Spacelift/Tooljet/Aleph/Ludwig/CFAIGW + **cluster** (+5). next **ingest**. **92 tests green.** Pending **32** — expand markets soon if queue thins further.
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.

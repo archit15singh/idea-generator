@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-77 + cluster):** startups=**431** scored | wedges=**8620** | primary=**431** | personal_fit=**431** | patterns=**139** | CANONICAL=**32/32** | e2e=431/431 | next=**ingest** | wave #437–441 Pulumi/Appsmith/Writer/Neptune/Keywords — Self-hosted / Open source / Compliance-first / More accurate / Cheaper | +5 patterns | pending **37** | tests=**92** green.
+**Live snapshot (post ingest+analyse-78 + cluster):** startups=**436** scored | wedges=**8720** | primary=**436** | personal_fit=**436** | patterns=**144** | CANONICAL=**32/32** | e2e=436/436 | next=**ingest** | wave #442–446 Spacelift/Tooljet/Aleph/Ludwig/CFAIGW — Faster / SMB-first / Compliance-first / Offline/local-first / Cheaper | +5 patterns | pending **32** | tests=**92** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
