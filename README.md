@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 490 | **all scored** (analyse-89 SWE-agent→Anchor) |
-| `analysed` (cohort) | 490 | CANONICAL **36/36** |
-| `wedges` | 9800 | **490 primary** + shortlists |
-| `infrastructure_ops` | ~2595+ | post analyse-80 |
-| `infrastructure_nodes` | 10 | **5 convergent** |
-| `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
-| `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 510+ | pending **10+** |
-| `personal_fit` | 490 | all e2e |
-| `pattern_library` | **198** | +SWE-agent, Mem0, AgentQL, Zep Cloud, Anchor Browser |
+| `startups` | **503** | **all scored** (analyse-92 ZenRows→Zyte) |
+| `analysed` (cohort) | **503** | CANONICAL **36/36** |
+| `wedges` | **10060** | **503 primary** + shortlists — **10k goal hit** |
+| `infrastructure_ops` | ~3125+ | post analyse-92 |
+| `infrastructure_nodes` | 10 | convergent (top=Tracing/observability) |
+| `infra_personal_fit` | 8 | Mode B |
+| `market_segments` | 142+ | CANONICAL **36** pool |
+| `candidate_startups` | 512+ | pending **2** (Humane/SciPhi stale) |
+| `personal_fit` | **503** | all e2e |
+| `pattern_library` | **198** | cluster deferred (need +20 SIDs since last) |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
+**`plan_recursive_fanout` next_action = `ingest`**. Latest wave #513–517: ZenRows (**API-first**), Apify (**Developer-first**), Jina AI (**Better integrations**), Ragie (**Better memory**), Zyte (**Enterprise-first**). decision_grade_primaries=**502**.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **36/36**; e2e **490/490**; wedges **9800**; patterns **198**. Latest: **ingest+analyse-89** SWE-agent/Mem0/AgentQL/Zep/Anchor + **cluster** (+5). Diversity Self-hosted / Better memory / Better integrations / Enterprise-first / Compliance-first. Mem0 fit=58. next **ingest**. **93 tests green.**
-- **Next fire:** `ingest` next plan wave → analyse→score→select.
+- **Done (pushed):** CANONICAL **36/36**; e2e **503/503**; wedges **10060** (**≥10k stop**); patterns **198**. Latest: **ingest+analyse-92** ZenRows/Apify/Jina/Ragie/Zyte. Diversity API-first / Developer-first / Better integrations / Better memory / Enterprise-first. next **ingest** (optional). **95 tests green.**
+- **Goal:** `COUNT(wedges) >= 10000` **MET** — continuous prebuild scheduler should stop.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.

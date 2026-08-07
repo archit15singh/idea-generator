@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-89):** startups=**490** scored | wedges=**9800** | primary=**490** | personal_fit=**490** | patterns=**198** | CANONICAL=**36/36** | e2e=490/490 | next=**ingest** | wave #496–500 SWE-agent/Mem0/AgentQL/Zep/Anchor — Self-hosted / Better memory / Better integrations / Enterprise-first / Compliance-first | +5 patterns | pending seeded | tests=**93** green.
+**Live snapshot (post ingest+analyse-92 — 10k goal hit):** startups=**503** scored | wedges=**10060** | primary=**503** | personal_fit=**503** | decision_grade=**502** | patterns=**198** | CANONICAL=**36/36** | e2e=503/503 | next=**ingest** | wave #513–517 ZenRows/Apify/Jina/Ragie/Zyte — API-first / Developer-first / Better integrations / Better memory / Enterprise-first | pending=2 stale | tests=**95** green | **wedges>=10000 stop MET**.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

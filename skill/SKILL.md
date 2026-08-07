@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-89):** startups=**490** scored | wedges=**9800** | primary=**490** | personal_fit=**490** | patterns=**198** | CANONICAL **36/36** | e2e=490/490 | next=`ingest` | wave SWE-agent/Mem0/AgentQL/Zep/Anchor + cluster (+5) | pending seeded | tests=**93**.
+**Board snapshot (Aug 07 2026, after ingest+analyse-92 — 10k goal hit):** startups=**503** scored | wedges=**10060** | primary=**503** | personal_fit=**503** | decision_grade=**502** | patterns=**198** | CANONICAL **36/36** | e2e=503/503 | next=`ingest` | wave ZenRows/Apify/Jina/Ragie/Zyte (API-first / Developer-first / Better integrations / Better memory / Enterprise-first) | pending=2 (Humane/SciPhi stale) | tests=**95** | **stop_if wedges>=10000 MET**.
 
 ## Refs
 
