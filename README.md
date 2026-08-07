@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 316 | **all scored** (analyse-54 Llama Guard→Deepgram + Langfuse re-E2E) |
-| `analysed` (cohort) | 316 | CANONICAL **32/32** |
-| `wedges` | 6320 | **316 primary** + shortlists |
+| `startups` | 321 | **all scored** (analyse-55 Amazon Q→Arthur + expand) |
+| `analysed` (cohort) | 321 | CANONICAL **32/32** |
+| `wedges` | 6420 | **321 primary** + shortlists |
 | `infrastructure_ops` | ~1450 | post analyse-52 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 429 | pending **117** |
-| `personal_fit` | 316 | all e2e |
+| `candidate_startups` | 437 | pending **120** |
+| `personal_fit` | 321 | all e2e |
 | `pattern_library` | **44** | +chat-to-app, multi-provider SDKs, gen-media GPU, TS agent platforms, neobank |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **316/316**; wedges **6320**; personal_fit **316**; patterns **44**. Latest: **ingest+analyse-54** Llama Guard/Tabnine/Langflow/Deepgram/Langfuse (thin markets filled). next **ingest**. **90 tests green.**
-- **Next fire:** `ingest` next plan wave → analyse→score→select.
+- **Done (pushed):** CANONICAL **32/32**; e2e **321/321**; wedges **6420**; personal_fit **321**; patterns **44**. Latest: **ingest+analyse-55** Amazon Q/Flowise/AssemblyAI/Apollo/Arthur. next **ingest**. **90 tests green.**
+- **Next fire:** `ingest` GitHub Copilot / Voiceflow / Dify… (plan) → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.

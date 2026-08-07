@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-54 + thin-market fill):** startups=**316** scored | wedges=**6320** | primary=**316** | personal_fit=**316** | patterns=**44** | CANONICAL=**32/32** analysed | e2e=316/316 | convergent=5 | next=**ingest** | wave #321–324+Langfuse: Llama Guard/Tabnine/Langflow/Deepgram/Langfuse — primaries Compliance-first / Enterprise-first / Better UX / More accurate / Better evaluation | pending **117** | tests=**90** green.
+**Live snapshot (post ingest+analyse-55 + expand):** startups=**321** scored | wedges=**6420** | primary=**321** | personal_fit=**321** | patterns=**44** | CANONICAL=**32/32** | e2e=321/321 | convergent=5 | next=**ingest** | wave #326–330 Amazon Q/Flowise/AssemblyAI/Apollo/Arthur — primaries Enterprise-first / Better UX / API-first / Better integrations / Compliance-first | pending **120** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
