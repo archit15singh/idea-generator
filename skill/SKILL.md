@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-47):** startups=**282** all scored | wedges=**5640** | primary=**282** | personal_fit=**282** | patterns=**32** | segments=**132** | CANONICAL **30/30** | e2e=282/282 | convergent=5 | next=`ingest` | primary mix AI-native 62 / Better evaluation 58 / Better memory 55 / Developer-first 49 / Open source 23 / Offline/local-first 1 / Enterprise-first 2 | wave Poolside/Fireworks/Envoy/Pydantic AI/Wiz | tests=89.
+**Board snapshot (Aug 07 2026, after ingest+analyse-48 + cluster):** startups=**287** all scored | wedges=**5740** | primary=**287** | personal_fit=**287** | patterns=**36** | segments=**132** | CANONICAL **30/30** | e2e=287/287 | convergent=5 | next=`ingest` | primary mix AI-native 63 / Better evaluation 58 / Better memory 55 / Developer-first 50 / Open source 24 / API-first 7 / Cheaper 6 | wave Windsurf/Together/Kong/CrewAI/Resend | +patterns open-model clouds, AI gateways, multi-agent runtime, dev email APIs | tests=89.
 
 ## Refs
 
