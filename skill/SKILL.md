@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-50 + expand):** startups=**297** all scored | wedges=**5940** | primary=**297** | personal_fit=**297** | patterns=**36** | segments=**132** | CANONICAL **30/30** | e2e=297/297 | convergent=5 | next=`ingest` | primary mix AI-native 64 / Better evaluation 58 / Better memory 55 / Developer-first 50 / Open source 25 / Compliance-first 5 / Faster 3 | wave Superblocks/EvenUp/TrueFoundry/Endor/Mixedbread + expand pending 47 | tests=89.
+**Board snapshot (Aug 07 2026, after ingest+analyse-51 + expand + www-dedup):** startups=**302** all scored | wedges=**6040** | primary=**302** | personal_fit=**302** | patterns=**36** | segments=**132** | CANONICAL **30/30** | e2e=302/302 | convergent=5 | next=`ingest` | wave v0/Cloudflare Workers AI/Postman/Ramp/Rabbit (Better UX / Faster / Better integrations / Vertical-specific / Mobile-first) | pending **59** | tests=**90**.
 
 ## Refs
 

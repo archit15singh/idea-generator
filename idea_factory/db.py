@@ -143,6 +143,10 @@ class DB:
         The PM fans the ingestor out on this list. Already-ingested websites are
         excluded so re-running a cohort does not re-dispatch the same 8 rows
         when 114 pending candidates remain.
+
+        Host matching is www-normalized: `https://www.letta.com` is treated as
+        already ingested when `https://letta.com` exists (and vice versa). Exact
+        string match alone left duplicate pending SIDs that starved fan-out.
         """
         sql = """
             SELECT c.* FROM candidate_startups c
@@ -155,14 +159,36 @@ class DB:
             params = (segment_id,)
         sql += " ORDER BY c.id"
         r = self._conn.execute(sql, params).fetchall()
-        return [
-            CandidateStartupRow(
-                name=row["name"], website=row["website"],
-                market_segment_id=row["market_segment_id"],
-                yc_batch=row["yc_batch"], notes=row["notes"],
+
+        def _host(url: str) -> str:
+            # strip scheme/userinfo/port/path; drop leading www.
+            u = (url or "").strip().lower()
+            if "://" in u:
+                u = u.split("://", 1)[1]
+            u = u.split("/", 1)[0]
+            u = u.split("@")[-1]
+            u = u.split(":")[0]
+            if u.startswith("www."):
+                u = u[4:]
+            return u
+
+        ingested_hosts = {
+            _host(row["website"])
+            for row in self._conn.execute("SELECT website FROM startups").fetchall()
+            if row["website"]
+        }
+        out: list[CandidateStartupRow] = []
+        for row in r:
+            if _host(row["website"]) in ingested_hosts:
+                continue
+            out.append(
+                CandidateStartupRow(
+                    name=row["name"], website=row["website"],
+                    market_segment_id=row["market_segment_id"],
+                    yc_batch=row["yc_batch"], notes=row["notes"],
+                )
             )
-            for row in r
-        ]
+        return out
 
     def segments(self) -> list[tuple[int, MarketSegmentRow]]:
         r = self._conn.execute("SELECT * FROM market_segments ORDER BY id").fetchall()

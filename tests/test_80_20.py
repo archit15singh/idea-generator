@@ -196,6 +196,28 @@ def test_db_candidate_startups_fanout(db):
     assert len(db.candidates_for_ingest(segment_id=seg_id)) == 1
 
 
+def test_candidates_for_ingest_www_normalized_host(db):
+    """www.example.com candidate is excluded when example.com is already a startup."""
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Memory", segment_name="www-dedup",
+        icp_cluster="developer", rationale="dedup test",
+    ))
+    db.upsert_startup(StartupRow(
+        startup="Letta", website="https://letta.com", yc_batch="W24",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Letta www", website="https://www.letta.com",
+        market_segment_id=seg_id, yc_batch="W24",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="FreshCo", website="https://fresh.example",
+        market_segment_id=seg_id,
+    ))
+    names = {c.name for c in db.candidates_for_ingest()}
+    assert "Letta www" not in names
+    assert "FreshCo" in names
+
+
 def test_db_idempotent_upsert(db):
     s = StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24")
     id1 = db.upsert_startup(s)
