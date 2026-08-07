@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-60 + cluster + expand):** startups=**346** scored | wedges=**6920** | primary=**346** | personal_fit=**346** | patterns=**54** | CANONICAL=**32/32** | e2e=346/346 | next=**ingest** | wave #351–355 Gemini Code Assist/Rasa/Marvin/Anyscale/Zuplo — Enterprise-first / Open source / Open source / Cheaper / SMB-first | +5 patterns | pending **127** | tests=**90** green.
+**Live snapshot (post ingest+analyse-61 + cluster):** startups=**351** scored | wedges=**7020** | primary=**351** | personal_fit=**351** | patterns=**59** | CANONICAL=**32/32** | e2e=351/351 | next=**ingest** | wave #356–360 Devin/Botpress/Ragflow/Beam/Gravitee — Faster / Better integrations / Self-hosted / Cheaper / Compliance-first | +5 patterns | pending **122** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
