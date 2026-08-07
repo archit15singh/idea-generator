@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-88):** startups=**485** scored | wedges=**9700** | primary=**485** | personal_fit=**485** | patterns=**193** | CANONICAL=**36/36** | e2e=485/485 | next=**ingest** | wave #491–495 OpenHands/MemGPTCloud/ClaudeComputerUse/LangMem/RedisAgentMemory — Open source / Offline-local-first / API-first / Developer-first / Faster | +5 patterns | pending **6** | tests=**93** green.
+**Live snapshot (post ingest+analyse-89):** startups=**490** scored | wedges=**9800** | primary=**490** | personal_fit=**490** | patterns=**198** | CANONICAL=**36/36** | e2e=490/490 | next=**ingest** | wave #496–500 SWE-agent/Mem0/AgentQL/Zep/Anchor — Self-hosted / Better memory / Better integrations / Enterprise-first / Compliance-first | +5 patterns | pending seeded | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
