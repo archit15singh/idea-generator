@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-48 + cluster):** startups=**287** all scored | wedges=**5740** | primary=**287** | personal_fit=**287** | patterns=**36** | segments=**132** | CANONICAL=**30/30** | e2e=287/287 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 63 / Better evaluation 58 / Better memory 55 / Developer-first 50 / Open source 24 / API-first 7 / Cheaper 6 | wave #291–295 Windsurf/Together/Kong/CrewAI/Resend + cluster | tests=89 green.
+**Live snapshot (post ingest+analyse-49):** startups=**292** all scored | wedges=**5840** | primary=**292** | personal_fit=**292** | patterns=**36** | segments=**132** | CANONICAL=**30/30** | e2e=292/292 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 63 / Better evaluation 58 / Better memory 55 / Developer-first 50 / Open source 25 / Better UX 1 / Faster 2 / Vertical-specific 3 | wave #296–300 Groq/Solo.io/AutoGen/Retool/Heidi | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
