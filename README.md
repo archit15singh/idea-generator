@@ -87,8 +87,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 177 | **177 scored** (all stage_marker=scored) |
-| `analysed` (cohort) | 177 | full pool analysed |
+| `startups` | 182 | **177 scored** + **5 ingested** (await analyse) |
+| `analysed` (cohort) | 177 | +5 SID backlog (ingest-27) |
 | `wedges` | 3540 | **177 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **177/177** structural (all scored+primary); wedges **3540**; personal_fit **177**; **177 primary**; **patterns 20**; startups **177**. Latest: **analyse-26** — Trustpair/AirOps/Rootly/WorkOS/Langfuse full E2E (AI-native / Better memory / Better memory / Developer-first / Better evaluation). next **ingest**. **88 tests green.**
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **177/177** structural; wedges **3540**; personal_fit **177**; **177 primary**; **patterns 20**; startups **182** (177 scored + 5 ingested). Latest: **ingest-27** — Sift/FireHydrant/Stytch/Notion/Phoenix SID (Railway.app dupe skipped; WhyLabs shutdown skipped). next **analyse** 186–190. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
