@@ -218,6 +218,32 @@ def test_candidates_for_ingest_www_normalized_host(db):
     assert "FreshCo" in names
 
 
+def test_upsert_startup_www_host_collapses_to_one_sid(db):
+    """www + apex must not create two SIDs (EvenUp/Poolside regression)."""
+    id1 = db.upsert_startup(StartupRow(
+        startup="EvenUp", website="https://evenuplaw.com", category="Enterprise AI",
+    ))
+    id2 = db.upsert_startup(StartupRow(
+        startup="EvenUp", website="https://www.evenuplaw.com",
+        yc_batch="S21", category="Enterprise AI",
+    ))
+    assert id1 == id2
+    rows = db._conn.execute(
+        "SELECT id, website, yc_batch FROM startups WHERE startup = 'EvenUp'"
+    ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["id"] == id1
+    assert rows[0]["yc_batch"] == "S21"
+    # monorepo paths stay distinct
+    g1 = db.upsert_startup(StartupRow(
+        startup="Garak", website="https://github.com/NVIDIA/garak",
+    ))
+    g2 = db.upsert_startup(StartupRow(
+        startup="PyRIT", website="https://github.com/Azure/PyRIT",
+    ))
+    assert g1 != g2
+
+
 def test_candidates_for_ingest_host_aliases(db):
     """HOST_ALIASES: abnormalsecurity.com is covered when abnormal.ai is ingested."""
     from idea_factory.db import HOST_ALIASES

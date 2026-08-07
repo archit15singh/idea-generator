@@ -56,6 +56,40 @@ HOST_ALIASES: dict[str, str] = {
     "console.groq.com": "groq.com",  # GroqCloud console vs marketing site
 }
 
+_MONOREPO_HOSTS = frozenset({"github.com", "gitlab.com", "bitbucket.org"})
+
+
+def _host(url: str) -> str:
+    """Strip scheme/userinfo/port/path; drop leading www."""
+    u = (url or "").strip().lower()
+    if "://" in u:
+        u = u.split("://", 1)[1]
+    u = u.split("/", 1)[0]
+    u = u.split("@")[-1]
+    u = u.split(":")[0]
+    if u.startswith("www."):
+        u = u[4:]
+    return u
+
+
+def _site_key(url: str) -> str:
+    """Dedupe key: host for normal sites; host/owner/repo for monorepos.
+
+    Applies HOST_ALIASES so alternate marketing domains collapse to one key.
+    """
+    h = _host(url)
+    h = HOST_ALIASES.get(h, h)
+    if h in _MONOREPO_HOSTS:
+        u = (url or "").strip().lower()
+        if "://" in u:
+            u = u.split("://", 1)[1]
+        parts = [p for p in u.split("/")[1:] if p]
+        if len(parts) >= 2:
+            return f"{h}/{parts[0]}/{parts[1]}"
+        if parts:
+            return f"{h}/{parts[0]}"
+    return h
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -182,35 +216,6 @@ class DB:
         sql += " ORDER BY c.id"
         r = self._conn.execute(sql, params).fetchall()
 
-        _MONOREPO_HOSTS = frozenset({"github.com", "gitlab.com", "bitbucket.org"})
-
-        def _host(url: str) -> str:
-            # strip scheme/userinfo/port/path; drop leading www.
-            u = (url or "").strip().lower()
-            if "://" in u:
-                u = u.split("://", 1)[1]
-            u = u.split("/", 1)[0]
-            u = u.split("@")[-1]
-            u = u.split(":")[0]
-            if u.startswith("www."):
-                u = u[4:]
-            return u
-
-        def _site_key(url: str) -> str:
-            """Dedupe key: host for normal sites; host/owner/repo for monorepos."""
-            h = _host(url)
-            h = HOST_ALIASES.get(h, h)
-            if h in _MONOREPO_HOSTS:
-                u = (url or "").strip().lower()
-                if "://" in u:
-                    u = u.split("://", 1)[1]
-                parts = [p for p in u.split("/")[1:] if p]
-                if len(parts) >= 2:
-                    return f"{h}/{parts[0]}/{parts[1]}"
-                if parts:
-                    return f"{h}/{parts[0]}"
-            return h
-
         def _name_slug(name: str) -> str:
             return re.sub(r"[^a-z0-9]", "", (name or "").lower())
 
@@ -274,8 +279,47 @@ class DB:
     # --- startups + SID sections (ingestor node write; PM reads) ---
 
     def upsert_startup(self, row: StartupRow) -> int:
-        """Idempotent on website. Returns startup_id."""
+        """Idempotent on website (exact + www-normalized host / monorepo path).
+
+        Exact `website` UNIQUE still applies. Additionally, if a row already
+        exists with the same `_site_key` (www stripped, HOST_ALIASES applied,
+        github.com/owner/repo for monorepos), we UPDATE that row instead of
+        inserting a duplicate SID (the EvenUp/Poolside www. failure mode).
+        """
+        key = _site_key(row.website) if row.website else ""
         with self.tx() as cur:
+            existing_id: Optional[int] = None
+            if row.website:
+                exact = cur.execute(
+                    "SELECT id FROM startups WHERE website = ?", (row.website,)
+                ).fetchone()
+                if exact:
+                    existing_id = int(exact[0])
+                elif key:
+                    for r in cur.execute("SELECT id, website FROM startups").fetchall():
+                        if r["website"] and _site_key(r["website"]) == key:
+                            existing_id = int(r["id"])
+                            break
+
+            if existing_id is not None:
+                cur.execute(
+                    """
+                    UPDATE startups SET
+                      startup=?, website=?, yc_batch=?, founders=?, category=?,
+                      funding=?, open_source=?, pricing=?, stage=?, stage_marker=?,
+                      source_url=?, raw=?, updated_at=datetime('now')
+                    WHERE id=?
+                    """,
+                    (
+                        row.startup, row.website, row.yc_batch,
+                        _json_dumps(row.founders), row.category, row.funding,
+                        int(row.open_source) if row.open_source is not None else None,
+                        row.pricing, row.stage, row.stage_marker, row.source_url,
+                        row.raw, existing_id,
+                    ),
+                )
+                return existing_id
+
             cur.execute(
                 """
                 INSERT INTO startups
