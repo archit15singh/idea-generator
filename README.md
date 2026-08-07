@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 187 | **182 scored** + **5 ingested** (await analyse) |
-| `analysed` (cohort) | 182 | +5 SID backlog (ingest-28 new parents) |
-| `wedges` | 3640 | **182 primary** (selected=1) + shortlists |
+| `startups` | 187 | **187 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 187 | full pool analysed; CANONICAL **30/30** |
+| `wedges` | 3740 | **187 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
-| `market_segments` | 132 | CANONICAL **30** pool; **27/30** analysed (3 new await E2E) |
+| `market_segments` | 132 | CANONICAL **30/30** analysed |
 | `candidate_startups` | 287 | pending_ingest≈105 |
-| `personal_fit` | 182 | Phoenix=60; Sift=56; Stytch=52; FireHydrant=49; Notion=42 |
+| `personal_fit` | 187 | DSPy=58; PromptLayer=54; Forter=52; Aembit=48; Gorgias=36 |
 | `pattern_library` | **20** | +multi-channel CX agents; +coding-agent harness routing |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Analyse-25 E2E done: Mimecast (#176 AI-native), Gumloop (#177 Developer-first), Zeni (#178 Cheaper), Cerbos (#179 Open source), Confluent (#180 Developer-first). Primary mix Better memory 48, Better evaluation 46, Developer-first 27, AI-native 25.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30**; segments **132**; startups **187** (182 scored + 5 ingested); e2e **182/182** prior. Latest: **ingest-28** — DSPy/Aembit/Gorgias/Forter/PromptLayer SID (Railway dupe + Ada 403 skipped). Covers new parents Context Engineering, Secrets, AI Customer Support. next **analyse** 191–195. **88 tests green.**
+- **Done (pushed):** CANONICAL **30/30** analysed; e2e **187/187**; wedges **3740**; personal_fit **187**; **187 primary**; segments **132**; startups **187**. Latest: **analyse-28** — DSPy/Aembit/Gorgias/Forter/PromptLayer full E2E (Developer-first / AI-native / Better memory / Better memory / Better evaluation). next **cluster**. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
