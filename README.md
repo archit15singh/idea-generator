@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 217 | **all scored** (analyse-34 complete) |
-| `analysed` (cohort) | 217 | CANONICAL **30/30** |
-| `wedges` | 4340 | **217 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~999 | post analyse-34 |
+| `startups` | 222 | **all scored** (analyse-35 complete) |
+| `analysed` (cohort) | 222 | CANONICAL **30/30** |
+| `wedges` | 4440 | **222 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 1024 | post analyse-35 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | ~285 | Tone candidate **retired** (DNS dead) |
-| `personal_fit` | 217 | all e2e |
-| `pattern_library` | **24** | cluster stamped after wave-32 |
+| `candidate_startups` | 285 | pending ≈ next Cortex/Opal/Tiptap/Patronus/Checkly |
+| `personal_fit` | 222 | all e2e |
+| `pattern_library` | **24** | cluster **15/20** new since last |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-34: Port (#221 Developer-first), Aserto (#222 Developer-first), Sana (#223 Better memory; Workday), WhyLabs (#224 Open source; discontinued→whylogs/langkit), Unstructured (#225 Developer-first). Primary mix Better evaluation 53, Better memory 53, AI-native 46, Developer-first 39, Open source 10.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-35: Humanitec (#226 Developer-first), ConductorOne (#227 AI-native), Nanonets (#228 AI-native), Humanloop (#229 Better evaluation; joining Anthropic/sunset), Middleware (#230 AI-native). Primary mix Better evaluation 54, Better memory 53, AI-native 49, Developer-first 40, Open source 10.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,16 +119,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **217/217**; wedges **4340**; personal_fit **217**; **217 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-34** Port/Aserto/Sana/WhyLabs/Unstructured + **retired Tone candidate** (DNS starvation fix). next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` next ≤5 (Humanitec/ConductorOne/Nanonets/Humanloop/Middleware per plan) → analyse→score→select.
+- **Done (pushed):** CANONICAL **30/30**; e2e **222/222**; wedges **4440**; personal_fit **222**; **222 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-35** Humanitec/ConductorOne/Nanonets/Humanloop/Middleware. next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` Cortex/Opal/Tiptap/Patronus/Checkly (or plan wave) → analyse→score→select; cluster after +5 more.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Ingest** next ≤5 candidates (plan wave) → analyse→score→select.
-2. Skip/retire other dead candidates early (Humanloop→Anthropic, similar to WhyLabs/CommandBar patterns).
+1. **Ingest** next ≤5 candidates → analyse→score→select.
+2. Cluster when +20 new since last (currently 15/20).
 3. Further CANONICAL expand past 30.
 
 ## Subagent dispatch contract

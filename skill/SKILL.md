@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-34):** startups=**217** all scored | wedges=**4340** | primary=**217** | personal_fit=**217** | patterns=**24** | segments=**132** | CANONICAL **30/30** | e2e=217/217 | convergent=5 | next=`ingest` | primary mix Better evaluation 53 / Better memory 53 / AI-native 46 / Developer-first 39 / Open source 10 | wave Port/Aserto/Sana/WhyLabs/Unstructured | fix: retired dead Tone candidate (DNS starvation) | WhyLabs discontinued→OSS; Sana=Workday | tests=89.
+**Board snapshot (Aug 07 2026, after ingest+analyse-35):** startups=**222** all scored | wedges=**4440** | primary=**222** | personal_fit=**222** | patterns=**24** | segments=**132** | CANONICAL **30/30** | e2e=222/222 | convergent=5 | next=`ingest` | primary mix Better evaluation 54 / Better memory 53 / AI-native 49 / Developer-first 40 / Open source 10 | wave Humanitec/ConductorOne/Nanonets/Humanloop/Middleware | Humanloop→Anthropic sunset | cluster 15/20 | tests=89.
 
 ## Refs
 
