@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 341 | **all scored** (analyse-59 Claude Code→Scalar) |
-| `analysed` (cohort) | 341 | CANONICAL **32/32** |
-| `wedges` | 6820 | **341 primary** + shortlists |
+| `startups` | 346 | **all scored** (analyse-60 Gemini→Zuplo + cluster) |
+| `analysed` (cohort) | 346 | CANONICAL **32/32** |
+| `wedges` | 6920 | **346 primary** + shortlists |
 | `infrastructure_ops` | ~1450 | post analyse-52 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 465 | pending **128** |
-| `personal_fit` | 341 | all e2e |
-| `pattern_library` | **49** | +SDLC coding agents, CX multi-channel, agentic workflow OS, private enterprise models, API→MCP |
+| `candidate_startups` | 469 | pending **127** |
+| `personal_fit` | 346 | all e2e |
+| `pattern_library` | **54** | +GCP coding assist, CALM agents, ambient AI libs, Ray clouds, API+AI+MCP gateways |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **341/341**; wedges **6820**; patterns **49**. Latest: **ingest+analyse-59** Claude Code/Yellow.ai/Instructor/SambaNova/Scalar. next **ingest**. **90 tests green.**
+- **Done (pushed):** CANONICAL **32/32**; e2e **346/346**; wedges **6920**; patterns **54**. Latest: **ingest+analyse-60** Gemini/Rasa/Marvin/Anyscale/Zuplo + **cluster** (+5). next **ingest**. **90 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
