@@ -81,6 +81,9 @@ CANONICAL_MARKETS = [
     # expand-34 — pending-queue thinning: red-team + local train/run (founder fit)
     "Agent Red Teaming",
     "Local LLM Infrastructure",
+    # expand-36 — durable agent runtimes + AI code review (founder eng workflow)
+    "Durable Agent Execution",
+    "AI Code Review Infrastructure",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.
