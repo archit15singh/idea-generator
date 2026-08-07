@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-32 + cluster):** startups=**207** all scored | wedges=**4140** | primary=**207** | personal_fit=**207** | patterns=**24** | segments=**132** | CANONICAL=**30/30** | e2e=207/207 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary Better evaluation 52 / Better memory 52 / AI-native 45 / Developer-first 34 | wave #211–215 Ada/Anthropic Console/PlanetScale/Scalekit/Fireflies E2E + cluster (agent delegated OAuth pattern) | Ada CF 403 secondary | tests=89 green.
+**Live snapshot (post ingest+analyse-33):** startups=**212** all scored | wedges=**4240** | primary=**212** | personal_fit=**212** | patterns=**24** | segments=**132** | CANONICAL=**30/30** | e2e=212/212 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary Better evaluation 53 / Better memory 52 / AI-native 46 / Developer-first 36 / Open source 9 | wave #216–220 LangSmith Hub/Phase/Permit.io/CommandBar/Replicate E2E | Tone DNS fail→Replicate; CommandBar=Amplitude acq | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
