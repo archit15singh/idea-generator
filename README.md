@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 461 | **all scored** (analyse-83 Hasura→Dagster + cluster) |
-| `analysed` (cohort) | 461 | CANONICAL **34/34** |
-| `wedges` | 9220 | **461 primary** + shortlists |
+| `startups` | 466 | **all scored** (analyse-84 Grafbase→Astronomer + cluster) |
+| `analysed` (cohort) | 466 | CANONICAL **34/34** |
+| `wedges` | 9320 | **466 primary** + shortlists |
 | `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 475+ | pending **10** |
-| `personal_fit` | 461 | all e2e |
-| `pattern_library` | **169** | +Hasura PromptQL, LangWatch eval, Holistic gov, Turbopuffer, Dagster |
+| `candidate_startups` | 475+ | pending **5** |
+| `personal_fit` | 466 | all e2e |
+| `pattern_library` | **174** | +Grafbase MCP, New Relic AI, Giskard red-team, Tavily web API, Astronomer |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **34/34**; e2e **461/461**; wedges **9220**; patterns **169**. Latest: **ingest+analyse-83** Hasura/LangWatch/HolisticAI/Turbopuffer/Dagster + **cluster** (+5). Diversity API-first / Better evaluation / Vertical-specific / Cheaper / Self-hosted. next **ingest**. **93 tests green.**
+- **Done (pushed):** CANONICAL **34/34**; e2e **466/466**; wedges **9320**; patterns **174**. Latest: **ingest+analyse-84** Grafbase/NewRelicAI/Giskard/Tavily/Astronomer + **cluster** (+5). Diversity Faster / Enterprise-first / Open source / AI-native / Developer-first. next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.

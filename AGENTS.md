@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-83 + cluster):** startups=**461** scored | wedges=**9220** | primary=**461** | personal_fit=**461** | patterns=**169** | CANONICAL=**34/34** | e2e=461/461 | next=**ingest** | wave #467–471 Hasura/LangWatch/HolisticAI/Turbopuffer/Dagster — API-first / Better evaluation / Vertical-specific / Cheaper / Self-hosted | +5 patterns | pending **10** | tests=**93** green.
+**Live snapshot (post ingest+analyse-84 + cluster):** startups=**466** scored | wedges=**9320** | primary=**466** | personal_fit=**466** | patterns=**174** | CANONICAL=**34/34** | e2e=466/466 | next=**ingest** | wave #472–476 Grafbase/NewRelicAI/Giskard/Tavily/Astronomer — Faster / Enterprise-first / Open source / AI-native / Developer-first | +5 patterns | pending **5** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
