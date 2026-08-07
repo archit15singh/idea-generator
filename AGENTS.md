@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-46 + expand):** startups=**277** all scored | wedges=**5540** | primary=**277** | personal_fit=**277** | patterns=**32** | segments=**132** | CANONICAL=**30/30** | e2e=277/277 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 62 / Better evaluation 58 / Better memory 55 / Developer-first 48 / Open source 22 / Faster 1 / Vertical-specific 2 | wave #281–285 Seven/Voyage/Activepieces/Prophet/Nomic + candidate expand (pending 27) | tests=89 green.
+**Live snapshot (post ingest+analyse-47):** startups=**282** all scored | wedges=**5640** | primary=**282** | personal_fit=**282** | patterns=**32** | segments=**132** | CANONICAL=**30/30** | e2e=282/282 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 62 / Better evaluation 58 / Better memory 55 / Developer-first 49 / Open source 23 / Offline/local-first 1 / Enterprise-first 2 | wave #286–290 Poolside/Fireworks/Envoy/Pydantic AI/Wiz | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
