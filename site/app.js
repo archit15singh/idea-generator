@@ -377,12 +377,49 @@
     });
   }
 
+  function setLoading(msg, pct) {
+    $("metaBar").textContent = msg;
+    $("resultsTitle").textContent = "Loading";
+    $("resultsCount").textContent = pct != null ? `${pct}%` : "…";
+    $("list").innerHTML = `
+      <div class="loading-panel" role="status" aria-live="polite">
+        <div class="loading-bar"><span style="width:${pct != null ? pct : 12}%"></span></div>
+        <p>${esc(msg)}</p>
+      </div>`;
+    $("empty").classList.add("hidden");
+  }
+
+  async function fetchBoardJson() {
+    const res = await fetch("data/board.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const total = +res.headers.get("content-length") || 0;
+    // Stream when possible so multi-MB download shows progress (not a blank list).
+    if (!res.body || !total || !res.body.getReader) {
+      setLoading("Parsing board.json…", null);
+      return res.json();
+    }
+    const reader = res.body.getReader();
+    const chunks = [];
+    let received = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.byteLength;
+      const pct = Math.min(99, Math.round((received / total) * 100));
+      setLoading(`Loading board… ${(received / 1e6).toFixed(1)} / ${(total / 1e6).toFixed(1)} MB`, pct);
+    }
+    setLoading("Parsing board.json…", 100);
+    const blob = new Blob(chunks);
+    const text = await blob.text();
+    return JSON.parse(text);
+  }
+
   async function boot() {
     wire();
+    setLoading("Loading board…", 0);
     try {
-      const res = await fetch("data/board.json", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      state.board = await res.json();
+      state.board = await fetchBoardJson();
       renderMeta();
       fillFilters();
       render();
