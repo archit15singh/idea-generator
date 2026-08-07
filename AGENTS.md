@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-43):** startups=**262** all scored | wedges=**5240** | primary=**262** | personal_fit=**262** | patterns=**28** | segments=**132** | CANONICAL=**30/30** | e2e=262/262 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 60 / Better evaluation 58 / Better memory 54 / Developer-first 48 / Open source 17 / Compliance-first 3 / Better integrations 3 | wave #266–270 Labelbox/Anvilogic/Parallel/Temporal/Drata | tests=89 green.
+**Live snapshot (post ingest+analyse-44 + cluster):** startups=**267** all scored | wedges=**5340** | primary=**267** | personal_fit=**267** | patterns=**32** | segments=**132** | CANONICAL=**30/30** | e2e=267/267 | convergent=5 | top_infra=Tracing/observability | next_action=**ingest** | primary AI-native 60 / Better evaluation 58 / Better memory 54 / Developer-first 48 / Open source 19 / Compliance-first 4 / Cheaper 4 / More accurate 4 | wave #271–275 Secureframe/You.com/Prefect/Semgrep/Reducto + cluster | tests=89 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

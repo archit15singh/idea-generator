@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 262 | **all scored** (analyse-43 Labelbox→Drata) |
-| `analysed` (cohort) | 262 | CANONICAL **30/30** |
-| `wedges` | 5240 | **262 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1225 | post analyse-43 |
+| `startups` | 267 | **all scored** (analyse-44 Secureframe→Reducto + cluster) |
+| `analysed` (cohort) | 267 | CANONICAL **30/30** |
+| `wedges` | 5340 | **267 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1250 | post analyse-44 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | 285 | pending **23** |
-| `personal_fit` | 262 | all e2e |
-| `pattern_library` | **28** | +durable agents, NHI security; cluster stamped |
+| `candidate_startups` | 285 | pending **18** |
+| `personal_fit` | 267 | all e2e |
+| `pattern_library` | **32** | +compliance, web-search APIs, agentic docs, AI-code AppSec |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 

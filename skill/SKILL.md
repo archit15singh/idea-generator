@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after ingest+analyse-43):** startups=**262** all scored | wedges=**5240** | primary=**262** | personal_fit=**262** | patterns=**28** | segments=**132** | CANONICAL **30/30** | e2e=262/262 | convergent=5 | next=`ingest` | primary mix AI-native 60 / Better evaluation 58 / Better memory 54 / Developer-first 48 / Open source 17 / Compliance-first 3 / Better integrations 3 | wave Labelbox/Anvilogic/Parallel/Temporal/Drata | tests=89.
+**Board snapshot (Aug 07 2026, after ingest+analyse-44 + cluster):** startups=**267** all scored | wedges=**5340** | primary=**267** | personal_fit=**267** | patterns=**32** | segments=**132** | CANONICAL **30/30** | e2e=267/267 | convergent=5 | next=`ingest` | primary mix AI-native 60 / Better evaluation 58 / Better memory 54 / Developer-first 48 / Open source 19 / Compliance-first 4 / Cheaper 4 / More accurate 4 | wave Secureframe/You.com/Prefect/Semgrep/Reducto | +patterns compliance, web-search APIs, agentic docs, AI-code AppSec | tests=89.
 
 ## Refs
 
