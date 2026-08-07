@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 227 | **all scored** (analyse-36 + cluster) |
-| `analysed` (cohort) | 227 | CANONICAL **30/30** |
-| `wedges` | 4540 | **227 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | ~1049 | post analyse-36 |
+| `startups` | 232 | **all scored** (analyse-37 complete) |
+| `analysed` (cohort) | 232 | CANONICAL **30/30** |
+| `wedges` | 4640 | **232 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1074 | post analyse-37 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | ~280 | next LaunchDarkly/StrongDM/Comet/OpenStatus/1Password |
-| `personal_fit` | 227 | all e2e |
-| `pattern_library` | **26** | +EngOps scorecards, monitoring-as-code; cluster stamped |
+| `candidate_startups` | ~280 | next DevCycle/Astrix/W&B/Incident.io/Tines |
+| `personal_fit` | 232 | all e2e |
+| `pattern_library` | **26** | cluster 5/20 since last |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-36: Cortex (#231 AI-native), Opal (#232 AI-native), Tiptap (#233 Open source), Patronus (#234 Better evaluation), Checkly (#235 Developer-first). Primary mix Better evaluation 55, Better memory 53, AI-native 51, Developer-first 41, Open source 11.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-37: LaunchDarkly (#236 AI-native), StrongDM (#237 **Compliance-first**), Comet/Opik (#238 AI-native), OpenStatus (#239 Open source), 1Password Secrets (#240 Developer-first). Primary mix Better evaluation 55, AI-native 53, Better memory 53, Developer-first 42, Open source 12.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **227/227**; wedges **4540**; personal_fit **227**; **227 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-36** Cortex/Opal/Tiptap/Patronus/Checkly + **cluster** (+EngOps scorecards, monitoring-as-code). next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` LaunchDarkly/StrongDM/Comet/OpenStatus/1Password (plan) → analyse→score→select.
+- **Done (pushed):** CANONICAL **30/30**; e2e **232/232**; wedges **4640**; personal_fit **232**; **232 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-37** LaunchDarkly/StrongDM/Comet/OpenStatus/1Password Secrets. next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` DevCycle/Astrix/W&B/Incident.io/Tines (plan) → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -129,7 +129,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 1. **Ingest** next ≤5 candidates → analyse→score→select.
 2. Expand CANONICAL markets past 30 if candidate pool thins.
-3. Optional: Mode B re-score convergent infra after growth.
+3. Cluster after +15 more (currently 5/20).
 
 ## Subagent dispatch contract
 
