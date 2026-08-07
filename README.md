@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 167 | **162 scored** + **5 ingested** (ids 171–175) |
-| `analysed` (cohort) | 162 | ingest-24 backlog awaiting analyse |
-| `wedges` | 3240 | **162 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 741 | post analyse-23 |
+| `startups` | 167 | **167 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 167 | full pool analysed |
+| `wedges` | 3340 | **167 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 756 | post analyse-24 |
 | `infrastructure_nodes` | 10 | **4 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈25 |
-| `personal_fit` | 162 | WarpStream=56; Paubox=48; Feedzai=48; Decagon=33; Pilot=26 |
+| `personal_fit` | 167 | Not Diamond=60; Alloy=48; Canary Mail=46; Forethought=33; Campfire=29 |
 | `pattern_library` | **18** | +gateway routing; +email auth/DLP |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-24: Canary Mail (#171), Forethought (#172), Campfire (#173), Alloy (#174), Not Diamond (#175). Railway skipped (dupe #21). Primary mix Better memory 48, Better evaluation 45, Developer-first 24, AI-native 23.
+**`plan_recursive_fanout` next_action = `cluster`**. Analyse-24 E2E done: Canary Mail (#171 AI-native), Forethought (#172 Better evaluation), Campfire (#173 API-first), Alloy (#174 More accurate), Not Diamond (#175 Developer-first). Primary mix Better memory 48, Better evaluation 46, Developer-first 25, AI-native 24. Cluster ready (≥20 new since last).
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,17 +119,17 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **158/162** full (4 thin-evidence legacy); wedges 3240; personal_fit 162; **162 primary**; **patterns 18**; startups **167**. Latest: **ingest-24** — Canary Mail, Forethought, Campfire, Alloy, Not Diamond → ingested (Railway dupe skipped). next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` ids 171–175 then score/select.
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **163/167** full (4 thin-evidence legacy); wedges 3340; personal_fit 167; **167 primary**; **patterns 18**; startups 167. Latest: **analyse-24** — Canary Mail/Forethought/Campfire/Alloy/Not Diamond full E2E. next **cluster**. **88 tests green.**
+- **Next fire:** `cluster` (pattern library + infra graph) then continue ingest.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ids 171–175 then score/select.
+1. **Cluster** (patterns + infra convergence) then ingest next batch.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
-3. Further CANONICAL expand past 27; next cluster after +20 startups.
+3. Further CANONICAL expand past 27.
 
 ## Subagent dispatch contract
 

@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest-24):** startups=167 (162 scored + 5 ingested) | wedges=3240 | primary=162 | personal_fit=162 | patterns=18 | segments=123 | candidates=277 | CANONICAL=**27/27** analysed | e2e=158/162 | convergent=4 | top_infra=Tracing/observability | next_action=**analyse** (ids 171–175 Canary Mail/Forethought/Campfire/Alloy/Not Diamond) | primary Better memory 48 / Better evaluation 45 / Developer-first 24 / AI-native 23 | tests=88 green.
+**Live snapshot (post analyse-24 E2E):** startups=167 scored | wedges=3340 | primary=167 | personal_fit=167 | patterns=18 | segments=123 | candidates=277 | CANONICAL=**27/27** analysed | e2e=163/167 | convergent=4 | top_infra=Tracing/observability | next_action=**cluster** | primary Better memory 48 / Better evaluation 46 / Developer-first 25 / AI-native 24 | primaries: Canary=AI-native, Forethought=Better evaluation, Campfire=API-first, Alloy=More accurate, Not Diamond=Developer-first | tests=88 green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
