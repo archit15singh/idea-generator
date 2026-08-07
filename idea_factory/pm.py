@@ -78,6 +78,9 @@ CANONICAL_MARKETS = [
     # expand-32 — founder thesis: golden-trace agent observability + hard constraints
     "Agent Observability",
     "Policy Engines for Agents",
+    # expand-34 — pending-queue thinning: red-team + local train/run (founder fit)
+    "Agent Red Teaming",
+    "Local LLM Infrastructure",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.

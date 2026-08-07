@@ -2,7 +2,7 @@
 
 ## Verify
 ```sh
-python3 -m pytest tests/ -q        # 92 tests; load-bearing contract tests
+python3 -m pytest tests/ -q        # 93 tests; load-bearing contract tests
 python3 -c "from idea_factory.db import DB; DB('sid.db').init()"   # idempotent; safe on existing DB
 ```
 - DB at `sid.db` — **Git LFS tracked** (see `.gitattributes`), NEVER `rm sid.db`; it's board truth. Use `DB('sid.db').init()` to add new tables — schema is `CREATE TABLE IF NOT EXISTS`, fully idempotent. After `git clone` on a fresh laptop, run `git lfs pull` to materialise `sid.db` + `scrapes/` (clone gives you LFS pointers otherwise); verify `file sid.db` says SQLite, not a 130-byte pointer.
@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-78 + cluster):** startups=**436** scored | wedges=**8720** | primary=**436** | personal_fit=**436** | patterns=**144** | CANONICAL=**32/32** | e2e=436/436 | next=**ingest** | wave #442–446 Spacelift/Tooljet/Aleph/Ludwig/CFAIGW — Faster / SMB-first / Compliance-first / Offline/local-first / Cheaper | +5 patterns | pending **32** | tests=**92** green.
+**Live snapshot (post ingest+analyse-79 + expand + cluster):** startups=**441** scored | wedges=**8820** | primary=**441** | personal_fit=**441** | patterns=**149** | CANONICAL=**34** (33 analysed; Agent Red Teaming pending Garak/PyRIT) | e2e=441/441 | next=**ingest** | wave #447–451 Netlify/Zed/Unsloth/Sentry/Promptfoo — Better UX / Faster / Offline/local-first / Self-hosted / Open source | +5 patterns | pending **~30** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
@@ -63,6 +63,7 @@ Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds
 - **Product shutdown announcements.** e.g. Neptune docs: OpenAI acquisition → services end **2026-03-05**. Still ingest (migration-gap wedge is high-signal); set `stage=sunset`, cite Transition Hub/export, score moat low. Homepage 403 is OK if docs+GitHub exist.
 - **Host aliases for same company.** `idea_factory.db.HOST_ALIASES` maps marketing hosts → canonical (e.g. `abnormalsecurity.com` → `abnormal.ai`, `console.groq.com` → `groq.com`). `candidates_for_ingest` excludes alias hosts when the canonical site is already a startup.
 - **Name-slug prefix dedupe.** `candidates_for_ingest` also skips candidates whose name slug is a prefix/extension of an ingested startup (≥6 chars), e.g. `LangSmith` vs `LangSmith Hub`. Prevents marketing-page re-ingest of the same product.
+- **GitHub monorepo site keys.** Host-only matching treated `github.com/features/copilot` as covering *all* `github.com/*` candidates. Site keys for github/gitlab/bitbucket are `host/owner/repo` so Garak/PyRIT/llama.cpp stay ingestible.
 - **Context budget.** `webfetch` returns 60KB+ per startup page. The ingestor MUST compress with `pm.html_to_summary(html, max_chars=1200)` before reasoning, else a 5-startup cohort blows the prompt budget before SID extraction even starts.
 - **SQLite datetime compare.** Schema stores `updated_at` in SQLite's space-format `datetime('now')` (e.g. `2026-08-06 14:33:23`). Boundary comparisons from Python must use `WHERE updated_at > datetime(?)` so SQLite normalises the `?`-bound isoformat T-format string; a bare lexicographic compare returns 0 for same-day updates.
 - **Idempotent edges.** `INSERT OR IGNORE` returns `rowcount > 0` from the executed cursor (the just-executed statement), NOT `cur.total_changes` (cumulative since connection open). Use `res.rowcount`, not `cur.total_changes > 0` — otherwise duplicate inserts are reported as `True`.

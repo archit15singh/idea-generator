@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 436 | **all scored** (analyse-78 Spacelift→CFAIGW + cluster) |
-| `analysed` (cohort) | 436 | CANONICAL **32/32** |
-| `wedges` | 8720 | **436 primary** + shortlists |
-| `infrastructure_ops` | ~2495+ | post analyse-78 |
+| `startups` | 441 | **all scored** (analyse-79 Netlify→Promptfoo + expand-34) |
+| `analysed` (cohort) | 441 | CANONICAL **34** (33 with analysed; Agent Red Teaming thin) |
+| `wedges` | 8820 | **441 primary** + shortlists |
+| `infrastructure_ops` | ~2545+ | post analyse-79 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
-| `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 469 | pending **32** |
-| `personal_fit` | 436 | all e2e |
-| `pattern_library` | **144** | +IaC orchestration, AI OSS app builders, EU sovereign LLMs, declarative DL, edge AI gateways |
+| `market_segments` | 140+ | CANONICAL **34** pool |
+| `candidate_startups` | 475+ | pending **~30** (github monorepo fix unblocked Garak/PyRIT) |
+| `personal_fit` | 441 | all e2e |
+| `pattern_library` | **149** | +AI deploy platforms, Zed editors, offline LLM studios, Seer APM, AI red-team |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **436/436**; wedges **8720**; patterns **144**. Latest: **ingest+analyse-78** Spacelift/Tooljet/Aleph/Ludwig/CFAIGW + **cluster** (+5). next **ingest**. **92 tests green.** Pending **32** — expand markets soon if queue thins further.
+- **Done (pushed):** CANONICAL **34**; e2e **441/441**; wedges **8820**; patterns **149**. Latest: **ingest+analyse-79** Netlify/Zed/Unsloth/Sentry/Promptfoo + **expand** Agent Red Teaming + Local LLM Infrastructure + **cluster** (+5). next **ingest**. **93 tests green.** Fix: github monorepo site keys (Copilot no longer starves Garak/PyRIT).
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.

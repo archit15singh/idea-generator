@@ -162,6 +162,11 @@ class DB:
         Name-slug prefix dedupe: "LangSmith" is skipped when "LangSmith Hub" is
         already ingested (and "Abnormal Security" vs "Abnormal"). Shorter slug
         must be ≥6 chars to avoid false positives ("Open" vs "OpenAI").
+
+        Monorepo hosts (github.com / gitlab.com / bitbucket.org) match on
+        host+owner/repo, not bare host — otherwise a single GitHub product
+        (e.g. github.com/features/copilot) would starve every github.com/*
+        candidate (Garak, PyRIT, llama.cpp, …).
         """
         import re
 
@@ -177,6 +182,8 @@ class DB:
         sql += " ORDER BY c.id"
         r = self._conn.execute(sql, params).fetchall()
 
+        _MONOREPO_HOSTS = frozenset({"github.com", "gitlab.com", "bitbucket.org"})
+
         def _host(url: str) -> str:
             # strip scheme/userinfo/port/path; drop leading www.
             u = (url or "").strip().lower()
@@ -189,9 +196,20 @@ class DB:
                 u = u[4:]
             return u
 
-        def _canonical_host(url: str) -> str:
+        def _site_key(url: str) -> str:
+            """Dedupe key: host for normal sites; host/owner/repo for monorepos."""
             h = _host(url)
-            return HOST_ALIASES.get(h, h)
+            h = HOST_ALIASES.get(h, h)
+            if h in _MONOREPO_HOSTS:
+                u = (url or "").strip().lower()
+                if "://" in u:
+                    u = u.split("://", 1)[1]
+                parts = [p for p in u.split("/")[1:] if p]
+                if len(parts) >= 2:
+                    return f"{h}/{parts[0]}/{parts[1]}"
+                if parts:
+                    return f"{h}/{parts[0]}"
+            return h
 
         def _name_slug(name: str) -> str:
             return re.sub(r"[^a-z0-9]", "", (name or "").lower())
@@ -210,17 +228,17 @@ class DB:
         startup_rows = self._conn.execute(
             "SELECT website, startup FROM startups"
         ).fetchall()
-        ingested_hosts = {
-            _canonical_host(row["website"])
+        ingested_keys = {
+            _site_key(row["website"])
             for row in startup_rows
             if row["website"]
         }
-        # also accept reverse: if alias target is ingested, alias host is covered
+        # reverse HOST_ALIASES only for non-monorepo bare hosts
         for alias, target in HOST_ALIASES.items():
-            if target in ingested_hosts:
-                ingested_hosts.add(alias)
-            if alias in ingested_hosts:
-                ingested_hosts.add(target)
+            if target in ingested_keys:
+                ingested_keys.add(alias)
+            if alias in ingested_keys:
+                ingested_keys.add(target)
         ingested_name_slugs = {
             _name_slug(row["startup"])
             for row in startup_rows
@@ -229,9 +247,7 @@ class DB:
 
         out: list[CandidateStartupRow] = []
         for row in r:
-            if _canonical_host(row["website"]) in ingested_hosts:
-                continue
-            if _host(row["website"]) in ingested_hosts:
+            if _site_key(row["website"]) in ingested_keys:
                 continue
             if _name_covered(row["name"], ingested_name_slugs):
                 continue

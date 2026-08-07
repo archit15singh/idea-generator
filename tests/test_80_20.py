@@ -278,6 +278,28 @@ def test_candidates_for_ingest_name_slug_prefix(db):
     assert "FreshObs" in names
 
 
+def test_candidates_for_ingest_github_monorepo_path_keys(db):
+    """github.com/features/copilot must NOT starve github.com/NVIDIA/garak."""
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Agent Red Teaming", segment_name="gh-monorepo",
+        icp_cluster="developer", rationale="monorepo host key",
+    ))
+    db.upsert_startup(StartupRow(
+        startup="GitHub Copilot", website="https://github.com/features/copilot",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Garak", website="https://github.com/NVIDIA/garak",
+        market_segment_id=seg_id,
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="SameRepo", website="https://github.com/features/copilot",
+        market_segment_id=seg_id,
+    ))
+    names = {c.name for c in db.candidates_for_ingest()}
+    assert "Garak" in names
+    assert "SameRepo" not in names  # exact path key already ingested
+
+
 def test_db_idempotent_upsert(db):
     s = StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24")
     id1 = db.upsert_startup(s)
