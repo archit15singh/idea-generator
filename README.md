@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 182 | **177 scored** + **5 ingested** (await analyse) |
-| `analysed` (cohort) | 177 | +5 SID backlog (ingest-27) |
-| `wedges` | 3540 | **177 primary** (selected=1) + shortlists |
+| `startups` | 182 | **182 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 182 | full pool analysed |
+| `wedges` | 3640 | **182 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈100 (plan diversifies ~40/wave) |
-| `personal_fit` | 177 | Langfuse=60; Trustpair=55; WorkOS=51; Rootly=49; AirOps=34 |
+| `personal_fit` | 182 | Phoenix=60; Sift=56; Stytch=52; FireHydrant=49; Notion=42 |
 | `pattern_library` | **20** | +multi-channel CX agents; +coding-agent harness routing |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Analyse-25 E2E done: Mimecast (#176 AI-native), Gumloop (#177 Developer-first), Zeni (#178 Cheaper), Cerbos (#179 Open source), Confluent (#180 Developer-first). Primary mix Better memory 48, Better evaluation 46, Developer-first 27, AI-native 25.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **177/177** structural; wedges **3540**; personal_fit **177**; **177 primary**; **patterns 20**; startups **182** (177 scored + 5 ingested). Latest: **ingest-27** — Sift/FireHydrant/Stytch/Notion/Phoenix SID (Railway.app dupe skipped; WhyLabs shutdown skipped). next **analyse** 186–190. **88 tests green.**
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **182/182** structural; wedges **3640**; personal_fit **182**; **182 primary**; **patterns 20**; startups **182**. Latest: **analyse-27** — Sift/FireHydrant/Stytch/Notion/Phoenix full E2E (AI-native / Better memory / AI-native / Better memory / Better evaluation). next **ingest**. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
