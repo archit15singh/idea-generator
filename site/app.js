@@ -322,9 +322,12 @@
   }
 
   function wire() {
+    // Debounce search: board is multi-MB; full list re-render per keystroke janks hard.
+    let qTimer = 0;
     $("q").addEventListener("input", (e) => {
       state.q = e.target.value;
-      render();
+      clearTimeout(qTimer);
+      qTimer = setTimeout(render, 180);
     });
     $("market").addEventListener("change", (e) => {
       state.market = e.target.value;

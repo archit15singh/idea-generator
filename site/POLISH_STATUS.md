@@ -5,8 +5,8 @@ Track for the 120s polish loop. Set `satisfied=true` only when **all** checklist
 ```
 satisfied=false
 fires_no_fix=0
-last_fire=2026-08-07T07:12:00Z
-last_fix=URL deep-link ?id= opens drawer on load; replaceState on open/close
+last_fire=2026-08-07T07:15:00Z
+last_fix=Search debounce 180ms on #q input (avoids full re-render per keystroke on 5MB board)
 ```
 
 ## Checklist (all must be true)
