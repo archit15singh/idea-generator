@@ -87,15 +87,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 177 | **172 scored** + **5 ingested** (await analyse) |
-| `analysed` (cohort) | 172 | full prior pool analysed; +5 SID backlog |
-| `wedges` | 3440 | **172 primary** (selected=1) + shortlists |
+| `startups` | 177 | **177 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 177 | full pool analysed |
+| `wedges` | 3540 | **177 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 123 | CANONICAL **27/27** analysed |
 | `candidate_startups` | 277 | pending_ingest≈100 (plan diversifies ~40/wave) |
-| `personal_fit` | 172 | Cerbos=56; Confluent=52; Mimecast=47; Gumloop=44; Zeni=26 |
+| `personal_fit` | 177 | Langfuse=60; Trustpair=55; WorkOS=51; Rootly=49; AirOps=34 |
 | `pattern_library` | **20** | +multi-channel CX agents; +coding-agent harness routing |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Analyse-25 E2E done: Mimecast (#176 AI-native), Gumloop (#177 Developer-first), Zeni (#178 Cheaper), Cerbos (#179 Open source), Confluent (#180 Developer-first). Primary mix Better memory 48, Better evaluation 46, Developer-first 27, AI-native 25.
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **168/172** full (4 thin-evidence legacy); wedges 3440; personal_fit 172; **172 primary**; **patterns 20**; startups **177** (172 scored + 5 ingested). Latest: **ingest-26** — Trustpair/AirOps/Rootly/WorkOS/Langfuse SID (Railway.app skipped dupe #21). next **analyse** ids 181–185. **88 tests green.**
+- **Done (pushed):** CANONICAL **27/27** analysed; e2e **177/177** structural (all scored+primary); wedges **3540**; personal_fit **177**; **177 primary**; **patterns 20**; startups **177**. Latest: **analyse-26** — Trustpair/AirOps/Rootly/WorkOS/Langfuse full E2E (AI-native / Better memory / Better memory / Developer-first / Better evaluation). next **ingest**. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
