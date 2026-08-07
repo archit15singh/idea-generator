@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-86):** startups=**476** scored | wedges=**9520** | primary=**476** | personal_fit=**476** | patterns=**184** | CANONICAL=**36/36** | e2e=476/476 | next=**ingest** | wave #482–486 CodeRabbit/LangGraph/Greptile/Qodo/Sourcery — Faster / Developer-first / More accurate / Enterprise-first / Cheaper | +5 patterns | pending **4** | tests=**93** green.
+**Live snapshot (post ingest+analyse-87):** startups=**480** scored | wedges=**9600** | primary=**480** | personal_fit=**480** | patterns=**188** | CANONICAL=**36/36** | e2e=480/480 | next=**ingest** | wave #487–490 Codacy/LettaCloud/UpstashWorkflow/SonarQubeAI — Compliance-first / Better memory / SMB-first / Self-hosted | +4 patterns | pending **5** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
