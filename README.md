@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 451 | **all scored** (analyse-81 PyRIT→CalypsoAI + cluster) |
-| `analysed` (cohort) | 451 | CANONICAL **34/34** |
-| `wedges` | 9020 | **451 primary** + shortlists |
+| `startups` | 456 | **all scored** (analyse-82 Nhost→Relay + cluster) |
+| `analysed` (cohort) | 456 | CANONICAL **34/34** |
+| `wedges` | 9120 | **456 primary** + shortlists |
 | `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 475+ | pending **20** |
-| `personal_fit` | 451 | all e2e |
-| `pattern_library` | **159** | +PyRIT red-team, Appwrite BaaS, OMZ shell, Honeycomb obs, F5/Calypso guardrails |
+| `candidate_startups` | 475+ | pending **15** |
+| `personal_fit` | 456 | all e2e |
+| `pattern_library` | **164** | +Nhost BaaS, PagerDuty AIOps, Credo gov, Milvus/Zilliz, Relay workflows |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **34/34**; e2e **451/451**; wedges **9020**; patterns **159**. Latest: **ingest+analyse-81** PyRIT/Appwrite/OhMyZsh/Honeycomb/CalypsoAI + **cluster** (+5). Diversity primaries API-first / Self-hosted / Better UX / More accurate / Enterprise-first. next **ingest**. **93 tests green.**
+- **Done (pushed):** CANONICAL **34/34**; e2e **456/456**; wedges **9120**; patterns **164**. Latest: **ingest+analyse-82** Nhost/PagerDuty/CredoAI/MilvusZilliz/Relay + **cluster** (+5). Diversity SMB-first / Faster / Compliance-first / Open source / Better integrations. next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
