@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-62 + cluster):** startups=**356** scored | wedges=**7120** | primary=**356** | personal_fit=**356** | patterns=**64** | CANONICAL=**32/32** | e2e=356/356 | next=**ingest** | wave #361–365 OpenAI Codex/Zendesk AI/Open WebUI/Banana/SwaggerHub — Enterprise-first / Vertical-specific / Offline/local-first / Cheaper / API-first | +5 patterns | pending **117** | tests=**90** green.
+**Live snapshot (post ingest+analyse-63 + cluster):** startups=**361** scored | wedges=**7220** | primary=**361** | personal_fit=**361** | patterns=**69** | CANONICAL=**32/32** | e2e=361/361 | next=**ingest** | wave #366–370 TabbyML/Genesys/Jan/HF Inference/Aporia — Self-hosted / Enterprise-first / SMB-first / Better integrations / More accurate | +5 patterns | pending **112** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
