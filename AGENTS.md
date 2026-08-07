@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-63 + cluster):** startups=**361** scored | wedges=**7220** | primary=**361** | personal_fit=**361** | patterns=**69** | CANONICAL=**32/32** | e2e=361/361 | next=**ingest** | wave #366–370 TabbyML/Genesys/Jan/HF Inference/Aporia — Self-hosted / Enterprise-first / SMB-first / Better integrations / More accurate | +5 patterns | pending **112** | tests=**90** green.
+**Live snapshot (post ingest+analyse-64 + cluster):** startups=**366** scored | wedges=**7320** | primary=**366** | personal_fit=**366** | patterns=**74** | CANONICAL=**32/32** | e2e=366/366 | next=**ingest** | wave #371–375 Five9/LocalAI/Superwise/Evidence/Hyperbrowser — Vertical-specific / Offline/local-first / Compliance-first / Better UX / Faster | +5 patterns | pending **107** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
