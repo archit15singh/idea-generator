@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-68 + cluster):** startups=**386** scored | wedges=**7720** | primary=**386** | personal_fit=**386** | patterns=**94** | CANONICAL=**32/32** | e2e=386/386 | next=**ingest** | wave #391–395 Dialogflow/Synthflow/DeepEval/Sigma/Firecrawl — Enterprise-first / Vertical-specific / More accurate / Better UX / Open source | +5 patterns | pending **87** | tests=**90** green.
+**Live snapshot (post ingest+analyse-69 + cluster):** startups=**391** scored | wedges=**7820** | primary=**391** | personal_fit=**391** | patterns=**99** | CANONICAL=**32/32** | e2e=391/391 | next=**ingest** | wave #396–400 Cartesia/Confident AI/Rippling/Gretel/E2B — Faster / Better evaluation / SMB-first / Compliance-first / API-first | +5 patterns | pending **82** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
