@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-55 + expand):** startups=**321** scored | wedges=**6420** | primary=**321** | personal_fit=**321** | patterns=**44** | CANONICAL=**32/32** | e2e=321/321 | convergent=5 | next=**ingest** | wave #326–330 Amazon Q/Flowise/AssemblyAI/Apollo/Arthur — primaries Enterprise-first / Better UX / API-first / Better integrations / Compliance-first | pending **120** | tests=**90** green.
+**Live snapshot (post ingest+analyse-56 + cluster + expand):** startups=**326** scored | wedges=**6520** | primary=**326** | personal_fit=**326** | patterns=**49** | CANONICAL=**32/32** | e2e=326/326 | convergent=5 | next=**ingest** | wave #331–335 Copilot/Voiceflow/Dify/Cohere/Bump — primaries Developer-first / Vertical-specific / Open source / Enterprise-first / Better integrations | +5 patterns | pending **129** | tests=**90** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
