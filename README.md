@@ -87,8 +87,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 187 | **187 scored** (all stage_marker=scored) |
-| `analysed` (cohort) | 187 | full pool analysed; CANONICAL **30/30** |
+| `startups` | 192 | **187 scored** + **5 ingested** (await analyse) |
+| `analysed` (cohort) | 187 | +5 SID backlog (ingest-29) |
 | `wedges` | 3740 | **187 primary** (selected=1) + shortlists |
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **187/187**; wedges **3740**; personal_fit **187**; patterns **23** (+3); convergent **5** (Evaluation newly converged); top_infra=Tracing/observability. Latest: **cluster-28** infra graph + NHI/context-compile/fraud patterns. next **ingest**. **88 tests green.**
+- **Done (pushed):** CANONICAL **30/30**; startups **192** (187 scored + 5 ingested); e2e **187/187** prior; patterns **23**; convergent **5**. Latest: **ingest-29** — PropelAuth/Mem/Vault/Traceloop/Vanta SID (Ada 403, Anthropic Console, Railway dupe skipped). next **analyse** 196–200. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
