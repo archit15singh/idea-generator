@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30** analysed; e2e **187/187**; wedges **3740**; personal_fit **187**; **187 primary**; segments **132**; startups **187**. Latest: **analyse-28** — DSPy/Aembit/Gorgias/Forter/PromptLayer full E2E (Developer-first / AI-native / Better memory / Better memory / Better evaluation). next **cluster**. **88 tests green.**
+- **Done (pushed):** CANONICAL **30/30**; e2e **187/187**; wedges **3740**; personal_fit **187**; patterns **23** (+3); convergent **5** (Evaluation newly converged); top_infra=Tracing/observability. Latest: **cluster-28** infra graph + NHI/context-compile/fraud patterns. next **ingest**. **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
