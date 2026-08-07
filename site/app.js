@@ -232,6 +232,13 @@
     else renderInfra();
   }
 
+  function setDeepLink(id) {
+    const url = new URL(location.href);
+    if (id == null) url.searchParams.delete("id");
+    else url.searchParams.set("id", String(id));
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+
   function openStartup(id) {
     const s = state.board.startups.find((x) => x.id === id);
     if (!s) return;
@@ -296,6 +303,7 @@
           : ""
       }
     `;
+    setDeepLink(s.id);
     openDrawer();
   }
 
@@ -310,6 +318,7 @@
     d.hidden = true;
     d.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    setDeepLink(null);
   }
 
   function wire() {
@@ -374,6 +383,8 @@
       renderMeta();
       fillFilters();
       render();
+      const deepId = +new URL(location.href).searchParams.get("id");
+      if (deepId) openStartup(deepId);
     } catch (err) {
       $("metaBar").textContent = `Failed to load board.json — ${err.message}. Serve via http (not file://).`;
       $("list").innerHTML = "";
