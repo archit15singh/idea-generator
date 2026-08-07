@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 222 | **all scored** (analyse-35 complete) |
-| `analysed` (cohort) | 222 | CANONICAL **30/30** |
-| `wedges` | 4440 | **222 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 1024 | post analyse-35 |
+| `startups` | 227 | **all scored** (analyse-36 + cluster) |
+| `analysed` (cohort) | 227 | CANONICAL **30/30** |
+| `wedges` | 4540 | **227 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | ~1049 | post analyse-36 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
-| `candidate_startups` | 285 | pending ≈ next Cortex/Opal/Tiptap/Patronus/Checkly |
-| `personal_fit` | 222 | all e2e |
-| `pattern_library` | **24** | cluster **15/20** new since last |
+| `candidate_startups` | ~280 | next LaunchDarkly/StrongDM/Comet/OpenStatus/1Password |
+| `personal_fit` | 227 | all e2e |
+| `pattern_library` | **26** | +EngOps scorecards, monitoring-as-code; cluster stamped |
 
-**`plan_recursive_fanout` next_action = `ingest`**. Wave-35: Humanitec (#226 Developer-first), ConductorOne (#227 AI-native), Nanonets (#228 AI-native), Humanloop (#229 Better evaluation; joining Anthropic/sunset), Middleware (#230 AI-native). Primary mix Better evaluation 54, Better memory 53, AI-native 49, Developer-first 40, Open source 10.
+**`plan_recursive_fanout` next_action = `ingest`**. Wave-36: Cortex (#231 AI-native), Opal (#232 AI-native), Tiptap (#233 Open source), Patronus (#234 Better evaluation), Checkly (#235 Developer-first). Primary mix Better evaluation 55, Better memory 53, AI-native 51, Developer-first 41, Open source 11.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,8 +119,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **222/222**; wedges **4440**; personal_fit **222**; **222 primary**; patterns **24**; convergent **5**. Latest: **ingest+analyse-35** Humanitec/ConductorOne/Nanonets/Humanloop/Middleware. next **ingest**. **89 tests green.**
-- **Next fire:** `ingest` Cortex/Opal/Tiptap/Patronus/Checkly (or plan wave) → analyse→score→select; cluster after +5 more.
+- **Done (pushed):** CANONICAL **30/30**; e2e **227/227**; wedges **4540**; personal_fit **227**; **227 primary**; patterns **26**; convergent **5**. Latest: **ingest+analyse-36** Cortex/Opal/Tiptap/Patronus/Checkly + **cluster** (+EngOps scorecards, monitoring-as-code). next **ingest**. **89 tests green.**
+- **Next fire:** `ingest` LaunchDarkly/StrongDM/Comet/OpenStatus/1Password (plan) → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
@@ -128,8 +128,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 ## The next highest-ROI moves
 
 1. **Ingest** next ≤5 candidates → analyse→score→select.
-2. Cluster when +20 new since last (currently 15/20).
-3. Further CANONICAL expand past 30.
+2. Expand CANONICAL markets past 30 if candidate pool thins.
+3. Optional: Mode B re-score convergent infra after growth.
 
 ## Subagent dispatch contract
 
