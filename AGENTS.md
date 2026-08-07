@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-80 + cluster):** startups=**446** scored | wedges=**8920** | primary=**446** | personal_fit=**446** | patterns=**154** | CANONICAL=**34/34** (Agent Red Teaming covered via Garak) | e2e=446/446 | next=**ingest** | wave #452–456 Garak/CFPages/Neovim/Llama.cpp/DatadogLLM — Compliance-first / Faster / Open source / Self-hosted / Enterprise-first | +5 patterns | pending **25** | tests=**93** green.
+**Live snapshot (post ingest+analyse-81 + cluster):** startups=**451** scored | wedges=**9020** | primary=**451** | personal_fit=**451** | patterns=**159** | CANONICAL=**34/34** | e2e=451/451 | next=**ingest** | wave #457–461 PyRIT/Appwrite/OhMyZsh/Honeycomb/CalypsoAI — API-first / Self-hosted / Better UX / More accurate / Enterprise-first | +5 patterns | pending **20** | tests=**93** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh

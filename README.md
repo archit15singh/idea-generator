@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 446 | **all scored** (analyse-80 Garak→DatadogLLM + cluster) |
-| `analysed` (cohort) | 446 | CANONICAL **34/34** |
-| `wedges` | 8920 | **446 primary** + shortlists |
+| `startups` | 451 | **all scored** (analyse-81 PyRIT→CalypsoAI + cluster) |
+| `analysed` (cohort) | 451 | CANONICAL **34/34** |
+| `wedges` | 9020 | **451 primary** + shortlists |
 | `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 475+ | pending **25** |
-| `personal_fit` | 446 | all e2e |
-| `pattern_library` | **154** | +LLM vuln scanners, edge JAMstack, Neovim, llama.cpp, enterprise LLM obs |
+| `candidate_startups` | 475+ | pending **20** |
+| `personal_fit` | 451 | all e2e |
+| `pattern_library` | **159** | +PyRIT red-team, Appwrite BaaS, OMZ shell, Honeycomb obs, F5/Calypso guardrails |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **34/34**; e2e **446/446**; wedges **8920**; patterns **154**. Latest: **ingest+analyse-80** Garak/CFPages/Neovim/Llama.cpp/DatadogLLM + **cluster** (+5). Agent Red Teaming covered (Garak fit=60). next **ingest**. **93 tests green.**
+- **Done (pushed):** CANONICAL **34/34**; e2e **451/451**; wedges **9020**; patterns **159**. Latest: **ingest+analyse-81** PyRIT/Appwrite/OhMyZsh/Honeycomb/CalypsoAI + **cluster** (+5). Diversity primaries API-first / Self-hosted / Better UX / More accurate / Enterprise-first. next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
