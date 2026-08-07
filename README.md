@@ -87,18 +87,18 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 197 | **192 scored** + **5 ingested** (awaiting analyse) |
-| `analysed` (cohort) | 192 | CANONICAL **30/30**; 5 backlog at ingested |
-| `wedges` | 3840 | **192 primary** (selected=1) + shortlists |
-| `infrastructure_ops` | 872 | post analyse-29 |
+| `startups` | 197 | **197 scored** (all stage_marker=scored) |
+| `analysed` (cohort) | 197 | full pool analysed; CANONICAL **30/30** |
+| `wedges` | 3940 | **197 primary** (selected=1) + shortlists |
+| `infrastructure_ops` | 897 | post analyse-30 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 132 | CANONICAL **30/30** analysed |
 | `candidate_startups` | 286 | pending_ingest≈89 |
-| `personal_fit` | 192 | prior cohort fit locked until analyse-30 |
-| `pattern_library` | **23** | patterns held; next cluster after +20 |
+| `personal_fit` | 197 | Reflect=55; Infisical/Modal=52; SigNoz=51; Ory=48 |
+| `pattern_library` | **23** | next cluster after +20 new since last |
 
-**`plan_recursive_fanout` next_action = `analyse`**. Ingest-30 done: Ory (#201), Reflect (#202), SigNoz (#203), Infisical (#204), Modal (#205). Ada 403 / Anthropic Console skipped / Railway.app dupe removed. Primary mix Better memory 55, Better evaluation 51, Developer-first 31, AI-native 29.
+**`plan_recursive_fanout` next_action = `ingest`**. Analyse-30 E2E: Ory (#201 Developer-first), Reflect (#202 Better memory), SigNoz (#203 AI-native), Infisical (#204 AI-native), Modal (#205 Developer-first). Primary mix Better memory 56, Better evaluation 51, Developer-first 33, AI-native 31.
 
 ### The v2 ranked layers (live `run_infra_fit_digest` output)
 
@@ -119,15 +119,15 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **30/30**; e2e **192/197**; wedges **3840**; personal_fit **192**; **192 primary**; patterns **23**; convergent **5**. Latest: **ingest-30** — Ory/Reflect/SigNoz/Infisical/Modal SIDs (#201–205). next **analyse**. **88 tests green.**
-- **Next fire:** `analyse` wave on 201–205 then score→select.
+- **Done (pushed):** CANONICAL **30/30**; e2e **197/197**; wedges **3940**; personal_fit **197**; **197 primary**; patterns **23**; convergent **5**. Latest: **analyse-30** — Ory/Reflect/SigNoz/Infisical/Modal full E2E (Developer-first / Better memory / AI-native / AI-native / Developer-first). next **ingest**. **88 tests green.**
+- **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
   - **Builder (06)** — **disabled in pre-build** (`never_dispatch`). No stage 06.
 
 ## The next highest-ROI moves
 
-1. **Analyse** ingest-30 cohort (201–205) → score→select; then more ingest.
+1. **Ingest** next batch (≤5) then analyse→score→select.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
 3. Further CANONICAL expand past 30; next cluster after +20 startups.
 
