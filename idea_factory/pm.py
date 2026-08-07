@@ -71,6 +71,10 @@ CANONICAL_MARKETS = [
     "Agent Guardrails and Policy",
     "Computer Use Infrastructure",
     "Model Gateways",
+    # expand-30 — context/memory composition, secrets for agents, support-agent ops
+    "Context Engineering",
+    "Secrets and Credential Infrastructure",
+    "AI Customer Support",
 ]
 
 # Parallelism caps — recursive fan-out stays bounded so context/API budgets hold.

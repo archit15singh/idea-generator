@@ -1339,6 +1339,7 @@ def test_canonical_markets_pool_size():
         "AI Engineering", "Agent Memory", "Streaming Infrastructure",
         "AI Coding Agents", "Fraud Detection",
         "Agent Guardrails and Policy", "Computer Use Infrastructure", "Model Gateways",
+        "Context Engineering", "Secrets and Credential Infrastructure", "AI Customer Support",
     ):
         assert required in CANONICAL_MARKETS
 

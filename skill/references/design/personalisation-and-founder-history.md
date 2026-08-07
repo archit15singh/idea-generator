@@ -14,13 +14,15 @@ The original instinct, analyze 100 random YC startups, maximises for breadth. Th
 
 | Cluster | Markets |
 |---------|---------|
-| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure, **AI Coding Agents**, **Agent Guardrails and Policy**, **Computer Use Infrastructure** |
-| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration, **Agent Memory**, **Streaming Infrastructure**, **Model Gateways** |
-| **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation, **Fraud Detection** |
+| **developers/founders** | AI Engineering, Developer Tools, Agent Infrastructure, Technical Founder Tools, Developer Infrastructure, **AI Coding Agents**, **Agent Guardrails and Policy**, **Computer Use Infrastructure**, **Context Engineering** |
+| **platform / infra** | Knowledge Management, AI Infrastructure, Observability, Data Infrastructure, MLOps and Evaluation, Vector Search and Retrieval, API and Integration Platforms, Workflow Orchestration, **Agent Memory**, **Streaming Infrastructure**, **Model Gateways**, **Secrets and Credential Infrastructure** |
+| **enterprise / security** | Cybersecurity, Enterprise AI, Enterprise Automation, B2B Productivity, Email Security, Identity and Access, Security Automation, **Fraud Detection**, **AI Customer Support** |
 
 **2026-08 expansion (founder profile):** Agent Memory (Memori/PyCon thesis), Streaming Infrastructure (Kafka day-job), AI Coding Agents (persistent coding-agent context), Fraud Detection (Abnormal entity-scoring / BEC-adjacent).
 
 **2026-08 expand-27:** Agent Guardrails and Policy (hard-constraints-in-code / Luffy policy-engine thesis), Computer Use Infrastructure (Browserbase MCP fork, vision browser agents), Model Gateways (OpenRouter multi-provider / cost routing).
+
+**2026-08 expand-30:** Context Engineering (prompt/memory/RAG composition for agents — Memori + agent-loop home turf), Secrets and Credential Infrastructure (agent tool credentials, vaults, MCP auth — identity+agent gap), AI Customer Support (support agents / case triage — Abnormal production case-triage transfer).
 
 ## These are clusters, not fully independent dimensions
 

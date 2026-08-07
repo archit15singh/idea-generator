@@ -93,8 +93,8 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 | `infrastructure_ops` | 769 | post analyse-25 |
 | `infrastructure_nodes` | 10 | **4 convergent** (Connectors/Tracing/Cost/Auth) |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
-| `market_segments` | 123 | CANONICAL **27/27** analysed |
-| `candidate_startups` | 277 | pending_ingest≈100 (plan diversifies ~40/wave) |
+| `market_segments` | 132 | CANONICAL **30** pool; **27/30** analysed (3 new await E2E) |
+| `candidate_startups` | 287 | pending_ingest≈105 |
 | `personal_fit` | 182 | Phoenix=60; Sift=56; Stytch=52; FireHydrant=49; Notion=42 |
 | `pattern_library` | **20** | +multi-channel CX agents; +coding-agent harness routing |
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **27/27** analysed; e2e **182/182** structural; wedges **3640**; personal_fit **182**; **182 primary**; **patterns 20**; startups **182**. Latest: **analyse-27** — Sift/FireHydrant/Stytch/Notion/Phoenix full E2E (AI-native / Better memory / AI-native / Better memory / Better evaluation). next **ingest**. **88 tests green.**
+- **Done (pushed):** CANONICAL **30** (added Context Engineering, Secrets and Credential Infrastructure, AI Customer Support); segments **132**; candidates **287**; e2e **182/182** prior; **27/30** markets analysed (3 new parents await ingest→E2E). Latest: **expand-30 + scout**. next **ingest** (prefer DSPy/Aembit/Ada). **88 tests green.**
 - **Next fire:** `ingest` next batch (≤5) then analyse drain.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
@@ -129,7 +129,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 1. **Ingest** next batch (≤5) then analyse→score→select.
 2. Optionally top-up evidence on Doppler/Lattice/Unit21/Lovable (ev 16–17).
-3. Further CANONICAL expand past 27; next cluster after +20 startups.
+3. Further CANONICAL expand past 30; next cluster after +20 startups.
 
 ## Subagent dispatch contract
 
