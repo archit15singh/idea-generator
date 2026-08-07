@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 441 | **all scored** (analyse-79 Netlify→Promptfoo + expand-34) |
-| `analysed` (cohort) | 441 | CANONICAL **34** (33 with analysed; Agent Red Teaming thin) |
-| `wedges` | 8820 | **441 primary** + shortlists |
-| `infrastructure_ops` | ~2545+ | post analyse-79 |
+| `startups` | 446 | **all scored** (analyse-80 Garak→DatadogLLM + cluster) |
+| `analysed` (cohort) | 446 | CANONICAL **34/34** |
+| `wedges` | 8920 | **446 primary** + shortlists |
+| `infrastructure_ops` | ~2595+ | post analyse-80 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 140+ | CANONICAL **34** pool |
-| `candidate_startups` | 475+ | pending **~30** (github monorepo fix unblocked Garak/PyRIT) |
-| `personal_fit` | 441 | all e2e |
-| `pattern_library` | **149** | +AI deploy platforms, Zed editors, offline LLM studios, Seer APM, AI red-team |
+| `candidate_startups` | 475+ | pending **25** |
+| `personal_fit` | 446 | all e2e |
+| `pattern_library` | **154** | +LLM vuln scanners, edge JAMstack, Neovim, llama.cpp, enterprise LLM obs |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **34**; e2e **441/441**; wedges **8820**; patterns **149**. Latest: **ingest+analyse-79** Netlify/Zed/Unsloth/Sentry/Promptfoo + **expand** Agent Red Teaming + Local LLM Infrastructure + **cluster** (+5). next **ingest**. **93 tests green.** Fix: github monorepo site keys (Copilot no longer starves Garak/PyRIT).
+- **Done (pushed):** CANONICAL **34/34**; e2e **446/446**; wedges **8920**; patterns **154**. Latest: **ingest+analyse-80** Garak/CFPages/Neovim/Llama.cpp/DatadogLLM + **cluster** (+5). Agent Red Teaming covered (Garak fit=60). next **ingest**. **93 tests green.**
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
