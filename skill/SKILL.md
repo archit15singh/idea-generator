@@ -174,7 +174,7 @@ After 8 weeks of agent runtime, one wedge must have 3+ prospect replies indicati
 
 On every pass print: `next_action`, ingested_awaiting_analyse, analysed, **wedges total + selected**, personal_fit rows, convergent infra + `top_infra_node`, pattern_library count, markets segments/analysed / pool (CANONICAL starts at 20; expand parents continuously), kill-metric. Do **not** report "ready to build" as a next step — report "pre-build complete" when wedges are selected/scored/validated.
 
-**Board snapshot (Aug 07 2026, after analyse-24 E2E):** startups=167 scored | wedges=3340 | primary=167 | personal_fit=167 | patterns=18 | segments=123 | candidates=277 | CANONICAL **27/27** analysed | e2e=163/167 | convergent=4 | top_infra=Tracing/observability | next=`cluster` | primary mix Better memory 48 / Better evaluation 46 / Developer-first 25 / AI-native 24 | primaries 171 AI-native / 172 Better evaluation / 173 API-first / 174 More accurate / 175 Developer-first | tests=88.
+**Board snapshot (Aug 07 2026, after cluster-24):** startups=167 scored | wedges=3340 | primary=167 | personal_fit=167 | patterns=**20** | segments=123 | candidates=277 | CANONICAL **27/27** analysed | e2e=163/167 | convergent=4 | top_infra=Tracing/observability | next=`ingest` | primary mix Better memory 48 / Better evaluation 46 / Developer-first 25 | patterns +Multi-channel AI CX agents +Coding-agent harness routing | tests=88.
 
 ## Refs
 
