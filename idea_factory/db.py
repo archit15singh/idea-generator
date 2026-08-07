@@ -48,6 +48,13 @@ from idea_factory.schema import (
 
 DEFAULT_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "skill" / "templates" / "schema.sql"
 
+# Alternate marketing/product hosts for the same company as an already-ingested
+# website. candidates_for_ingest treats these as already present so fan-out does
+# not re-queue duplicates (e.g. abnormalsecurity.com vs abnormal.ai).
+HOST_ALIASES: dict[str, str] = {
+    "abnormalsecurity.com": "abnormal.ai",
+}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -147,6 +154,9 @@ class DB:
         Host matching is www-normalized: `https://www.letta.com` is treated as
         already ingested when `https://letta.com` exists (and vice versa). Exact
         string match alone left duplicate pending SIDs that starved fan-out.
+
+        Also resolves HOST_ALIASES (e.g. abnormalsecurity.com → abnormal.ai) so
+        alternate marketing domains do not re-enter the ingest queue.
         """
         sql = """
             SELECT c.* FROM candidate_startups c
@@ -172,13 +182,26 @@ class DB:
                 u = u[4:]
             return u
 
+        def _canonical_host(url: str) -> str:
+            h = _host(url)
+            return HOST_ALIASES.get(h, h)
+
         ingested_hosts = {
-            _host(row["website"])
+            _canonical_host(row["website"])
             for row in self._conn.execute("SELECT website FROM startups").fetchall()
             if row["website"]
         }
+        # also accept reverse: if alias target is ingested, alias host is covered
+        for alias, target in HOST_ALIASES.items():
+            if target in ingested_hosts:
+                ingested_hosts.add(alias)
+            if alias in ingested_hosts:
+                ingested_hosts.add(target)
+
         out: list[CandidateStartupRow] = []
         for row in r:
+            if _canonical_host(row["website"]) in ingested_hosts:
+                continue
             if _host(row["website"]) in ingested_hosts:
                 continue
             out.append(

@@ -218,6 +218,31 @@ def test_candidates_for_ingest_www_normalized_host(db):
     assert "FreshCo" in names
 
 
+def test_candidates_for_ingest_host_aliases(db):
+    """HOST_ALIASES: abnormalsecurity.com is covered when abnormal.ai is ingested."""
+    from idea_factory.db import HOST_ALIASES
+
+    assert HOST_ALIASES.get("abnormalsecurity.com") == "abnormal.ai"
+    seg_id = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Email Security", segment_name="alias-dedup",
+        icp_cluster="enterprise-IT", rationale="alias test",
+    ))
+    db.upsert_startup(StartupRow(
+        startup="Abnormal", website="https://abnormal.ai",
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="Abnormal Security", website="https://abnormalsecurity.com",
+        market_segment_id=seg_id,
+    ))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="FreshSec", website="https://freshsec.example",
+        market_segment_id=seg_id,
+    ))
+    names = {c.name for c in db.candidates_for_ingest()}
+    assert "Abnormal Security" not in names
+    assert "FreshSec" in names
+
+
 def test_db_idempotent_upsert(db):
     s = StartupRow(startup="Acme", website="https://acme.example", yc_batch="W24")
     id1 = db.upsert_startup(s)
