@@ -41,7 +41,7 @@ One-shot resume digest (counts + deterministic blockers for a fresh session):
 python3 -c "from idea_factory.db import DB; from idea_factory.pm import board_status; import json; print(json.dumps(board_status(DB('sid.db')), indent=2, default=str))"
 ```
 
-**Live snapshot (post ingest+analyse-74 + cluster):** startups=**416** scored | wedges=**8320** | primary=**416** | personal_fit=**416** | patterns=**124** | CANONICAL=**32/32** | e2e=416/416 | next=**ingest** | wave #422–426 Blacksmith/Raycast/Ambience/Oso/Scale — Faster / Better UX / Compliance-first / Self-hosted / Enterprise-first | +5 patterns | pending **53** | tests=**92** green.
+**Live snapshot (post ingest+analyse-75 + cluster):** startups=**421** scored | wedges=**8420** | primary=**421** | personal_fit=**421** | patterns=**129** | CANONICAL=**32/32** | e2e=421/421 | next=**ingest** | wave #427–431 Earthly/Warp/Nabla/Snorkel/EnvoyAIGW — Open source / API-first / Vertical-specific / More accurate / Developer-first | +5 patterns | pending **47** | tests=**92** green.
 
 ## Recursive fan-out (PRE-BUILD; depth-first; re-plan each fire)
 ```sh
@@ -59,7 +59,7 @@ Dispatch via the Task tool with `subagent_type` of the agent name. The PM builds
 ## Live-run gotchas (learned Aug 06)
 - **YC /companies/<slug> pages routinely 404.** Ingestor's best-effort rule: log the 404 in `scrape_log`, fall back to the company's own homepage. Don't halt on a 404.
 - **Cloudflare / bot-challenge pricing pages (403 + "Just a moment...").** e.g. codesandbox.io/pricing. Log status=403, treat as thin, continue with homepage + GitHub/docs. Never invent pricing numbers from a challenge page.
-- **Host aliases for same company.** `idea_factory.db.HOST_ALIASES` maps marketing hosts → canonical (e.g. `abnormalsecurity.com` → `abnormal.ai`). `candidates_for_ingest` excludes alias hosts when the canonical site is already a startup — prevents re-queueing Abnormal Security-class dupes.
+- **Host aliases for same company.** `idea_factory.db.HOST_ALIASES` maps marketing hosts → canonical (e.g. `abnormalsecurity.com` → `abnormal.ai`, `console.groq.com` → `groq.com`). `candidates_for_ingest` excludes alias hosts when the canonical site is already a startup.
 - **Name-slug prefix dedupe.** `candidates_for_ingest` also skips candidates whose name slug is a prefix/extension of an ingested startup (≥6 chars), e.g. `LangSmith` vs `LangSmith Hub`. Prevents marketing-page re-ingest of the same product.
 - **Context budget.** `webfetch` returns 60KB+ per startup page. The ingestor MUST compress with `pm.html_to_summary(html, max_chars=1200)` before reasoning, else a 5-startup cohort blows the prompt budget before SID extraction even starts.
 - **SQLite datetime compare.** Schema stores `updated_at` in SQLite's space-format `datetime('now')` (e.g. `2026-08-06 14:33:23`). Boundary comparisons from Python must use `WHERE updated_at > datetime(?)` so SQLite normalises the `?`-bound isoformat T-format string; a bare lexicographic compare returns 0 for same-day updates.

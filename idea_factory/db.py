@@ -53,6 +53,7 @@ DEFAULT_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "skill" / "templa
 # not re-queue duplicates (e.g. abnormalsecurity.com vs abnormal.ai).
 HOST_ALIASES: dict[str, str] = {
     "abnormalsecurity.com": "abnormal.ai",
+    "console.groq.com": "groq.com",  # GroqCloud console vs marketing site
 }
 
 

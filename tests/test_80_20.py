@@ -223,6 +223,7 @@ def test_candidates_for_ingest_host_aliases(db):
     from idea_factory.db import HOST_ALIASES
 
     assert HOST_ALIASES.get("abnormalsecurity.com") == "abnormal.ai"
+    assert HOST_ALIASES.get("console.groq.com") == "groq.com"
     seg_id = db.upsert_market_segment(MarketSegmentRow(
         parent_market="Email Security", segment_name="alias-dedup",
         icp_cluster="enterprise-IT", rationale="alias test",
@@ -241,6 +242,18 @@ def test_candidates_for_ingest_host_aliases(db):
     names = {c.name for c in db.candidates_for_ingest()}
     assert "Abnormal Security" not in names
     assert "FreshSec" in names
+    # GroqCloud console host covered when groq.com ingested
+    seg2 = db.upsert_market_segment(MarketSegmentRow(
+        parent_market="Model Gateways", segment_name="groq-alias",
+        icp_cluster="infra", rationale="groq alias",
+    ))
+    db.upsert_startup(StartupRow(startup="Groq", website="https://groq.com"))
+    db.insert_candidate_startup(CandidateStartupRow(
+        name="GroqCloud", website="https://console.groq.com",
+        market_segment_id=seg2,
+    ))
+    names2 = {c.name for c in db.candidates_for_ingest()}
+    assert "GroqCloud" not in names2
 
 
 def test_candidates_for_ingest_name_slug_prefix(db):

@@ -87,16 +87,16 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 | Table | Count | Notes |
 |-------|-------|-------|
-| `startups` | 416 | **all scored** (analyse-74 Blacksmith→Scale + cluster) |
-| `analysed` (cohort) | 416 | CANONICAL **32/32** |
-| `wedges` | 8320 | **416 primary** + shortlists |
-| `infrastructure_ops` | ~2295+ | post analyse-74 |
+| `startups` | 421 | **all scored** (analyse-75 Earthly→EnvoyAIGW + cluster) |
+| `analysed` (cohort) | 421 | CANONICAL **32/32** |
+| `wedges` | 8420 | **421 primary** + shortlists |
+| `infrastructure_ops` | ~2345+ | post analyse-75 |
 | `infrastructure_nodes` | 10 | **5 convergent** |
 | `infra_personal_fit` | 8 | Mode B; top_infra=Tracing/observability |
 | `market_segments` | 134+ | CANONICAL **32** pool |
-| `candidate_startups` | 469 | pending **53** |
-| `personal_fit` | 416 | all e2e |
-| `pattern_library` | **124** | +CI runners, Raycast launchers, clinical AI, agent security, Scale systems |
+| `candidate_startups` | 469 | pending **47** |
+| `personal_fit` | 421 | all e2e |
+| `pattern_library` | **129** | +AI guardrails, agentic terminals, clinical ambient, frontier data, Envoy AI GW |
 
 **`plan_recursive_fanout` next_action = `ingest`**. Wave-40: Entro (#251 AI-native), Baseten (#252 Developer-first), Blink Ops (#253 **Better integrations**), Weaviate (#254 Better memory), Inngest (#255 Developer-first). Primary mix AI-native 59, Better evaluation 56, Better memory 54, Developer-first 46, Open source 13.
 
@@ -119,7 +119,7 @@ python3 -c "from idea_factory.db import DB; from idea_factory.pm import run_infr
 
 ## Where the loop stands
 
-- **Done (pushed):** CANONICAL **32/32**; e2e **416/416**; wedges **8320**; patterns **124**. Latest: **ingest+analyse-74** Blacksmith/Raycast/Ambience/Oso/Scale + **cluster** (+5). next **ingest**. **92 tests green.** Fix: name-slug prefix dedupe (LangSmith vs LangSmith Hub).
+- **Done (pushed):** CANONICAL **32/32**; e2e **421/421**; wedges **8420**; patterns **129**. Latest: **ingest+analyse-75** Earthly/Warp/Nabla/Snorkel/EnvoyAIGW + **cluster** (+5). next **ingest**. **92 tests green.** Fix: `console.groq.com`→`groq.com` HOST_ALIAS.
 - **Next fire:** `ingest` next plan wave → analyse→score→select.
 - **BLOCKED on human action (do NOT auto-resume):**
   - **Validator (05)** — cold emails via gmail MCP. Explicit user approval + recipient pairing.
